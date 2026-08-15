@@ -1,10 +1,12 @@
 /**
- * Admin dashboard — manage the educational content that drives Learn, the games and the
- * dictionary.
+ * Admin dashboard — manage the content that drives Learn, the games and the dictionary.
  *
- * One generic document editor rather than nine bespoke forms: the collections have nine
- * different shapes, and hand-built forms would need updating every time `models/content.ts`
- * changes. The bundled copy of each document is the shape reference, one click away.
+ * Every collection is edited through real labelled fields, generated from the schema in
+ * `admin.schema.ts`. Units and topics appear as dropdowns rather than ids to type, which is
+ * where content most often breaks: a mistyped `unitId` saves cleanly and then quietly hides
+ * the topic from the unit it belongs to.
+ *
+ * The raw JSON view is kept behind a disclosure for the rare field a form cannot express.
  *
  * The screen is a convenience, not a control. Firestore rules decide what is actually
  * accepted — a forged visit here produces a dashboard whose every write is refused.
@@ -23,7 +25,11 @@ import {
   summarise,
 } from '@/services/admin.service';
 import type { AdminDocument } from '@/services/admin.service';
-import { contentSource } from '@/services/content.service';
+import { fieldsFor } from '@/services/admin.schema';
+import { buildDocument, suggestId } from '@/services/admin.form.logic';
+import { formHtml, readForm, showFieldErrors } from './admin.form';
+import type { ReferenceOptions } from './admin.form';
+import { contentSource, getTopics, getUnits } from '@/services/content.service';
 import { showToast } from '@/components/toast';
 import { escapeHtml, qs, qsa } from '@/utils/dom';
 import { loaderHtml, stateHtml } from '@/components/loader';
@@ -31,10 +37,10 @@ import '@/styles/admin.css';
 
 const ROOT_ID = 'cn-admin-root';
 
-/** The collection currently open. Kept in the hash so a reload lands back in the same place. */
 let activeCollection = CONTENT_COLLECTIONS[0].id;
 let documents: AdminDocument[] = [];
 let selectedId: string | null = null;
+let references: ReferenceOptions = { units: [], topics: [] };
 
 function tabsHtml(): string {
   return CONTENT_COLLECTIONS.map(
@@ -46,7 +52,6 @@ function tabsHtml(): string {
         aria-pressed="${entry.id === activeCollection}"
       >
         ${escapeHtml(entry.label)}
-        <span class="cn-admin__tab-count">${entry.bundled.length}</span>
       </button>
     `,
   ).join('');
@@ -56,8 +61,8 @@ function listHtml(): string {
   if (documents.length === 0) {
     return `
       <p class="cn-admin__empty">
-        Nothing in Firestore for this collection. Students are seeing the bundled copy.
-        Use <strong>Publish bundled</strong> to upload it.
+        Nothing here yet. Students are reading the copy bundled with the app —
+        <strong>Publish bundled</strong> uploads it so you can edit it.
       </p>
     `;
   }
@@ -74,8 +79,8 @@ function listHtml(): string {
                 data-id="${escapeHtml(entry.id)}"
                 aria-pressed="${entry.id === selectedId}"
               >
-                <span class="cn-admin__row-id">${escapeHtml(entry.id)}</span>
                 <span class="cn-admin__row-summary">${escapeHtml(summarise(entry.data))}</span>
+                <span class="cn-admin__row-id">${escapeHtml(entry.id)}</span>
               </button>
             </li>
           `,
@@ -86,34 +91,59 @@ function listHtml(): string {
 }
 
 function editorHtml(): string {
-  const selected = documents.find((entry) => entry.id === selectedId);
   const collection = collectionById(activeCollection);
-  const template = collection?.bundled[0];
-
-  const value = selected
-    ? JSON.stringify(selected.data, null, 2)
-    : JSON.stringify(template ?? { id: '' }, null, 2);
+  const selected = documents.find((entry) => entry.id === selectedId);
+  const specs = fieldsFor(activeCollection);
+  const data = selected?.data ?? {};
+  const label = collection?.label ?? activeCollection;
+  const singular = label.replace(/s$/, '');
 
   return `
-    <div class="cn-admin__editor">
-      <div class="cn-admin__editor-head">
-        <label for="cn-admin-id">Document id</label>
+    <form class="cn-admin__editor" id="cn-admin-form" novalidate>
+      <header class="cn-admin__editor-head">
+        <h2 class="cn-admin__subtitle">
+          ${selected ? `Editing ${escapeHtml(singular.toLowerCase())}` : `New ${escapeHtml(singular.toLowerCase())}`}
+        </h2>
+        ${
+          selected
+            ? `<p class="cn-admin__editing-id">${escapeHtml(selected.id)}</p>`
+            : '<p class="cn-field__hint">The id is filled in from the title — you can change it before saving.</p>'
+        }
+      </header>
+
+      <div class="cn-admin__field" data-field="id"${selected ? ' hidden' : ''}>
+        <label for="cn-admin-id">Id</label>
         <input
           class="form-control"
           id="cn-admin-id"
           value="${escapeHtml(selectedId ?? '')}"
-          placeholder="e.g. topic-osi-model"
+          placeholder="filled in automatically"
           ${selected ? 'readonly' : ''}
         />
+        <p class="cn-field__hint">
+          Permanent once students' progress refers to it. Renaming later creates a second document.
+        </p>
+        <p class="cn-field__error" data-error-for="id" role="alert"></p>
       </div>
 
-      <label for="cn-admin-json">Document JSON</label>
-      <textarea class="form-control cn-admin__json" id="cn-admin-json" rows="18" spellcheck="false">${escapeHtml(value)}</textarea>
-      <p class="cn-field__error" id="cn-admin-error" role="alert"></p>
+      ${formHtml(specs, data, references)}
+
+      <details class="cn-admin__raw">
+        <summary>Advanced: edit the raw document</summary>
+        <p class="cn-field__hint">
+          For anything the fields above cannot express. Saving from here ignores the form.
+        </p>
+        <textarea class="form-control cn-admin__json" id="cn-admin-json" rows="14" spellcheck="false">${escapeHtml(JSON.stringify(data, null, 2))}</textarea>
+        <button class="btn btn-cn-ghost btn-sm mt-2" type="button" id="cn-admin-save-json">
+          Save raw document
+        </button>
+        <p class="cn-field__error" id="cn-admin-json-error" role="alert"></p>
+      </details>
 
       <div class="cn-admin__actions">
-        <button class="btn btn-cn-primary" type="button" id="cn-admin-save">
-          <i class="bi bi-save" aria-hidden="true"></i> Save document
+        <button class="btn btn-cn-primary" type="submit">
+          <i class="bi bi-check-lg" aria-hidden="true"></i>
+          ${selected ? 'Save changes' : `Create ${escapeHtml(singular.toLowerCase())}`}
         </button>
         <button class="btn btn-cn-ghost" type="button" id="cn-admin-new">
           <i class="bi bi-plus-lg" aria-hidden="true"></i> New
@@ -127,7 +157,7 @@ function editorHtml(): string {
           <i class="bi bi-trash" aria-hidden="true"></i> Delete
         </button>
       </div>
-    </div>
+    </form>
   `;
 }
 
@@ -140,11 +170,10 @@ function panelHtml(): string {
         <div class="cn-admin__list-head">
           <h2 class="cn-admin__subtitle">
             ${escapeHtml(collection?.label ?? activeCollection)}
-            <span class="cn-admin__count">${documents.length} in Firestore</span>
+            <span class="cn-admin__count">${documents.length} live · ${collection?.bundled.length ?? 0} bundled</span>
           </h2>
           <button class="btn btn-cn-ghost btn-sm" type="button" id="cn-admin-publish">
-            <i class="bi bi-cloud-upload" aria-hidden="true"></i>
-            Publish bundled (${collection?.bundled.length ?? 0})
+            <i class="bi bi-cloud-upload" aria-hidden="true"></i> Publish bundled
           </button>
         </div>
         ${listHtml()}
@@ -155,13 +184,15 @@ function panelHtml(): string {
 }
 
 function bodyHtml(): string {
+  const source = contentSource();
+
   return `
     <header class="cn-admin__head">
       <div>
         <span class="cn-label cn-label--marked">Admin</span>
         <h1 class="cn-section__title mt-2">Content management</h1>
         <p class="cn-label mt-2">
-          Students are currently reading <strong>${contentSource()}</strong> content
+          Students are reading <strong>${escapeHtml(source)}</strong> content
         </p>
       </div>
     </header>
@@ -171,7 +202,6 @@ function bodyHtml(): string {
   `;
 }
 
-/** Repaints the list and editor without re-rendering the tab strip. */
 function repaintPanel(root: HTMLElement): void {
   const panel = qs('#cn-admin-panel', root);
   if (!panel) return;
@@ -181,14 +211,14 @@ function repaintPanel(root: HTMLElement): void {
 
 async function loadCollection(root: HTMLElement): Promise<void> {
   const panel = qs('#cn-admin-panel', root);
-  if (panel) panel.innerHTML = loaderHtml('Loading documents');
+  if (panel) panel.innerHTML = loaderHtml('Loading');
 
   try {
     documents = await listDocuments(activeCollection);
   } catch (error) {
     console.error('[admin] could not list documents', error);
     documents = [];
-    showToast('Could not read that collection. Check your connection and that you are signed in as the admin.', {
+    showToast('Could not read that collection. Check you are signed in as the admin account.', {
       title: 'Load failed',
       variant: 'error',
     });
@@ -206,14 +236,15 @@ function bindPanel(root: HTMLElement): void {
     });
   });
 
+  qs<HTMLFormElement>('#cn-admin-form', root)?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    void handleSave(root);
+  });
+
   qs<HTMLButtonElement>('#cn-admin-new', root)?.addEventListener('click', () => {
     selectedId = null;
     repaintPanel(root);
     qs<HTMLInputElement>('#cn-admin-id', root)?.focus();
-  });
-
-  qs<HTMLButtonElement>('#cn-admin-save', root)?.addEventListener('click', () => {
-    void handleSave(root);
   });
 
   qs<HTMLButtonElement>('#cn-admin-delete', root)?.addEventListener('click', () => {
@@ -223,48 +254,107 @@ function bindPanel(root: HTMLElement): void {
   qs<HTMLButtonElement>('#cn-admin-publish', root)?.addEventListener('click', () => {
     void handlePublish(root);
   });
+
+  qs<HTMLButtonElement>('#cn-admin-save-json', root)?.addEventListener('click', () => {
+    void handleSaveRaw(root);
+  });
+
+  bindIdSuggestion(root);
+}
+
+/** Fills the id from the title while creating, until the admin types their own. */
+function bindIdSuggestion(root: HTMLElement): void {
+  const idInput = qs<HTMLInputElement>('#cn-admin-id', root);
+  if (!idInput || idInput.readOnly) return;
+
+  const titleKey = fieldsFor(activeCollection).some((spec) => spec.key === 'title')
+    ? 'title'
+    : fieldsFor(activeCollection).some((spec) => spec.key === 'term')
+      ? 'term'
+      : 'name';
+  const titleInput = qs<HTMLInputElement>(`[name="${titleKey}"]`, root);
+  if (!titleInput) return;
+
+  let touched = false;
+  idInput.addEventListener('input', () => {
+    touched = true;
+  });
+
+  titleInput.addEventListener('input', () => {
+    if (touched) return;
+    idInput.value = suggestId(activeCollection, titleInput.value);
+  });
 }
 
 async function handleSave(root: HTMLElement): Promise<void> {
+  const form = qs<HTMLFormElement>('#cn-admin-form', root);
+  const idInput = qs<HTMLInputElement>('#cn-admin-id', root);
+  if (!form || !idInput) return;
+
+  const specs = fieldsFor(activeCollection);
+  const id = idInput.value.trim();
+  const { data, errors } = buildDocument(specs, id, readForm(specs, form));
+
+  if (Object.keys(errors).length > 0) {
+    showFieldErrors(form, errors);
+    return;
+  }
+  showFieldErrors(form, {});
+
+  try {
+    await saveDocument(activeCollection, id, data);
+    showToast(`Saved. Students will see this on their next load.`, { variant: 'success' });
+    await loadCollection(root);
+  } catch (error) {
+    console.error('[admin] save failed', error);
+    showToast('Firestore refused the write. Confirm you are signed in as the admin account.', {
+      title: 'Save failed',
+      variant: 'error',
+    });
+  }
+}
+
+/** The escape hatch: saves exactly what is in the JSON box, bypassing the form. */
+async function handleSaveRaw(root: HTMLElement): Promise<void> {
   const idInput = qs<HTMLInputElement>('#cn-admin-id', root);
   const jsonInput = qs<HTMLTextAreaElement>('#cn-admin-json', root);
-  const errorEl = qs('#cn-admin-error', root);
+  const errorEl = qs('#cn-admin-json-error', root);
   if (!idInput || !jsonInput || !errorEl) return;
 
   const id = idInput.value.trim();
   if (!id) {
-    errorEl.textContent = 'A document id is required.';
-    idInput.focus();
+    errorEl.textContent = 'An id is required.';
     return;
   }
 
   const result = parseDocumentInput(jsonInput.value, id);
   if ('error' in result) {
     errorEl.textContent = result.error;
-    jsonInput.focus();
     return;
   }
 
   errorEl.textContent = '';
   try {
     await saveDocument(activeCollection, id, result.data);
-    showToast(`Saved ${activeCollection}/${id}.`, { variant: 'success' });
+    showToast('Saved.', { variant: 'success' });
     await loadCollection(root);
   } catch (error) {
-    console.error('[admin] save failed', error);
-    errorEl.textContent =
-      'Firestore refused the write. Confirm you are signed in as the admin account.';
+    console.error('[admin] raw save failed', error);
+    errorEl.textContent = 'Firestore refused the write.';
   }
 }
 
 async function handleDelete(root: HTMLElement): Promise<void> {
   if (!selectedId) return;
+  const label = documents.find((entry) => entry.id === selectedId);
+  const name = label ? summarise(label.data) : selectedId;
+
   // Deleting content students are reading is worth one deliberate confirmation.
-  if (!window.confirm(`Delete ${activeCollection}/${selectedId}? This cannot be undone.`)) return;
+  if (!window.confirm(`Delete "${name}"? This cannot be undone.`)) return;
 
   try {
     await deleteDocument(activeCollection, selectedId);
-    showToast(`Deleted ${activeCollection}/${selectedId}.`, { variant: 'success' });
+    showToast('Deleted.', { variant: 'success' });
     await loadCollection(root);
   } catch (error) {
     console.error('[admin] delete failed', error);
@@ -277,8 +367,8 @@ async function handlePublish(root: HTMLElement): Promise<void> {
   if (!collection) return;
 
   const confirmed = window.confirm(
-    `Upload ${collection.bundled.length} bundled ${collection.label.toLowerCase()} to Firestore?\n\n` +
-      'Documents with the same id will be overwritten.',
+    `Upload the ${collection.bundled.length} bundled ${collection.label.toLowerCase()} to Firestore?\n\n` +
+      'Anything with a matching id is overwritten.',
   );
   if (!confirmed) return;
 
@@ -287,7 +377,8 @@ async function handlePublish(root: HTMLElement): Promise<void> {
 
   try {
     const written = await publishBundled(activeCollection);
-    showToast(`Published ${written} documents to ${activeCollection}.`, { variant: 'success' });
+    showToast(`Published ${written} documents. They are editable now.`, { variant: 'success' });
+    await refreshReferences();
     await loadCollection(root);
   } catch (error) {
     console.error('[admin] publish failed', error);
@@ -296,6 +387,20 @@ async function handlePublish(root: HTMLElement): Promise<void> {
       variant: 'error',
     });
     if (button) button.disabled = false;
+  }
+}
+
+/** Units and topics power the dropdowns, so they are loaded once per visit. */
+async function refreshReferences(): Promise<void> {
+  try {
+    const [units, topics] = await Promise.all([getUnits(), getTopics()]);
+    references = {
+      units: units.map((unit) => ({ id: unit.id, title: unit.title })),
+      topics: topics.map((topic) => ({ id: topic.id, title: topic.title })),
+    };
+  } catch (error) {
+    // The reference fields fall back to plain text inputs rather than blocking the screen.
+    console.error('[admin] could not load unit/topic options', error);
   }
 }
 
@@ -326,10 +431,10 @@ const adminPage: Page = {
       return;
     }
 
-    // `#/admin?collection=questions` reopens where the admin left off.
     const requested = ctx.query.get('collection');
     if (requested && collectionById(requested)) activeCollection = requested;
 
+    await refreshReferences();
     root.innerHTML = bodyHtml();
 
     qsa<HTMLButtonElement>('.cn-admin__tab', root).forEach((tab) => {

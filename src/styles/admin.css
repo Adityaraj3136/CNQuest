@@ -169,3 +169,87 @@
 .cn-admin__danger:not(:disabled):hover {
   background: var(--cn-negative-wash);
 }
+
+/* --- Form fields --- */
+
+.cn-admin__field {
+  display: grid;
+  gap: var(--cn-space-2);
+  margin-bottom: var(--cn-space-4);
+}
+
+.cn-admin__field label {
+  display: flex;
+  align-items: baseline;
+  gap: var(--cn-space-2);
+  font-size: var(--cn-text-sm);
+  font-weight: 600;
+}
+
+.cn-admin__req {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-micro);
+  text-transform: uppercase;
+  letter-spacing: var(--cn-tracking-label);
+  color: var(--cn-ink-faint);
+  font-weight: 400;
+}
+
+.cn-admin__checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cn-space-3);
+}
+
+.cn-admin__check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cn-space-2);
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.cn-admin__editing-id {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-faint);
+  margin: 0;
+}
+
+/* Raw JSON is the escape hatch, so it stays folded away until asked for. */
+.cn-admin__raw {
+  border-top: var(--cn-hairline);
+  padding-top: var(--cn-space-3);
+  margin-bottom: var(--cn-space-4);
+}
+
+.cn-admin__raw summary {
+  cursor: pointer;
+  font-size: var(--cn-text-sm);
+  color: var(--cn-ink-soft);
+}
+
+.cn-admin__raw summary:hover {
+  color: var(--cn-accent);
+}
+
+/* The list is now titles first, ids second — an index of content, not of keys. */
+.cn-admin__row-summary {
+  font-size: var(--cn-text-sm);
+  color: var(--cn-ink);
+  font-weight: 500;
+  white-space: normal;
+}
+
+.cn-admin__row-id {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-micro);
+  color: var(--cn-ink-faint);
+}
+
+.cn-admin__actions {
+  position: sticky;
+  bottom: 0;
+  padding-block: var(--cn-space-3);
+  background: linear-gradient(to top, var(--cn-paper) 70%, transparent);
+}

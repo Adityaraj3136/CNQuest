@@ -555,11 +555,9 @@ Stated plainly rather than discovered in a viva:
    a tabular policy properly; it is included to demonstrate the interface and the RL component.
 6. **Bootstrap ships in full** (~48 kB gzipped CSS) although the design uses only its reset, grid
    and form base. Importing only the used partials would recover most of that.
-7. **The admin dashboard edits raw JSON**, one generic editor rather than nine typed forms.
-   The collections have nine different shapes, and bespoke forms would need updating with every
-   change to `models/content.ts`. It validates that the input is a JSON object whose `id`
-   matches the document being written, and nothing beyond that — a malformed field reaches
-   Firestore and surfaces as a rendering gap, not a save error.
+7. **The admin dashboard validates shape, not meaning.** Fields are typed and required fields
+   are enforced, and a correct-answer number outside the options list is rejected — but a
+   factually wrong explanation or a word the grid cannot place still saves cleanly.
 8. **The leaderboard ranks all-time XP only, and no weekly board.** Weekly ranking needs a
    per-week XP counter that resets, which is a second write path and a second monotonicity story;
    all-time XP is already on the profile and needed neither.
@@ -578,7 +576,7 @@ Stated plainly rather than discovered in a viva:
 - Contextual-bandit / Q-learning replacement for the rule-based adaptive engine
 - Weekly leaderboard (needs a resetting per-week XP counter) and class/cohort filtering
 - Dark mode
-- Typed per-collection forms in the admin dashboard, replacing the JSON editor
+- Rich-text editing and image uploads for topic notes
 
 ---
 
