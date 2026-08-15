@@ -1007,3 +1007,205 @@ body.cn-in-session {
     transition: none;
   }
 }
+
+/* ==================================================================== *
+ * Result screen — the payoff
+ * ==================================================================== */
+
+.cn-result {
+  max-width: 720px;
+  margin-inline: auto;
+  padding: var(--cn-space-6) var(--cn-space-4) var(--cn-space-8);
+}
+
+/* One strong central card. Everything below it is detail the player may or may not read. */
+.cn-result__hero {
+  text-align: center;
+  padding: var(--cn-space-7) var(--cn-space-5);
+  border-radius: var(--cn-radius-xl);
+  background: var(--cn-paper-raised);
+  border: var(--cn-hairline);
+  box-shadow: var(--cn-shadow-card);
+}
+
+.cn-result__hero[data-milestone='true'] {
+  border-color: var(--cn-xp);
+  box-shadow: 0 0 0 4px var(--cn-xp-wash), var(--cn-shadow-card);
+}
+
+.cn-result__eyebrow {
+  margin: 0;
+  font-size: var(--cn-text-sm);
+  font-weight: 600;
+  color: var(--cn-ink-faint);
+}
+
+.cn-result__score {
+  margin: var(--cn-space-3) 0 0;
+  font-size: clamp(3rem, 2rem + 6vw, 5rem);
+  font-weight: 750;
+  line-height: 1;
+  letter-spacing: var(--cn-tracking-tight);
+  font-variant-numeric: tabular-nums;
+}
+
+.cn-result__score small {
+  font-size: 0.38em;
+  font-weight: 600;
+  color: var(--cn-ink-faint);
+  letter-spacing: 0;
+}
+
+.cn-result__xp {
+  margin: var(--cn-space-3) 0 0;
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xl);
+  font-weight: 700;
+  color: var(--cn-xp);
+}
+
+/* Levelling up is rare enough to deserve its own line and a short entrance. */
+.cn-result__milestone {
+  display: inline-block;
+  margin: var(--cn-space-4) 0 0;
+  padding: var(--cn-space-2) var(--cn-space-4);
+  border-radius: var(--cn-radius-pill);
+  background: var(--cn-special-wash);
+  color: var(--cn-special);
+  font-weight: 700;
+  font-size: var(--cn-text-sm);
+  animation: cn-milestone-in 420ms var(--cn-ease-out) both;
+}
+
+@keyframes cn-milestone-in {
+  0% { opacity: 0; transform: scale(0.9) translateY(6px); }
+  60% { opacity: 1; transform: scale(1.04) translateY(0); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.cn-result__meta {
+  margin: var(--cn-space-4) 0 0;
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-faint);
+}
+
+.cn-result__section {
+  margin: 0 0 var(--cn-space-3);
+  font-size: var(--cn-text-sm);
+  font-weight: 650;
+}
+
+.cn-result__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cn-space-3);
+  margin-top: var(--cn-space-6);
+}
+
+.cn-result__back {
+  font-size: var(--cn-text-sm);
+  color: var(--cn-ink-faint);
+}
+
+@media (max-width: 560px) {
+  /* Primary actions go full width so neither is a small target after a round. */
+  .cn-result__actions .btn {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+
+  .cn-result__back {
+    width: 100%;
+    text-align: center;
+    padding-top: var(--cn-space-2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cn-result__milestone {
+    animation: none;
+  }
+}
+
+/* ==================================================================== *
+ * Mobile — games get the whole screen
+ * ==================================================================== */
+
+@media (max-width: 640px) {
+  /* Session mode already removed the nav and footer; these reclaim the padding that assumed
+     a page around the game rather than a game filling the screen. */
+  .cn-arena--match,
+  .cn-arena--ws,
+  .cn-arena--riddle,
+  .cn-arena--boss,
+  .cn-result {
+    padding-inline: var(--cn-space-3);
+    padding-top: var(--cn-space-5);
+  }
+
+  /* 44px is the floor for anything a thumb has to hit accurately mid-round. */
+  .cn-option,
+  .cn-match__card {
+    min-height: 56px;
+  }
+
+  .cn-match {
+    gap: var(--cn-space-3);
+  }
+
+  /* Two columns stay side by side on a phone: the pairing is the game, and stacking the
+     columns would turn it into two unrelated lists. */
+  .cn-match {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .cn-match__card {
+    padding: var(--cn-space-2);
+    font-size: var(--cn-text-sm);
+  }
+
+  .cn-ws__grid {
+    gap: 3px;
+  }
+
+  .cn-ws__cell {
+    border-radius: 6px;
+  }
+
+  .cn-ws__words {
+    padding: var(--cn-space-3);
+  }
+
+  .cn-ws__words ul {
+    /* The list is reference material on a phone, so it reads across rather than down. */
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .cn-riddle__clue {
+    padding-left: var(--cn-space-4);
+    border-left-width: 2px;
+  }
+
+  .cn-boss__head {
+    gap: var(--cn-space-3);
+  }
+
+  .cn-boss__sigil {
+    width: 2.75rem;
+    height: 2.75rem;
+    font-size: 1.25rem;
+  }
+}
+
+/* The HUD keeps its fields on one line at any width by scrolling them, never by wrapping into
+   a second row that would eat the arena. */
+@media (max-width: 420px) {
+  .cn-hud__exit span {
+    display: none;
+  }
+
+  .cn-hud__field {
+    padding-inline: var(--cn-space-2);
+  }
+}

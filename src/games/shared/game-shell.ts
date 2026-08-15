@@ -141,18 +141,35 @@ export function resultScreenHtml(
     rows.push({ label: `Achievement · ${achievement.name}`, xp: achievement.rewardXP });
   }
 
+  // A milestone is worth marking; an ordinary round is not. Confetti after every game is
+  // noise, and noise makes the real moments worth nothing.
+  const levelledUp = processed.levelAfter > processed.levelBefore;
+  const milestone = levelledUp || Boolean(options.verdict) || processed.unlockedAchievements.length > 0;
+
   return `
     <div class="cn-result">
-      <div class="cn-result__hero cn-on-field cn-rise cn-rise-1">
-        <span class="cn-label">${escapeHtml(options.caption)}</span>
+      <div class="cn-result__hero cn-rise cn-rise-1" data-milestone="${milestone}">
+        <p class="cn-result__eyebrow">${escapeHtml(options.caption)}</p>
+
         <div class="cn-result__score">
           ${escapeHtml(options.verdict ?? options.score)}
           ${options.verdict ? '' : `<small>${escapeHtml(options.scoreSuffix ?? '')}</small>`}
         </div>
-        <div class="cn-result__xp">+${processed.xpAwarded} XP earned</div>
+
+        <p class="cn-result__xp">+${processed.xpAwarded} XP</p>
+
+        ${
+          levelledUp
+            ? `<p class="cn-result__milestone">Level ${processed.levelAfter} reached</p>`
+            : ''
+        }
+
         ${
           processed.saved
-            ? `<span class="cn-label">Total ${processed.totalXP} XP · Level ${processed.levelAfter} · ${processed.currentStreak} day streak</span>`
+            ? `<p class="cn-result__meta">
+                 ${processed.totalXP.toLocaleString()} XP total · Level ${processed.levelAfter} ·
+                 ${processed.currentStreak} day streak
+               </p>`
             : ''
         }
       </div>
@@ -164,7 +181,7 @@ export function resultScreenHtml(
       </div>
 
       <section class="cn-rise cn-rise-3" style="margin-top: var(--cn-space-6)">
-        <span class="cn-label cn-label--marked">How your XP was earned</span>
+        <p class="cn-result__section">How your XP was earned</p>
         <div class="cn-xp-rows">
           ${rows
             .filter((row) => row.xp > 0)
@@ -179,8 +196,8 @@ export function resultScreenHtml(
 
       <div class="cn-result__actions cn-rise cn-rise-4">
         <button type="button" class="btn btn-cn-primary" id="${escapeHtml(playAgainId)}">Play again</button>
-        <a class="btn btn-cn-ghost" href="#/games">All game modes</a>
-        <a class="btn btn-cn-ghost" href="#/dashboard">Dashboard</a>
+        <a class="btn btn-cn-ghost" href="#/games">Next challenge</a>
+        <a class="cn-result__back" href="#/dashboard">Back to home</a>
       </div>
 
       ${options.extraHtml ?? ''}
