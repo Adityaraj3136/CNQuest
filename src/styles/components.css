@@ -22,11 +22,9 @@
   display: inline-flex;
   align-items: center;
   gap: var(--cn-space-2);
-  font-family: var(--cn-font-mono);
   font-weight: 700;
-  font-size: var(--cn-text-sm);
-  letter-spacing: var(--cn-tracking-wide);
-  text-transform: uppercase;
+  font-size: var(--cn-text-base);
+  letter-spacing: var(--cn-tracking-snug);
   color: var(--cn-ink);
 }
 
@@ -54,13 +52,11 @@
 .cn-navlink {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.45rem 0.7rem;
-  font-family: var(--cn-font-mono);
-  font-size: var(--cn-text-micro);
-  font-weight: 600;
-  letter-spacing: var(--cn-tracking-wide);
-  text-transform: uppercase;
+  gap: 0.45rem;
+  padding: 0.5rem 0.8rem;
+  border-radius: var(--cn-radius-md);
+  font-size: var(--cn-text-sm);
+  font-weight: 550;
   color: var(--cn-ink-soft);
   border-bottom: 2px solid transparent;
 }
@@ -68,19 +64,19 @@
 .cn-navlink:hover,
 .cn-navlink:focus {
   color: var(--cn-ink);
-  border-bottom-color: var(--cn-rule-strong);
+  background: var(--cn-paper-sunken);
   text-decoration: none;
 }
 
 .cn-navlink[aria-current='page'] {
-  color: var(--cn-ink);
-  border-bottom-color: var(--cn-accent);
+  color: var(--cn-accent);
+  background: var(--cn-accent-wash);
+  font-weight: 650;
 }
 
-/* The icon is noise at this size on wide navs; text carries it. */
 .cn-navlink i {
-  font-size: 0.85rem;
-  opacity: 0.65;
+  font-size: 0.95rem;
+  opacity: 0.8;
 }
 
 .cn-navbar__user {

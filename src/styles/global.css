@@ -292,11 +292,10 @@ a:hover {
 
 .btn {
   --bs-btn-border-radius: var(--cn-radius-md);
-  font-family: var(--cn-font-mono);
+  font-family: inherit;
   font-size: var(--cn-text-xs);
   font-weight: 700;
-  letter-spacing: var(--cn-tracking-wide);
-  text-transform: uppercase;
+  letter-spacing: 0;
   padding: 0.85rem 1.5rem;
   border-radius: var(--cn-radius-md);
   transition:
@@ -429,7 +428,6 @@ a:hover {
   font-family: var(--cn-font-mono);
   font-size: var(--cn-text-micro);
   letter-spacing: var(--cn-tracking-wide);
-  text-transform: uppercase;
   color: var(--cn-ink-soft);
   white-space: nowrap;
 }

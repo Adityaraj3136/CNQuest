@@ -17,79 +17,6 @@
 
 /* --- Mode list: ruled rows, not a card pile --- */
 
-.cn-mode {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: var(--cn-space-3) var(--cn-space-4);
-  padding-block: var(--cn-space-5);
-  border-bottom: var(--cn-hairline);
-  align-items: baseline;
-  transition: background-color var(--cn-duration-fast) var(--cn-ease-out);
-}
-
-@media (min-width: 820px) {
-  .cn-mode {
-    grid-template-columns: 3.5rem minmax(0, 14rem) 1fr auto;
-    align-items: center;
-    gap: var(--cn-space-5);
-  }
-}
-
-.cn-mode:hover {
-  background: var(--cn-paper-raised);
-}
-
-.cn-mode__num {
-  font-family: var(--cn-font-mono);
-  font-size: var(--cn-text-xs);
-  color: var(--cn-ink-faint);
-}
-
-.cn-mode__name {
-  display: flex;
-  align-items: center;
-  gap: var(--cn-space-3);
-  font-size: var(--cn-text-lg);
-  font-weight: 700;
-  letter-spacing: var(--cn-tracking-snug);
-  margin: 0;
-}
-
-.cn-mode__name i {
-  color: var(--cn-accent);
-  font-size: 1rem;
-}
-
-.cn-mode__desc {
-  grid-column: 2 / -1;
-  font-size: var(--cn-text-sm);
-  color: var(--cn-ink-soft);
-  margin: 0;
-}
-
-.cn-mode__action {
-  grid-column: 2 / -1;
-}
-
-@media (min-width: 820px) {
-  .cn-mode__desc,
-  .cn-mode__action {
-    grid-column: auto;
-  }
-  .cn-mode__action {
-    justify-self: end;
-  }
-}
-
-.cn-mode--locked {
-  color: var(--cn-ink-faint);
-}
-
-.cn-mode--locked .cn-mode__name,
-.cn-mode--locked .cn-mode__name i {
-  color: var(--cn-ink-faint);
-}
-
 /* ---------------- Quiz play ---------------- */
 
 .cn-quiz {
@@ -568,6 +495,8 @@
 
 .cn-mode {
   display: grid;
+  /* One column, explicitly: the card stacks, and nothing may place items side by side. */
+  grid-template-columns: 1fr;
   /* The action pins to the bottom so six cards of differing text length still line up. */
   grid-template-rows: auto auto auto 1fr auto;
   gap: var(--cn-space-2);
