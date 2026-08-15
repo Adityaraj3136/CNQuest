@@ -359,3 +359,57 @@
 .cn-install__list i {
   color: var(--cn-accent);
 }
+
+/* --- Purpose --- */
+
+.cn-purpose__list {
+  margin: var(--cn-space-6) 0 0;
+  border-top: var(--cn-hairline-strong);
+}
+
+.cn-purpose__row {
+  display: grid;
+  gap: var(--cn-space-2);
+  padding-block: var(--cn-space-4);
+  border-bottom: var(--cn-hairline);
+}
+
+@media (min-width: 820px) {
+  .cn-purpose__row {
+    grid-template-columns: minmax(0, 12rem) 1fr;
+    gap: var(--cn-space-6);
+    align-items: baseline;
+  }
+}
+
+.cn-purpose__row dt {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--cn-tracking-label);
+  color: var(--cn-accent);
+}
+
+.cn-purpose__row dd {
+  margin: 0;
+  font-size: var(--cn-text-lg);
+  line-height: 1.55;
+  color: var(--cn-ink);
+  max-width: 62ch;
+}
+
+.cn-purpose__note {
+  margin-top: var(--cn-space-5);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-ink-soft);
+  max-width: 62ch;
+}
+
+/* The hero headline now finishes with a quieter clause, so it reads as one sentence. */
+.cn-hero__title-tail {
+  display: block;
+  font-size: 0.42em;
+  letter-spacing: var(--cn-tracking-snug);
+  color: var(--cn-ink-soft);
+  margin-top: var(--cn-space-2);
+}

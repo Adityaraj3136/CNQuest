@@ -33,19 +33,21 @@ function heroHtml(): string {
         </div>
 
         <h1 class="cn-hero__title cn-rise cn-rise-2" id="hero-heading">
-          <span>Master</span>
+          <span>Revise</span>
           <span>Computer</span>
           <span class="cn-hero__accent">
             Networks
             <i class="cn-hero__trace" aria-hidden="true"></i>
           </span>
+          <span class="cn-hero__title-tail">by playing it</span>
         </h1>
 
         <div class="cn-hero__body">
           <div class="cn-rise cn-rise-3">
             <p class="cn-hero__lead">
-              Six game modes, XP, levels and daily streaks built around the ${escapeHtml(APP.subject)}
-              syllabus. Read a topic, play it, and watch your mastery move.
+              The full B.Tech Computer Networks syllabus as short revision notes plus six
+              question games. Read a topic, play it, and see which ones you have actually
+              learned.
             </p>
             <div class="cn-hero__actions">
               <a class="btn btn-cn-primary" href="#/register">
@@ -141,6 +143,58 @@ function ledgerHtml(): string {
               </div>`,
           ).join('')}
         </dl>
+      </div>
+    </section>
+  `;
+}
+
+/**
+ * What the app is, stated plainly.
+ *
+ * The landing page previously opened with features and never said what the product was for.
+ * A visitor could read the whole hero and still not know it was a revision tool for one
+ * university subject, so this sits directly under it and answers the three questions a
+ * student actually has before signing up.
+ */
+function purposeHtml(): string {
+  const answers = [
+    {
+      q: 'What is it',
+      a: `A revision app for the ${APP.subject} paper. Every unit of the syllabus as short notes, then questions on the same material in six different game formats.`,
+    },
+    {
+      q: 'Who it is for',
+      a: 'Undergraduate CS students revising for a Computer Networks exam, or anyone who wants the fundamentals to stick without reading a 900-page textbook cover to cover.',
+    },
+    {
+      q: 'How it works',
+      a: 'Read a topic, play a round on it, and the app tracks per-topic mastery from what you actually got right. Weak topics come back; strong ones make way.',
+    },
+  ];
+
+  return `
+    <section class="cn-section cn-purpose" aria-labelledby="purpose-heading">
+      <div class="cn-container">
+        <h2 class="cn-section__title" id="purpose-heading">
+          A syllabus you can play through
+        </h2>
+
+        <dl class="cn-purpose__list">
+          ${answers
+            .map(
+              (entry) => `
+                <div class="cn-purpose__row">
+                  <dt>${escapeHtml(entry.q)}</dt>
+                  <dd>${escapeHtml(entry.a)}</dd>
+                </div>`,
+            )
+            .join('')}
+        </dl>
+
+        <p class="cn-purpose__note">
+          Built to supplement lectures and textbooks, not to replace them. Free, installable,
+          and usable offline once loaded.
+        </p>
       </div>
     </section>
   `;
@@ -257,7 +311,7 @@ const landingPage: Page = {
   title: APP.tagline,
 
   render() {
-    return `${heroHtml()}${ledgerHtml()}${featuresHtml()}${flowHtml()}${installHtml()}`;
+    return `${heroHtml()}${purposeHtml()}${ledgerHtml()}${featuresHtml()}${flowHtml()}${installHtml()}`;
   },
 
   mount() {

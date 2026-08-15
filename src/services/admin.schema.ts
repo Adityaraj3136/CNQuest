@@ -86,6 +86,13 @@ export const COLLECTION_FIELDS: Readonly<Record<string, readonly FieldSpec[]>> =
     { key: 'description', label: 'Short description', kind: 'textarea', required: true, rows: 2 },
     { key: 'order', label: 'Sort order', kind: 'number', required: true },
     { key: 'estimatedMinutes', label: 'Estimated minutes', kind: 'number', required: true },
+    {
+      key: 'hook',
+      label: 'Hook',
+      kind: 'textarea',
+      rows: 2,
+      help: 'One line naming the problem this topic solves. Shown above the notes.',
+    },
     { key: 'overview', label: 'Overview', kind: 'textarea', required: true, rows: 6 },
     { key: 'keyPoints', label: 'Key points', kind: 'list', help: 'One point per line.' },
     {
@@ -96,6 +103,12 @@ export const COLLECTION_FIELDS: Readonly<Record<string, readonly FieldSpec[]>> =
       pairKeys: ['term', 'meaning'],
     },
     { key: 'examples', label: 'Examples', kind: 'list', help: 'One example per line. Optional.' },
+    {
+      key: 'pitfalls',
+      label: 'Where marks get lost',
+      kind: 'list',
+      help: 'Common mistakes, one per line. Shown after the examples.',
+    },
     {
       key: 'relatedTerms',
       label: 'Related dictionary ids',

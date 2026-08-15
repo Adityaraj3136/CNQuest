@@ -63,6 +63,11 @@ function bodyHtml(
           ${unit ? ` / <a href="#/learn#unit-${escapeHtml(unit.id)}">Unit ${String(unit.number).padStart(2, '0')} · ${escapeHtml(unit.title)}</a>` : ''}
         </p>
         <h1 class="cn-topic__title">${escapeHtml(topic.title)}</h1>
+        ${
+          topic.hook
+            ? `<p class="cn-topic__hook">${escapeHtml(topic.hook)}</p>`
+            : ''
+        }
         <p class="cn-topic__overview">${escapeHtml(topic.overview)}</p>
 
         <section class="cn-topic__block" style="margin-top: var(--cn-space-7)">
@@ -99,6 +104,17 @@ function bodyHtml(
                  <div class="cn-stack">
                    ${topic.examples.map((example) => `<p class="cn-example">${escapeHtml(example)}</p>`).join('')}
                  </div>
+               </section>`
+            : ''
+        }
+
+        ${
+          topic.pitfalls && topic.pitfalls.length > 0
+            ? `<section class="cn-topic__block cn-pitfalls">
+                 <h2>Where marks get lost</h2>
+                 <ul class="cn-pitfalls__list">
+                   ${topic.pitfalls.map((pitfall) => `<li>${escapeHtml(pitfall)}</li>`).join('')}
+                 </ul>
                </section>`
             : ''
         }

@@ -48,10 +48,22 @@ export interface Topic {
   order: number;
   estimatedMinutes: number;
 
+  /**
+   * One line naming the problem this topic solves, shown before the notes.
+   * Revision reads better when the student knows what the fight is about first.
+   */
+  hook?: string;
+
   overview: string;
   keyPoints: string[];
   definitions: TopicDefinition[];
   examples?: string[];
+
+  /**
+   * The mistakes that cost marks in exams and break real networks. Kept separate from
+   * keyPoints because "what is true" and "what people get wrong" are different questions.
+   */
+  pitfalls?: string[];
   /** Ids of related entries in the networking dictionary. */
   relatedTerms?: string[];
 }

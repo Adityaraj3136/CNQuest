@@ -300,3 +300,47 @@
 .cn-topic__actions .btn {
   justify-content: center;
 }
+
+/* The hook states the problem before the notes answer it. Larger than body, quieter than the title. */
+.cn-topic__hook {
+  font-size: var(--cn-text-lg);
+  line-height: 1.5;
+  color: var(--cn-ink);
+  border-left: 2px solid var(--cn-accent);
+  padding-left: var(--cn-space-4);
+  margin-block: var(--cn-space-4);
+  max-width: 60ch;
+}
+
+/* Mistakes, kept visually distinct from key points: this is the "do not" list. */
+.cn-pitfalls__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--cn-space-3);
+}
+
+.cn-pitfalls__list li {
+  position: relative;
+  padding-left: var(--cn-space-5);
+  color: var(--cn-ink-soft);
+  font-size: var(--cn-text-sm);
+  line-height: 1.6;
+}
+
+.cn-pitfalls__list li::before {
+  content: '!';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.15rem;
+  height: 1.15rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--cn-negative);
+  color: var(--cn-negative);
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-micro);
+  font-weight: 700;
+}
