@@ -1,0 +1,46 @@
+rules_version = '2';
+
+// CN Quest Cloud Storage rules.
+//
+// One bucket path is in use: `lesson-media/`, holding diagrams shown inside lessons.
+//
+// Threat model matches firestore.rules. Any signed-in student may read, because the images
+// appear in lessons they are entitled to see. Only the course owner may write, and the rules
+// enforce what a write may contain rather than trusting the client to behave: an upload is
+// capped, must declare an image content type, and cannot be overwritten anonymously.
+//
+// The email check mirrors `adminEmail()` in firestore.rules. Change both together.
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function adminEmail() { return 'adityaraj3136@gmail.com'; }
+
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email == adminEmail();
+    }
+
+    // 5 MB. A lesson diagram that needs more than this should be optimised, not uploaded:
+    // students on campus wifi pay for every byte of it.
+    function withinSizeLimit() {
+      return request.resource.size < 5 * 1024 * 1024;
+    }
+
+    // Content type is checked because a file named .png is not necessarily an image, and the
+    // browser will happily execute what it is actually served.
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    match /lesson-media/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin() && withinSizeLimit() && isImage();
+      allow delete: if isAdmin();
+    }
+
+    // Nothing else in the bucket is reachable from the client.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

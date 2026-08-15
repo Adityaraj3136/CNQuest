@@ -34,6 +34,7 @@ import { showToast } from '@/components/toast';
 import { getPreferences, setPreference } from '@/state/preferences';
 import { escapeHtml, qs, qsa } from '@/utils/dom';
 import { loaderHtml, stateHtml } from '@/components/loader';
+import { mediaTabHtml, mountMediaTab, openMediaPicker } from './admin.media';
 import '@/styles/admin.css';
 
 const ROOT_ID = 'cn-admin-root';
@@ -43,8 +44,10 @@ let documents: AdminDocument[] = [];
 let selectedId: string | null = null;
 let references: ReferenceOptions = { units: [], topics: [] };
 
+const MEDIA_TAB = 'media';
+
 function tabsHtml(): string {
-  return CONTENT_COLLECTIONS.map(
+  const collections = CONTENT_COLLECTIONS.map(
     (entry) => `
       <button
         type="button"
@@ -56,6 +59,17 @@ function tabsHtml(): string {
       </button>
     `,
   ).join('');
+
+  return `${collections}
+    <button
+      type="button"
+      class="cn-admin__tab"
+      data-collection="${MEDIA_TAB}"
+      aria-pressed="${activeCollection === MEDIA_TAB}"
+    >
+      Media
+    </button>
+  `;
 }
 
 function listHtml(): string {
@@ -163,6 +177,8 @@ function editorHtml(): string {
 }
 
 function panelHtml(): string {
+  if (activeCollection === MEDIA_TAB) return mediaTabHtml();
+
   const collection = collectionById(activeCollection);
 
   return `
@@ -222,6 +238,15 @@ async function loadCollection(root: HTMLElement): Promise<void> {
   const panel = qs('#cn-admin-panel', root);
   if (panel) panel.innerHTML = loaderHtml('Loading');
 
+  // The media library has no documents to list; it loads its own contents.
+  if (activeCollection === MEDIA_TAB) {
+    if (panel) {
+      panel.innerHTML = panelHtml();
+      await mountMediaTab(panel);
+    }
+    return;
+  }
+
   try {
     documents = await listDocuments(activeCollection);
   } catch (error) {
@@ -269,6 +294,36 @@ function bindPanel(root: HTMLElement): void {
   });
 
   bindIdSuggestion(root);
+  bindMediaPicker(root);
+}
+
+/**
+ * Puts a "Choose from library" control beside the media URL field.
+ *
+ * Without it the only way to add a diagram is to paste a URL, which in practice means
+ * uploading the same image again because finding the first one is harder than re-uploading.
+ */
+function bindMediaPicker(root: HTMLElement): void {
+  const urlField = qs<HTMLInputElement>('[name="mediaUrl"]', root);
+  if (!urlField || qs('#cn-media-pick', root)) return;
+
+  urlField.insertAdjacentHTML(
+    'afterend',
+    `<button type="button" class="btn btn-cn-ghost btn-sm cn-admin__pick" id="cn-media-pick">
+       Choose from library
+     </button>`,
+  );
+
+  qs<HTMLButtonElement>('#cn-media-pick', root)?.addEventListener('click', () => {
+    void openMediaPicker((item) => {
+      urlField.value = item.url;
+
+      // A caption is required whenever a URL is set, so the file name seeds one rather than
+      // leaving the admin with an error they did not cause.
+      const caption = qs<HTMLInputElement>('[name="mediaCaption"]', root);
+      if (caption && !caption.value.trim()) caption.value = item.name.replace(/\.[a-z0-9]+$/i, '');
+    });
+  });
 }
 
 /** Fills the id from the title while creating, until the admin types their own. */
@@ -441,7 +496,7 @@ const adminPage: Page = {
     }
 
     const requested = ctx.query.get('collection');
-    if (requested && collectionById(requested)) activeCollection = requested;
+    if (requested && (collectionById(requested) || requested === MEDIA_TAB)) activeCollection = requested;
     // Set by the "Edit this" button students never see; opens the document being viewed.
     const requestedId = ctx.query.get('id');
 
