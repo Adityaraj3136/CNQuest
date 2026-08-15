@@ -196,7 +196,7 @@ function modesHtml(): string {
   ];
 
   return `
-    <section class="cn-section cn-modes" id="features" aria-labelledby="modes-heading">
+    <section class="cn-section cn-modes" id="games" aria-labelledby="modes-heading">
       <div class="cn-container">
         <h2 class="cn-section__title" id="modes-heading">Revision that is not another lecture</h2>
         <p class="cn-section__lead">Six ways to practise the same syllabus. Pick whichever suits the hour you have.</p>
@@ -262,7 +262,7 @@ function modesHtml(): string {
 
 function journeyHtml(): string {
   return `
-    <section class="cn-section cn-syllabus" id="install" aria-labelledby="syllabus-heading">
+    <section class="cn-section cn-syllabus" id="syllabus" aria-labelledby="syllabus-heading">
       <div class="cn-container">
         <h2 class="cn-section__title" id="syllabus-heading">A syllabus that reads as progression</h2>
         <p class="cn-section__lead">
@@ -279,6 +279,186 @@ function journeyHtml(): string {
               </li>`,
           ).join('')}
         </ol>
+      </div>
+    </section>
+  `;
+}
+
+// ---------------------------------------------------------------- boss
+
+/**
+ * Boss battles get their own section because they are the mechanic people remember.
+ *
+ * The boss is drawn as a cluster of network nodes behind a shield rather than a creature.
+ * Its name, title and the units it draws from are the real ones from the content bundle.
+ */
+function bossHtml(): string {
+  return `
+    <section class="cn-section cn-boss-band" aria-labelledby="boss-heading">
+      <div class="cn-container cn-boss-band__grid">
+        <div>
+          <h2 class="cn-section__title" id="boss-heading">Think you know the topic? Fight the boss.</h2>
+          <p class="cn-section__lead">
+            Three bosses guard the harder units. Right answers take their HP down, wrong ones
+            take yours. Running out of questions counts as a defeat, so there is no farming it.
+          </p>
+
+          <a class="btn btn-cn-primary mt-4" href="#/register">Challenge the boss</a>
+        </div>
+
+        <article class="cn-bosscard">
+          <div class="cn-bosscard__sigil" aria-hidden="true">
+            <svg viewBox="0 0 120 120">
+              <path class="cn-bosscard__shield" d="M60 10 L104 28 V62 C104 88 84 104 60 112 C36 104 16 88 16 62 V28 Z" />
+              <circle class="cn-bosscard__hub" cx="60" cy="58" r="9" />
+              ${[
+                [60, 30],
+                [88, 58],
+                [60, 86],
+                [32, 58],
+              ]
+                .map(
+                  ([x, y]) => `
+                    <line class="cn-bosscard__link" x1="60" y1="58" x2="${x}" y2="${y}" />
+                    <circle class="cn-bosscard__node" cx="${x}" cy="${y}" r="5" />`,
+                )
+                .join('')}
+            </svg>
+          </div>
+
+          <h3 class="cn-bosscard__name">OSI Guardian</h3>
+          <p class="cn-bosscard__title">Keeper of the Seven Layers</p>
+
+          <dl class="cn-bosscard__stats">
+            <div><dt>Tests</dt><dd>Layers, encapsulation, responsibilities</dd></div>
+            <div><dt>Difficulty</dt><dd>Medium</dd></div>
+          </dl>
+
+          <div class="cn-bosscard__hp" aria-label="Boss health">
+            <span style="width:64%"></span>
+          </div>
+          <p class="cn-bosscard__hplabel">Boss HP</p>
+        </article>
+      </div>
+    </section>
+  `;
+}
+
+// ---------------------------------------------------------------- progression
+
+/**
+ * What the product knows about you, shown rather than promised.
+ *
+ * The mastery figures are illustrative of the interface, not claims about a real student, and
+ * the badge names are the ones actually in the achievement set.
+ */
+function progressionHtml(): string {
+  const mastery: ReadonlyArray<readonly [string, number]> = [
+    ['Foundations', 92],
+    ['Physical Layer', 74],
+    ['Data Link', 55],
+    ['Network Layer', 42],
+  ];
+
+  const badges = [
+    { name: 'First Steps', detail: 'Finish your first round', icon: 'bi-send' },
+    { name: 'On Fire', detail: 'Keep a seven day streak', icon: 'bi-fire' },
+    { name: 'Boss Slayer', detail: 'Defeat a boss', icon: 'bi-shield-check' },
+  ];
+
+  return `
+    <section class="cn-section cn-mastery" aria-labelledby="mastery-heading">
+      <div class="cn-container cn-mastery__grid">
+        <div class="cn-mastery__copy">
+          <h2 class="cn-section__title" id="mastery-heading">Know what you have actually mastered</h2>
+          <p class="cn-section__lead">
+            Every answer moves one topic. Mastery is tracked per topic, so revision goes where
+            it is needed instead of wherever you left off.
+          </p>
+
+          <ul class="cn-badges-row">
+            ${badges
+              .map(
+                (badge) => `
+                  <li class="cn-badge-chip">
+                    <i class="bi ${badge.icon}" aria-hidden="true"></i>
+                    <span>
+                      <b>${escapeHtml(badge.name)}</b>
+                      ${escapeHtml(badge.detail)}
+                    </span>
+                  </li>`,
+              )
+              .join('')}
+          </ul>
+        </div>
+
+        <div class="cn-mastery__panel">
+          <div class="cn-mastery__level">
+            <span class="cn-mastery__lvl">Level 4</span>
+            <span class="cn-mastery__title">Packet Explorer</span>
+          </div>
+
+          <div class="cn-mastery__xpbar"><span style="width:82%"></span></div>
+          <p class="cn-mastery__xp">1,240 / 1,500 XP</p>
+
+          <ul class="cn-mastery__list">
+            ${mastery
+              .map(
+                ([name, value]) => `
+                  <li>
+                    <span class="cn-mastery__name">${escapeHtml(name)}</span>
+                    <span class="cn-mastery__bar"><span style="width:${value}%"></span></span>
+                    <span class="cn-mastery__pct">${value}%</span>
+                  </li>`,
+              )
+              .join('')}
+          </ul>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+// ---------------------------------------------------------------- why
+
+/**
+ * Three real problems rather than four adjectives.
+ *
+ * The last one describes the adaptive engine in terms of what it does, because "powered by
+ * AI" tells a student nothing and the engine is genuinely just a recommender.
+ */
+function whyHtml(): string {
+  const reasons = [
+    {
+      title: 'Short enough to actually revise',
+      body: 'Each topic is a focused set of notes with the traps that lose marks, not a chapter you have to schedule an evening for.',
+    },
+    {
+      title: 'Practise the moment you read it',
+      body: 'Every topic ends with a round on the same material, so what you just read gets tested while it is still fresh.',
+    },
+    {
+      title: 'Find the weak spots before the exam does',
+      body: 'Mastery is tracked per topic, and the app picks what to practise next from your own answers rather than a fixed order.',
+    },
+  ];
+
+  return `
+    <section class="cn-section cn-why" aria-labelledby="why-heading">
+      <div class="cn-container">
+        <h2 class="cn-section__title" id="why-heading">Built for the week before the exam</h2>
+
+        <div class="cn-why__grid">
+          ${reasons
+            .map(
+              (reason) => `
+                <article class="cn-why__item">
+                  <h3>${escapeHtml(reason.title)}</h3>
+                  <p>${escapeHtml(reason.body)}</p>
+                </article>`,
+            )
+            .join('')}
+        </div>
       </div>
     </section>
   `;
@@ -308,6 +488,9 @@ const landingPage: Page = {
       ${loopHtml()}
       ${modesHtml()}
       ${journeyHtml()}
+      ${bossHtml()}
+      ${progressionHtml()}
+      ${whyHtml()}
       ${closingHtml()}
     `;
   },

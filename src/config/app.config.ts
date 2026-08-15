@@ -28,9 +28,9 @@ export interface NavItem {
 
 /** Navigation shown before sign-in. */
 export const PUBLIC_NAV: readonly NavItem[] = [
-  { label: 'Features', href: '#/#features', icon: 'bi-grid' },
   { label: 'How it works', href: '#/#how-it-works', icon: 'bi-diagram-3' },
-  { label: 'Install', href: '#/#install', icon: 'bi-download' },
+  { label: 'Games', href: '#/#games', icon: 'bi-controller' },
+  { label: 'Syllabus', href: '#/#syllabus', icon: 'bi-book' },
 ];
 
 /**

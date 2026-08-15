@@ -577,3 +577,295 @@
     transform: none;
   }
 }
+
+/* ---------------------------------------------------------------- boss */
+
+.cn-boss-band {
+  background: var(--cn-paper-raised);
+  border-block: var(--cn-hairline);
+}
+
+.cn-boss-band__grid {
+  display: grid;
+  gap: var(--cn-space-6);
+  align-items: center;
+}
+
+@media (min-width: 900px) {
+  .cn-boss-band__grid {
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: var(--cn-space-7);
+  }
+}
+
+.cn-bosscard {
+  padding: var(--cn-space-6);
+  border-radius: var(--cn-radius-xl);
+  background: var(--cn-special-wash);
+  border: 1px solid rgb(109 74 255 / 0.18);
+  text-align: center;
+}
+
+.cn-bosscard__sigil svg {
+  width: 7rem;
+  height: 7rem;
+}
+
+/* Infrastructure behind a shield, not a creature. */
+.cn-bosscard__shield {
+  fill: rgb(109 74 255 / 0.08);
+  stroke: var(--cn-special);
+  stroke-width: 2.5;
+}
+
+.cn-bosscard__link {
+  stroke: var(--cn-special);
+  stroke-width: 1.5;
+  opacity: 0.55;
+}
+
+.cn-bosscard__hub,
+.cn-bosscard__node {
+  fill: var(--cn-special);
+}
+
+.cn-bosscard__name {
+  margin: var(--cn-space-2) 0 0;
+  font-size: var(--cn-text-xl);
+  letter-spacing: var(--cn-tracking-snug);
+}
+
+.cn-bosscard__title {
+  margin: 2px 0 var(--cn-space-4);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-ink-soft);
+}
+
+.cn-bosscard__stats {
+  display: grid;
+  gap: var(--cn-space-2);
+  margin: 0 0 var(--cn-space-4);
+  text-align: left;
+}
+
+.cn-bosscard__stats div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--cn-space-3);
+  font-size: var(--cn-text-xs);
+}
+
+.cn-bosscard__stats dt {
+  color: var(--cn-ink-faint);
+}
+
+.cn-bosscard__stats dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+
+.cn-bosscard__hp {
+  height: 8px;
+  border-radius: var(--cn-radius-pill);
+  background: rgb(22 24 29 / 0.08);
+  overflow: hidden;
+}
+
+.cn-bosscard__hp span {
+  display: block;
+  height: 100%;
+  background: var(--cn-special);
+}
+
+.cn-bosscard__hplabel {
+  margin: var(--cn-space-2) 0 0;
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-micro);
+  color: var(--cn-ink-faint);
+}
+
+/* ---------------------------------------------------------------- mastery */
+
+.cn-mastery__grid {
+  display: grid;
+  gap: var(--cn-space-6);
+  align-items: center;
+}
+
+@media (min-width: 900px) {
+  .cn-mastery__grid {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--cn-space-7);
+  }
+}
+
+.cn-badges-row {
+  list-style: none;
+  display: grid;
+  gap: var(--cn-space-3);
+  margin: var(--cn-space-5) 0 0;
+  padding: 0;
+}
+
+.cn-badge-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--cn-space-3);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-ink-soft);
+}
+
+.cn-badge-chip i {
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  flex: none;
+  border-radius: var(--cn-radius-pill);
+  background: var(--cn-xp-wash);
+  color: var(--cn-xp);
+}
+
+.cn-badge-chip b {
+  display: block;
+  color: var(--cn-ink);
+}
+
+.cn-mastery__panel {
+  padding: var(--cn-space-5);
+  border-radius: var(--cn-radius-xl);
+  background: var(--cn-paper-raised);
+  border: var(--cn-hairline);
+  box-shadow: var(--cn-shadow-card);
+}
+
+.cn-mastery__level {
+  display: flex;
+  align-items: baseline;
+  gap: var(--cn-space-3);
+}
+
+.cn-mastery__lvl {
+  font-size: var(--cn-text-xs);
+  font-weight: 700;
+  color: var(--cn-ink-faint);
+}
+
+.cn-mastery__title {
+  font-size: var(--cn-text-lg);
+  font-weight: 700;
+  letter-spacing: var(--cn-tracking-snug);
+}
+
+.cn-mastery__xpbar {
+  height: 8px;
+  margin-top: var(--cn-space-3);
+  border-radius: var(--cn-radius-pill);
+  background: var(--cn-paper-sunken);
+  overflow: hidden;
+}
+
+.cn-mastery__xpbar span {
+  display: block;
+  height: 100%;
+  background: var(--cn-xp);
+}
+
+.cn-mastery__xp {
+  margin: var(--cn-space-2) 0 var(--cn-space-5);
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-faint);
+}
+
+.cn-mastery__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--cn-space-3);
+}
+
+.cn-mastery__list li {
+  display: grid;
+  grid-template-columns: minmax(0, 8.5rem) 1fr auto;
+  align-items: center;
+  gap: var(--cn-space-3);
+  font-size: var(--cn-text-sm);
+}
+
+.cn-mastery__bar {
+  height: 6px;
+  border-radius: var(--cn-radius-pill);
+  background: var(--cn-paper-sunken);
+  overflow: hidden;
+}
+
+.cn-mastery__bar span {
+  display: block;
+  height: 100%;
+  background: var(--cn-accent);
+}
+
+.cn-mastery__pct {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------- why */
+
+.cn-why {
+  background: var(--cn-paper-sunken);
+  border-block: var(--cn-hairline);
+}
+
+.cn-why__grid {
+  display: grid;
+  gap: var(--cn-space-5);
+  margin-top: var(--cn-space-6);
+}
+
+@media (min-width: 860px) {
+  .cn-why__grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--cn-space-6);
+  }
+}
+
+/* Text only, separated by a rule rather than boxed into cards. */
+.cn-why__item {
+  padding-top: var(--cn-space-4);
+  border-top: 2px solid var(--cn-ink);
+}
+
+.cn-why__item h3 {
+  margin: 0;
+  font-size: var(--cn-text-base);
+  letter-spacing: var(--cn-tracking-snug);
+}
+
+.cn-why__item p {
+  margin: var(--cn-space-2) 0 0;
+  font-size: var(--cn-text-sm);
+  color: var(--cn-ink-soft);
+  line-height: 1.6;
+}
+
+/* ---------------------------------------------------------------- grid restraint */
+
+/*
+ * The blueprint grid was on every section at once, which is most of why the page read as a
+ * technical document. It now appears on the hero and the syllabus only.
+ */
+.cn-proof,
+.cn-loop,
+.cn-modes,
+.cn-boss-band,
+.cn-mastery,
+.cn-why,
+.cn-close {
+  background-image: none;
+}
