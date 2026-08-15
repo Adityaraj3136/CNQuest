@@ -1,98 +1,56 @@
 /**
- * Landing page — Technical Editorial.
+ * CN Quest landing page.
  *
- * Composition: a full-bleed display headline anchored left, a packet-trace line that draws
- * itself once on load, a monospace stat ledger, then an indexed feature list instead of a
- * card pile. Weight comes from one inverted band near the end.
+ * Rhythm: hero on paper, proof strip on a sunken band, loop on raised, modes on paper,
+ * syllabus on sunken, close on ink. No two adjacent sections share a surface, which is what
+ * gives the page shape without decoration.
  */
 
+/* ---------------------------------------------------------------- hero */
+
 .cn-hero {
-  position: relative;
-  padding-block: clamp(3rem, 1.5rem + 7vw, 7rem) clamp(2.5rem, 1rem + 4vw, 4.5rem);
-  overflow: hidden;
+  padding-block: clamp(2.5rem, 1.5rem + 3vw, 4.5rem) clamp(3rem, 2rem + 3vw, 5rem);
 }
 
-.cn-hero__meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--cn-space-4);
-  align-items: center;
-  justify-content: space-between;
-  padding-bottom: var(--cn-space-4);
-  border-bottom: var(--cn-hairline);
-  margin-bottom: clamp(2rem, 1rem + 3vw, 3.5rem);
-}
-
-/* The one memorable thing on the page. */
-.cn-hero__title {
-  font-size: var(--cn-text-display);
-  line-height: var(--cn-leading-display);
-  letter-spacing: var(--cn-tracking-tight);
-  font-weight: 800;
-  text-transform: uppercase;
-  margin: 0;
-  max-width: 14ch;
-}
-
-.cn-hero__title span {
-  display: block;
-}
-
-.cn-hero__title .cn-hero__accent {
-  color: var(--cn-accent);
-  display: flex;
-  align-items: center;
-  gap: clamp(0.5rem, 0.2rem + 1.5vw, 1.5rem);
-}
-
-/* The line that draws itself: a packet leaving the headline. */
-.cn-hero__trace {
-  flex: 1;
-  height: 2px;
-  background: var(--cn-accent);
-  transform-origin: left center;
-  animation: cn-trace 900ms var(--cn-ease-out) 320ms backwards;
-  position: relative;
-  min-width: 40px;
-}
-
-.cn-hero__trace::after {
-  content: '';
-  position: absolute;
-  right: -1px;
-  top: 50%;
-  translate: 0 -50%;
-  border-left: 10px solid var(--cn-accent);
-  border-block: 6px solid transparent;
-}
-
-@keyframes cn-trace {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
-}
-
-.cn-hero__body {
+.cn-hero__grid {
   display: grid;
   gap: var(--cn-space-6);
-  margin-top: clamp(1.5rem, 1rem + 2vw, 2.75rem);
-  align-items: end;
+  align-items: center;
 }
 
-@media (min-width: 900px) {
-  .cn-hero__body {
-    grid-template-columns: 1.1fr 0.9fr;
+@media (min-width: 940px) {
+  .cn-hero__grid {
+    /* Copy leads, the preview is the proof. Neither is centred. */
+    grid-template-columns: 1fr 1.05fr;
     gap: var(--cn-space-7);
   }
 }
 
+/*
+ * Sentence case at a readable scale. The previous hero was uppercase at up to 8rem with a
+ * 14ch measure, which pushed a seven word headline onto three shouted lines and left the CTA
+ * below the fold.
+ */
+.cn-hero__title {
+  margin: 0;
+  font-size: clamp(2rem, 1.35rem + 2.6vw, 3.5rem);
+  line-height: 1.1;
+  letter-spacing: var(--cn-tracking-tight);
+  font-weight: 780;
+  max-width: 22ch;
+}
+
+.cn-hero__title span {
+  display: block;
+  color: var(--cn-accent);
+}
+
 .cn-hero__lead {
+  margin: var(--cn-space-4) 0 0;
   font-size: var(--cn-text-lg);
+  line-height: 1.55;
   color: var(--cn-ink-soft);
-  max-width: 48ch;
+  max-width: 46ch;
 }
 
 .cn-hero__actions {
@@ -102,335 +60,520 @@
   margin-top: var(--cn-space-5);
 }
 
-/* --- Stat ledger --- */
+.btn-lg {
+  padding: 0.85rem 1.6rem;
+  font-size: var(--cn-text-base);
+}
 
-.cn-ledger {
+.cn-hero__stage {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  border-top: var(--cn-hairline-strong);
-  margin: 0;
+  gap: var(--cn-space-4);
+  justify-items: center;
 }
 
-@media (min-width: 560px) {
-  .cn-ledger {
-    grid-template-columns: repeat(4, 1fr);
-  }
+/* --- The question card --- */
+
+.cn-preview {
+  width: 100%;
+  max-width: 30rem;
+  border-radius: var(--cn-radius-xl);
+  background: var(--cn-paper-raised);
+  border: var(--cn-hairline);
+  box-shadow: var(--cn-shadow-lift);
+  overflow: hidden;
 }
 
-.cn-ledger__cell {
-  padding: var(--cn-space-4) var(--cn-space-3) var(--cn-space-3) 0;
+.cn-preview__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cn-space-3);
+  padding: var(--cn-space-3) var(--cn-space-4);
   border-bottom: var(--cn-hairline);
 }
 
-@media (min-width: 560px) {
-  .cn-ledger__cell + .cn-ledger__cell {
-    padding-inline-start: var(--cn-space-4);
-    border-left: var(--cn-hairline);
-  }
-}
-
-.cn-ledger__value {
-  font-family: var(--cn-font-mono);
-  font-size: clamp(1.75rem, 1.2rem + 1.8vw, 2.75rem);
+.cn-preview__mode {
   font-weight: 700;
-  line-height: 1;
-  letter-spacing: var(--cn-tracking-tight);
-  display: block;
+  font-size: var(--cn-text-sm);
 }
 
-.cn-ledger__label {
+.cn-preview__fields {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cn-space-2);
+}
+
+.cn-preview__streak,
+.cn-preview__xp {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px var(--cn-space-2);
+  border-radius: var(--cn-radius-pill);
   font-family: var(--cn-font-mono);
-  font-size: var(--cn-text-micro);
-  letter-spacing: var(--cn-tracking-label);
-  text-transform: uppercase;
-  color: var(--cn-ink-faint);
-  margin-top: var(--cn-space-2);
-  display: block;
+  font-size: var(--cn-text-xs);
+  font-weight: 700;
 }
 
-/* --- Console preview --- */
+.cn-preview__streak {
+  background: var(--cn-accent-wash);
+  color: var(--cn-accent);
+}
 
-/* --- Hero topology diagram --- */
+.cn-preview__xp {
+  background: var(--cn-xp-wash);
+  color: var(--cn-xp);
+}
 
-.cn-hero__figure {
-  margin: 0;
-  border: var(--cn-hairline-strong);
-  background: var(--cn-paper-raised);
+.cn-preview__body {
   padding: var(--cn-space-4);
 }
 
-.cn-hero__figure svg {
-  display: block;
-  width: 100%;
-  height: auto;
-  /* Reserved by the viewBox, so nothing reflows once the page paints. */
-  aspect-ratio: 5 / 3;
-  color: var(--cn-ink);
-}
-
-.cn-topo__link {
-  stroke: var(--cn-rule-strong);
-  stroke-width: 1;
-}
-
-/* The route is the only accent in the figure: one path for the eye to follow. */
-.cn-topo__route {
-  fill: none;
-  stroke: var(--cn-accent);
-  stroke-width: 2;
-  stroke-linejoin: round;
-  stroke-dasharray: 6 6;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .cn-topo__route {
-    animation: cn-packet 2.4s linear infinite;
-  }
-}
-
-@keyframes cn-packet {
-  to {
-    stroke-dashoffset: -24;
-  }
-}
-
-.cn-topo__node circle {
-  fill: var(--cn-paper);
-  stroke: currentColor;
-  stroke-width: 1.5;
-}
-
-.cn-topo__node text {
-  fill: var(--cn-ink-faint);
-  font-family: var(--cn-font-mono);
-  font-size: 13px;
-  letter-spacing: 0.1em;
-}
-
-/* --- Feature groups --- */
-
-/* Ten rows under one heading read as a data dump; three named clusters read as an index. */
-.cn-group + .cn-group {
-  margin-top: var(--cn-space-6);
-}
-
-.cn-group__name {
-  font-family: var(--cn-font-mono);
-  font-size: var(--cn-text-xs);
-  text-transform: uppercase;
-  letter-spacing: var(--cn-tracking-label);
-  color: var(--cn-accent);
-  margin-bottom: var(--cn-space-2);
-}
-
-.cn-index {
-  border-top: var(--cn-hairline-strong);
-}
-
-.cn-index__item {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--cn-space-3) var(--cn-space-4);
-  padding-block: var(--cn-space-4);
-  border-bottom: var(--cn-hairline);
-  align-items: baseline;
-  transition: background-color var(--cn-duration-fast) var(--cn-ease-out);
-}
-
-@media (min-width: 768px) {
-  .cn-index__item {
-    grid-template-columns: minmax(0, 16rem) 1fr;
-    gap: var(--cn-space-5);
-    align-items: center;
-  }
-}
-
-.cn-index__item:hover {
-  background: var(--cn-paper-raised);
-}
-
-.cn-index__num {
-  font-family: var(--cn-font-mono);
+.cn-preview__count {
+  margin: 0;
   font-size: var(--cn-text-xs);
   color: var(--cn-ink-faint);
-  letter-spacing: var(--cn-tracking-wide);
 }
 
-.cn-index__name {
+.cn-preview__q {
+  margin: var(--cn-space-2) 0 var(--cn-space-4);
   font-size: var(--cn-text-lg);
-  font-weight: 700;
-  letter-spacing: var(--cn-tracking-snug);
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.cn-preview__options {
+  display: grid;
+  gap: var(--cn-space-2);
+}
+
+.cn-preview__option {
   display: flex;
   align-items: center;
   gap: var(--cn-space-3);
-}
-
-.cn-index__name i {
-  color: var(--cn-accent);
-  font-size: 1rem;
-}
-
-.cn-index__desc {
-  color: var(--cn-ink-soft);
+  padding: var(--cn-space-3);
+  border-radius: var(--cn-radius-md);
+  border: 1px solid var(--cn-rule);
   font-size: var(--cn-text-sm);
-  grid-column: 2 / -1;
 }
 
-@media (min-width: 768px) {
-  .cn-index__desc {
-    grid-column: auto;
-  }
+.cn-preview__option[data-state="correct"] {
+  border-color: var(--cn-mastered);
+  background: var(--cn-mastered-wash);
+  color: var(--cn-mastered);
+  font-weight: 650;
 }
 
-/* --- Flow --- */
+.cn-preview__option i {
+  margin-left: auto;
+}
 
-.cn-flow {
+.cn-preview__key {
   display: grid;
-  gap: 1px;
-  background: var(--cn-rule);
-  border: var(--cn-hairline);
-  margin-top: var(--cn-space-6);
-}
-
-@media (min-width: 720px) {
-  .cn-flow {
-    grid-template-columns: repeat(5, 1fr);
-  }
-}
-
-.cn-flow__step {
-  background: var(--cn-paper);
-  padding: var(--cn-space-5) var(--cn-space-4);
-  display: grid;
-  gap: var(--cn-space-2);
-  align-content: start;
-  position: relative;
-}
-
-.cn-flow__step h3 {
-  font-size: var(--cn-text-base);
-  text-transform: uppercase;
-  letter-spacing: var(--cn-tracking-wide);
-}
-
-.cn-flow__step p {
-  font-size: var(--cn-text-sm);
-  color: var(--cn-ink-soft);
-}
-
-/* --- Install band --- */
-
-.cn-install {
-  display: grid;
-  gap: var(--cn-space-6);
-  align-items: start;
-}
-
-@media (min-width: 860px) {
-  .cn-install {
-    grid-template-columns: 1.15fr 0.85fr;
-    gap: var(--cn-space-8);
-  }
-}
-
-.cn-install__title {
-  font-size: var(--cn-text-3xl);
-  letter-spacing: var(--cn-tracking-tight);
-  text-transform: uppercase;
-  line-height: var(--cn-leading-tight);
-}
-
-.cn-install__list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  border-top: 1px solid var(--cn-field-rule);
-}
-
-.cn-install__list li {
-  display: flex;
-  gap: var(--cn-space-3);
-  padding-block: var(--cn-space-3);
-  border-bottom: 1px solid var(--cn-field-rule);
-  font-size: var(--cn-text-sm);
-  color: var(--cn-field-ink);
-}
-
-.cn-install__list i {
-  color: var(--cn-accent);
-}
-
-/* --- Purpose --- */
-
-.cn-purpose__list {
-  margin: var(--cn-space-6) 0 0;
-  border-top: var(--cn-hairline-strong);
-}
-
-.cn-purpose__row {
-  display: grid;
-  gap: var(--cn-space-2);
-  padding-block: var(--cn-space-4);
-  border-bottom: var(--cn-hairline);
-}
-
-@media (min-width: 820px) {
-  .cn-purpose__row {
-    grid-template-columns: minmax(0, 12rem) 1fr;
-    gap: var(--cn-space-6);
-    align-items: baseline;
-  }
-}
-
-.cn-purpose__row dt {
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex: none;
+  border-radius: var(--cn-radius-sm);
+  background: var(--cn-paper-sunken);
   font-family: var(--cn-font-mono);
   font-size: var(--cn-text-xs);
-  text-transform: uppercase;
-  letter-spacing: var(--cn-tracking-label);
-  color: var(--cn-accent);
+  font-weight: 700;
 }
 
-.cn-purpose__row dd {
-  margin: 0;
-  font-size: var(--cn-text-lg);
-  line-height: 1.55;
-  color: var(--cn-ink);
-  max-width: 62ch;
+.cn-preview__option[data-state="correct"] .cn-preview__key {
+  background: var(--cn-mastered);
+  color: #fff;
 }
 
-.cn-purpose__note {
-  margin-top: var(--cn-space-5);
-  font-size: var(--cn-text-sm);
-  color: var(--cn-ink-soft);
-  max-width: 62ch;
+/* --- The route --- */
+
+.cn-route {
+  width: 100%;
+  max-width: 26rem;
+  height: auto;
 }
 
-/* The hero headline now finishes with a quieter clause, so it reads as one sentence. */
-.cn-hero__title-tail {
-  display: block;
-  font-size: 0.42em;
-  letter-spacing: var(--cn-tracking-snug);
-  color: var(--cn-ink-soft);
-  margin-top: var(--cn-space-2);
+.cn-route__line {
+  stroke: var(--cn-rule-strong);
+  stroke-width: 1.5;
 }
 
-/* The packet that actually travels the route. One moving element, four seconds, no loop
-   anywhere else on the page. */
-.cn-topo__packet {
+.cn-route__node {
+  fill: var(--cn-paper);
+  stroke: var(--cn-rule-strong);
+  stroke-width: 2;
+}
+
+.cn-route__label {
+  fill: var(--cn-ink-faint);
+  font-family: var(--cn-font-mono);
+  font-size: 11px;
+}
+
+/* One packet, moving. It is the only looping animation on the page. */
+.cn-route__packet {
   fill: var(--cn-accent);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cn-topo__packet {
+  .cn-route__packet {
     display: none;
   }
 }
 
-/* The headline was set as a poster: three stacked words filling the viewport. A landing page
-   has to say what the product is before it performs. */
-.cn-hero__title {
-  font-size: clamp(2rem, 1.4rem + 3.2vw, 3.6rem);
-  line-height: 1.08;
-  letter-spacing: var(--cn-tracking-tight);
-  max-width: 18ch;
+/* ---------------------------------------------------------------- proof */
+
+.cn-proof {
+  background: var(--cn-paper-sunken);
+  border-block: var(--cn-hairline);
+  padding-block: var(--cn-space-5);
+}
+
+.cn-proof__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cn-space-5) var(--cn-space-7);
+  align-items: baseline;
+}
+
+.cn-proof__item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--cn-space-2);
+}
+
+.cn-proof__value {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xl);
+  font-weight: 700;
+  color: var(--cn-ink);
+}
+
+.cn-proof__label {
+  font-size: var(--cn-text-sm);
+  color: var(--cn-ink-soft);
+}
+
+/* ---------------------------------------------------------------- loop */
+
+.cn-section {
+  padding-block: clamp(3.5rem, 2.5rem + 3vw, 6rem);
+}
+
+.cn-section__title {
+  margin: 0;
+  font-size: clamp(1.6rem, 1.25rem + 1.6vw, 2.4rem);
+  letter-spacing: var(--cn-tracking-snug);
+}
+
+.cn-section__lead {
+  margin: var(--cn-space-3) 0 0;
+  color: var(--cn-ink-soft);
+  max-width: 56ch;
+}
+
+.cn-loop {
+  background: var(--cn-paper-raised);
+  border-block: var(--cn-hairline);
+}
+
+.cn-loop__steps {
+  list-style: none;
+  display: grid;
+  gap: var(--cn-space-5);
+  margin: var(--cn-space-6) 0 0;
+  padding: 0;
+}
+
+@media (min-width: 820px) {
+  .cn-loop__steps {
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--cn-space-4);
+  }
+}
+
+.cn-loop__step {
+  position: relative;
+  padding-top: var(--cn-space-5);
+}
+
+/* The wire between steps: the loop is itself a path through a network. */
+@media (min-width: 820px) {
+  .cn-loop__step:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    top: 7px;
+    left: 1rem;
+    right: -1rem;
+    height: 2px;
+    background: var(--cn-rule);
+  }
+}
+
+.cn-loop__node {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--cn-radius-pill);
+  background: var(--cn-accent);
+  z-index: 1;
+}
+
+.cn-loop__step h3 {
+  margin: 0;
+  font-size: var(--cn-text-base);
+  letter-spacing: var(--cn-tracking-snug);
+}
+
+.cn-loop__step p {
+  margin: var(--cn-space-2) 0 0;
+  font-size: var(--cn-text-sm);
+  color: var(--cn-ink-soft);
+  line-height: 1.55;
+}
+
+/* ---------------------------------------------------------------- modes */
+
+.cn-modes__grid {
+  display: grid;
+  gap: var(--cn-space-4);
+  margin-top: var(--cn-space-6);
+}
+
+@media (min-width: 700px) {
+  .cn-modes__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1040px) {
+  .cn-modes__grid {
+    /* Asymmetric on purpose: the wide card takes two columns, so the grid is not six
+       identical rectangles. */
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .cn-modes__card--wide {
+    grid-column: span 2;
+  }
+}
+
+.cn-modes__card {
+  display: grid;
+  align-content: start;
+  gap: var(--cn-space-2);
+  padding: var(--cn-space-5);
+  border-radius: var(--cn-radius-xl);
+  background: var(--cn-paper-raised);
+  border: var(--cn-hairline);
+  transition: transform var(--cn-duration-fast) var(--cn-ease-out),
+    box-shadow var(--cn-duration-fast) var(--cn-ease-out);
+}
+
+.cn-modes__card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--cn-shadow-card);
+}
+
+/* Tints are drawn from the game-state palette, and three of six stay neutral. */
+.cn-modes__card[data-tone="accent"] { background: var(--cn-accent-wash); }
+.cn-modes__card[data-tone="xp"] { background: var(--cn-xp-wash); }
+.cn-modes__card[data-tone="mastered"] { background: var(--cn-mastered-wash); }
+.cn-modes__card[data-tone="special"] { background: var(--cn-special-wash); }
+
+.cn-modes__card h3 {
+  margin: 0;
+  font-size: var(--cn-text-lg);
+  letter-spacing: var(--cn-tracking-snug);
+}
+
+.cn-modes__card p {
+  margin: 0;
+  font-size: var(--cn-text-sm);
+  color: var(--cn-ink-soft);
+  line-height: 1.55;
+}
+
+/* --- Miniatures --- */
+
+.cn-mini {
+  display: grid;
+  gap: var(--cn-space-2);
+  margin-top: var(--cn-space-3);
+}
+
+.cn-mini__pair {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--cn-space-3);
+}
+
+.cn-mini__pair span {
+  padding: var(--cn-space-2) var(--cn-space-3);
+  border-radius: var(--cn-radius-md);
+  background: var(--cn-paper-raised);
+  border: 1px solid var(--cn-mastered);
+  color: var(--cn-mastered);
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  font-weight: 700;
+  text-align: center;
+}
+
+/* The connection between a protocol and its port, which is the whole game. */
+.cn-mini__pair i {
+  display: block;
+  width: 100%;
+  min-width: 1.5rem;
+  height: 2px;
+  background: var(--cn-mastered);
+}
+
+.cn-mini__hp {
+  height: 8px;
+  margin-top: var(--cn-space-3);
+  border-radius: var(--cn-radius-pill);
+  background: rgb(22 24 29 / 0.08);
+  overflow: hidden;
+}
+
+.cn-mini__hp span {
+  display: block;
+  height: 100%;
+  background: var(--cn-special);
+}
+
+.cn-mini__clock {
+  margin-top: var(--cn-space-3) !important;
+  font-family: var(--cn-font-mono);
+  font-size: 1.75rem !important;
+  font-weight: 700;
+  color: var(--cn-xp) !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.cn-mini__letters {
+  display: flex;
+  gap: 3px;
+  margin-top: var(--cn-space-3);
+  flex-wrap: wrap;
+}
+
+.cn-mini__letters span {
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 5px;
+  background: var(--cn-paper-sunken);
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  font-weight: 700;
+}
+
+/* ---------------------------------------------------------------- syllabus */
+
+.cn-syllabus {
+  background: var(--cn-paper-sunken);
+  border-block: var(--cn-hairline);
+}
+
+.cn-syllabus__list {
+  list-style: none;
+  margin: var(--cn-space-6) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--cn-space-1);
+}
+
+.cn-syllabus__unit {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--cn-space-3);
+  padding: var(--cn-space-3) 0 var(--cn-space-3) var(--cn-space-6);
+}
+
+.cn-syllabus__unit:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 28px;
+  bottom: -4px;
+  width: 2px;
+  background: var(--cn-rule-strong);
+}
+
+.cn-syllabus__node {
+  position: absolute;
+  left: 0;
+  top: 18px;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--cn-radius-pill);
+  background: var(--cn-paper);
+  border: 2px solid var(--cn-rule-strong);
+}
+
+.cn-syllabus__unit[data-state="current"] .cn-syllabus__node {
+  background: var(--cn-accent);
+  border-color: var(--cn-accent);
+  box-shadow: 0 0 0 4px var(--cn-accent-wash);
+}
+
+.cn-syllabus__num {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-faint);
+}
+
+.cn-syllabus__name {
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------- close */
+
+.cn-close {
+  background: var(--cn-field);
+  color: var(--cn-field-ink);
+}
+
+.cn-close__inner {
+  text-align: center;
+  display: grid;
+  justify-items: center;
+  gap: var(--cn-space-3);
+}
+
+.cn-close__title {
+  margin: 0;
+  font-size: clamp(1.7rem, 1.3rem + 1.8vw, 2.6rem);
+  letter-spacing: var(--cn-tracking-snug);
+}
+
+.cn-close__lead {
+  margin: 0;
+  color: var(--cn-field-ink-soft);
+  max-width: 48ch;
+}
+
+.cn-close__inner .btn-cn-primary {
+  margin-top: var(--cn-space-3);
+  background: var(--cn-accent);
+  border-color: var(--cn-accent);
+  color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cn-modes__card {
+    transition: none;
+  }
+
+  .cn-modes__card:hover {
+    transform: none;
+  }
 }
