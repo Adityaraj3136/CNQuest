@@ -3,9 +3,11 @@
 import type { Page, PageContext } from '@/types/page';
 import {
   authShellHtml,
+  bindGoogleButton,
   clearFieldErrors,
   fieldHtml,
   focusFirstInvalid,
+  googleButtonHtml,
   phaseNoticeHtml,
   setFieldError,
   setSubmitting,
@@ -55,6 +57,8 @@ const loginPage: Page = {
 
         <div class="cn-auth__divider"><span>or</span></div>
 
+        ${googleButtonHtml('Continue with Google')}
+
         <button class="btn btn-cn-ghost w-100" type="button" id="cn-guest-btn">
           <i class="bi bi-person-badge" aria-hidden="true"></i> Continue as guest
         </button>
@@ -97,6 +101,14 @@ const loginPage: Page = {
     form.addEventListener('submit', (event) => {
       event.preventDefault();
       void handleSubmit();
+    });
+
+    bindGoogleButton(form, {
+      onSuccess: () => {
+        showToast('Welcome back! Loading your dashboard…', { variant: 'success' });
+        navigate(next, true);
+      },
+      onError: (message) => showToast(message, { title: 'Could not sign in', variant: 'error' }),
     });
 
     qs<HTMLButtonElement>('#cn-guest-btn', form)?.addEventListener('click', () => {

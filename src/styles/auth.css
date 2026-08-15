@@ -149,6 +149,18 @@
   background: var(--cn-rule);
 }
 
+/* The Google mark must keep its own colours, so the button stays neutral around it. */
+.cn-auth__google {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--cn-space-3);
+}
+
+.cn-auth__google svg {
+  flex: none;
+}
+
 /* --- Specimen panel --- */
 
 .cn-auth__aside {

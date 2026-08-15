@@ -10,7 +10,8 @@ rules_version = '2';
 // counters to farm achievements again.
 //
 // Defence in depth, in order:
-//   1. Content is read-only for everyone. Only the Console or the seed script writes it.
+//   1. Content is read-only for students. Only the admin account, the Console or the
+//      seed script writes it.
 //   2. A student may only touch documents keyed to their own uid.
 //   3. Profiles start at zero and every cumulative field is monotonically non-decreasing.
 //   4. A single write may add at most MAX_XP_PER_WRITE, so no one jumps to level 40 in one go.
@@ -35,52 +36,68 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    // The course owner. Kept as an email rather than a uid so it survives the account being
+    // deleted and recreated. `email_verified` is required so the identity cannot be claimed by
+    // registering the address with a password and never proving control of the inbox — signing
+    // in with Google satisfies it automatically.
+    //
+    // This grants content writes only. There is no admin *screen* yet (see README limitation
+    // 7), so today it means the Console and a future admin dashboard can edit content while
+    // signed in as this address, instead of that being possible only with a service key.
+    function adminEmail() { return 'adityaraj3136@gmail.com'; }
+
+    function isAdmin() {
+      return isSignedIn()
+        && request.auth.token.email == adminEmail()
+        && request.auth.token.email_verified == true;
+    }
+
     function incoming() { return request.resource.data; }
     function existing() { return resource.data; }
 
     // ---------------------------------------------------------------- content
 
-    // Read-only educational content. Written only via the Console or scripts/seed.mjs
-    // (which uses the Admin SDK and bypasses these rules by design).
+    // Educational content: readable by any signed-in student, writable only by the admin
+    // account. scripts/seed.mjs uses the Admin SDK and bypasses these rules by design.
     function contentIsReadable() {
       return isSignedIn();
     }
 
     match /units/{unitId} {
       allow read: if contentIsReadable();
-      allow write: if false;
+      allow write: if isAdmin();
     }
     match /topics/{topicId} {
       allow read: if contentIsReadable();
-      allow write: if false;
+      allow write: if isAdmin();
     }
     match /questions/{questionId} {
       allow read: if contentIsReadable();
-      allow write: if false;
+      allow write: if isAdmin();
     }
     match /riddles/{riddleId} {
       allow read: if contentIsReadable();
-      allow write: if false;
+      allow write: if isAdmin();
     }
     match /dictionary/{termId} {
       allow read: if contentIsReadable();
-      allow write: if false;
+      allow write: if isAdmin();
     }
     match /achievements/{achievementId} {
       allow read: if contentIsReadable();
-      allow write: if false;
+      allow write: if isAdmin();
     }
     match /matchingSets/{setId} {
       allow read: if contentIsReadable();
-      allow write: if false;
+      allow write: if isAdmin();
     }
     match /wordSearchSets/{setId} {
       allow read: if contentIsReadable();
-      allow write: if false;
+      allow write: if isAdmin();
     }
     match /bosses/{bossId} {
       allow read: if contentIsReadable();
-      allow write: if false;
+      allow write: if isAdmin();
     }
 
     // ---------------------------------------------------------------- profile

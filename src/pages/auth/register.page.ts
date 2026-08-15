@@ -7,9 +7,11 @@
 import type { Page } from '@/types/page';
 import {
   authShellHtml,
+  bindGoogleButton,
   clearFieldErrors,
   fieldHtml,
   focusFirstInvalid,
+  googleButtonHtml,
   phaseNoticeHtml,
   setFieldError,
   setSubmitting,
@@ -68,6 +70,10 @@ const registerPage: Page = {
           <i class="bi bi-rocket-takeoff" aria-hidden="true"></i> Start Learning
         </button>
 
+        <div class="cn-auth__divider"><span>or</span></div>
+
+        ${googleButtonHtml('Sign up with Google')}
+
         ${
           isFirebaseConfigured()
             ? ''
@@ -101,6 +107,18 @@ const registerPage: Page = {
     form.addEventListener('submit', (event) => {
       event.preventDefault();
       void handleSubmit();
+    });
+
+    bindGoogleButton(form, {
+      onSuccess: () => {
+        showToast('Signed in with Google. Loading your dashboard…', {
+          title: 'Welcome to CN Quest',
+          variant: 'success',
+        });
+        navigate('/dashboard', true);
+      },
+      onError: (message) =>
+        showToast(message, { title: 'Could not create account', variant: 'error' }),
     });
 
     async function handleSubmit(): Promise<void> {

@@ -6,7 +6,7 @@
  */
 
 import { getFirebaseAuth, isFirebaseConfigured } from '@/config/firebase';
-import { createUserProfile } from '@/services/user.service';
+import { createUserProfile, ensureUserProfile } from '@/services/user.service';
 import type { User } from 'firebase/auth';
 
 export class AuthServiceError extends Error {
@@ -31,6 +31,14 @@ const FRIENDLY_MESSAGES: Record<string, string> = {
   'auth/too-many-requests': 'Too many attempts. Wait a moment and try again.',
   'auth/network-request-failed': 'Network error. Check your connection and try again.',
   'auth/operation-not-allowed': 'Email/password sign-in is not enabled in the Firebase project.',
+  // Closing the Google window is a decision, not a fault — say nothing accusatory.
+  'auth/popup-closed-by-user': 'Google sign-in was cancelled.',
+  'auth/cancelled-popup-request': 'Google sign-in was cancelled.',
+  'auth/popup-blocked': 'Your browser blocked the Google sign-in window. Allow pop-ups and try again.',
+  'auth/account-exists-with-different-credential':
+    'An account with this email already exists. Log in with your password instead.',
+  'auth/unauthorized-domain':
+    'This site is not an authorised domain for sign-in. Add it in Firebase Console → Authentication → Settings.',
 };
 
 const NOT_CONFIGURED_MESSAGE =
@@ -108,6 +116,50 @@ export async function signIn(email: string, password: string, remember = true): 
   } catch (error) {
     throw toAuthError(error);
   }
+}
+
+/**
+ * Signs in with Google.
+ *
+ * Google hands back a display name and photo but no Firestore profile, so this calls
+ * `ensureUserProfile` — the same idempotent path session bootstrap uses — rather than
+ * `createUserProfile`, which would fail the second time the student signs in.
+ */
+export async function signInWithGoogle(remember = true): Promise<User> {
+  assertConfigured();
+  const auth = await getFirebaseAuth();
+  const {
+    GoogleAuthProvider,
+    signInWithPopup,
+    setPersistence,
+    browserLocalPersistence,
+    browserSessionPersistence,
+  } = await import('firebase/auth');
+
+  let user: User;
+  try {
+    await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
+    const provider = new GoogleAuthProvider();
+    // Always show the chooser: shared and lab machines are the normal case here.
+    provider.setCustomParameters({ prompt: 'select_account' });
+    user = (await signInWithPopup(auth, provider)).user;
+  } catch (error) {
+    throw toAuthError(error);
+  }
+
+  try {
+    await ensureUserProfile({
+      uid: user.uid,
+      name: user.displayName?.trim() || user.email?.split('@')[0] || 'Student',
+      email: user.email ?? '',
+      ...(user.photoURL ? { photoURL: user.photoURL } : {}),
+    });
+  } catch (error) {
+    // The account is valid; only the profile write failed. Session bootstrap retries it.
+    console.error('[auth] profile creation failed after Google sign-in', error);
+  }
+
+  return user;
 }
 
 export async function signOut(): Promise<void> {
