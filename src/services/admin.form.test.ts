@@ -6,7 +6,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { buildDocument, suggestId, toFieldValue } from './admin.form.logic.ts';
+import { buildDocument, mediaFieldValue, suggestId, toFieldValue } from './admin.form.logic.ts';
 import { fieldsFor } from './admin.schema.ts';
 import type { FieldSpec } from './admin.schema.ts';
 
@@ -180,4 +180,69 @@ test('every editable collection has a field schema', () => {
   for (const id of collections) {
     assert.ok(fieldsFor(id).length > 0, `${id} has no form fields`);
   }
+});
+
+// ---------------------------------------------------------------- lesson media
+
+test('media is stored nested from two flat fields', () => {
+  const { data, errors } = buildDocument([TEXT], 'topic-x', {
+    title: 'X',
+    mediaUrl: 'https://example.com/osi.png',
+    mediaCaption: 'The seven OSI layers',
+  });
+
+  assert.deepEqual(errors, {});
+  assert.deepEqual(data.media, {
+    url: 'https://example.com/osi.png',
+    caption: 'The seven OSI layers',
+  });
+});
+
+test('an image without a caption is refused', () => {
+  // An uncaptioned diagram is invisible to anyone using a screen reader.
+  const { errors } = buildDocument([TEXT], 'topic-x', {
+    title: 'X',
+    mediaUrl: 'https://example.com/osi.png',
+    mediaCaption: '   ',
+  });
+
+  assert.match(errors.mediaCaption, /caption is required/);
+});
+
+test('a media URL that is not http is refused', () => {
+  const { errors } = buildDocument([TEXT], 'topic-x', {
+    title: 'X',
+    mediaUrl: 'javascript:alert(1)',
+    mediaCaption: 'Nope',
+  });
+
+  assert.match(errors.mediaUrl, /http/);
+});
+
+test('no media fields means no media key at all', () => {
+  const { data } = buildDocument([TEXT], 'topic-x', { title: 'X' });
+
+  assert.equal('media' in data, false);
+});
+
+test('media fields never leak into the document as flat keys', () => {
+  const { data } = buildDocument([TEXT], 'topic-x', {
+    title: 'X',
+    mediaUrl: 'https://example.com/a.png',
+    mediaCaption: 'A',
+  });
+
+  assert.equal('mediaUrl' in data, false);
+  assert.equal('mediaCaption' in data, false);
+});
+
+test('mediaFieldValue reads back what was stored', () => {
+  const document = { media: { url: 'https://example.com/a.png', caption: 'A diagram' } };
+
+  assert.equal(mediaFieldValue('mediaUrl', document), 'https://example.com/a.png');
+  assert.equal(mediaFieldValue('mediaCaption', document), 'A diagram');
+});
+
+test('mediaFieldValue returns blank when a topic has no media', () => {
+  assert.equal(mediaFieldValue('mediaUrl', {}), '');
 });

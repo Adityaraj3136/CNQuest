@@ -104,6 +104,18 @@ export const COLLECTION_FIELDS: Readonly<Record<string, readonly FieldSpec[]>> =
     },
     { key: 'examples', label: 'Examples', kind: 'list', help: 'One example per line. Optional.' },
     {
+      key: 'mediaUrl',
+      label: 'Diagram or image URL',
+      kind: 'text',
+      help: 'Optional. A full https:// address. Leave blank for no image.',
+    },
+    {
+      key: 'mediaCaption',
+      label: 'Image caption',
+      kind: 'text',
+      help: 'Describes the image for anyone who cannot see it. Required if a URL is set.',
+    },
+    {
       key: 'pitfalls',
       label: 'Where marks get lost',
       kind: 'list',

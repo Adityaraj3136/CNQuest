@@ -503,6 +503,7 @@ a.cn-chip:hover {
 .cn-rise-3 { animation-delay: 180ms; }
 .cn-rise-4 { animation-delay: 250ms; }
 .cn-rise-5 { animation-delay: 320ms; }
+.cn-rise-6 { animation-delay: 400ms; }
 
 /* Honour both the OS setting and the in-app toggle from Settings. */
 @media (prefers-reduced-motion: reduce) {

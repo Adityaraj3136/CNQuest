@@ -6,7 +6,7 @@
  */
 
 import type { FieldSpec } from '@/services/admin.schema';
-import { toFieldValue } from '@/services/admin.form.logic';
+import { mediaFieldValue, toFieldValue } from '@/services/admin.form.logic';
 import type { RawValue } from '@/services/admin.form.logic';
 import { escapeHtml, qs, qsa } from '@/utils/dom';
 
@@ -116,7 +116,10 @@ export function formHtml(
 ): string {
   return specs
     .map((spec) => {
-      const value = toFieldValue(spec, document[spec.key]);
+      const value =
+        spec.key === 'mediaUrl' || spec.key === 'mediaCaption'
+          ? mediaFieldValue(spec.key, document)
+          : toFieldValue(spec, document[spec.key]);
       const hint = spec.kind === 'pairs' ? pairHintHtml(spec) : helpHtml(spec);
 
       return `

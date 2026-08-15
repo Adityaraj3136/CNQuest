@@ -64,6 +64,14 @@ export interface Topic {
    * keyPoints because "what is true" and "what people get wrong" are different questions.
    */
   pitfalls?: string[];
+
+  /**
+   * An optional diagram or photograph for the lesson.
+   *
+   * Networking is a visual subject and a topology is far easier to see than to read. The
+   * caption doubles as the alt text, so an image can never ship without one.
+   */
+  media?: { url: string; caption: string };
   /** Ids of related entries in the networking dictionary. */
   relatedTerms?: string[];
 }

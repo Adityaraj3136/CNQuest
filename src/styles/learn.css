@@ -973,3 +973,67 @@
     transition: none;
   }
 }
+
+/* ==================================================================== *
+ * Lesson fixes
+ * ==================================================================== */
+
+/*
+ * Section headings were mono micro-caps, which read as file labels rather than as parts of a
+ * lesson. They are headings, so they are set as headings.
+ */
+.cn-topic__block h2 {
+  font-family: var(--cn-font-sans);
+  font-size: var(--cn-text-lg);
+  font-weight: 650;
+  text-transform: none;
+  letter-spacing: var(--cn-tracking-snug);
+  color: var(--cn-ink);
+  padding-bottom: 0;
+  border-bottom: 0;
+  margin-bottom: var(--cn-space-4);
+}
+
+/* A diagram is worth more than a paragraph in this subject, so it gets real width. */
+.cn-lesson__figure {
+  margin: var(--cn-space-6) 0;
+  padding: var(--cn-space-4);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-paper-raised);
+  border: var(--cn-hairline);
+}
+
+.cn-lesson__figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--cn-radius-md);
+}
+
+.cn-lesson__figure figcaption {
+  margin-top: var(--cn-space-3);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-faint);
+}
+
+/* The practice card carried two headings; the label is enough above a single question line. */
+.cn-lesson__practice h2 {
+  font-size: var(--cn-text-lg);
+}
+
+.cn-lesson__practice {
+  padding: var(--cn-space-5);
+}
+
+/* The companion sat below the article because a stray closing tag put the practice card and
+   the navigation into their own grid cells. With that fixed, this keeps it aligned to the top
+   of the first row on every screen size. */
+.cn-companion {
+  grid-row: 1;
+}
+
+@media (max-width: 1019.98px) {
+  .cn-companion {
+    grid-row: auto;
+  }
+}

@@ -11,10 +11,10 @@ import { escapeHtml, qs } from '@/utils/dom';
 import { loaderHtml, stateHtml } from '@/components/loader';
 import { editAffordanceHtml } from '@/components/edit-affordance';
 import { lessonPosition } from '@/services/lesson-nav.logic';
+import { questReward } from '@/services/quest.logic';
 import type { LessonPosition } from '@/services/lesson-nav.logic';
 import { getSyllabus } from '@/services/content.service';
 import { activeStore } from '@/services/progress.store';
-import { questReward } from '@/services/quest.logic';
 import type { DictionaryTerm, Question, Topic, Unit } from '@/models/content';
 import type { UserProgress } from '@/models/progress';
 import '@/styles/learn.css';
@@ -134,7 +134,7 @@ function companionHtml(
         <p class="cn-companion__label">Practice</p>
         <p class="cn-companion__value">${questions.length} questions</p>
         <p class="cn-companion__hint">${easy} easy · ${medium} medium · ${hard} hard</p>
-        <a class="btn btn-cn-primary btn-sm cn-companion__cta"
+        <a class="btn btn-cn-ghost btn-sm cn-companion__cta"
            href="#/games/quiz?topic=${encodeURIComponent(topic.id)}">
           Start topic challenge
         </a>
@@ -150,7 +150,7 @@ function practiceHtml(topic: Topic, questions: Question[]): string {
   return `
     <section class="cn-lesson__practice">
       <h2>Ready to test yourself?</h2>
-      <p>${questions.length} questions, about ${minutes} min. Answers are explained as you go.</p>
+      <p>${questions.length} questions, about ${minutes} min. Reward +${questReward(questions.length)} XP.</p>
 
       <div class="cn-lesson__practice-actions">
         <a class="btn btn-cn-primary" href="#/games/quiz?topic=${encodeURIComponent(topic.id)}">
@@ -220,6 +220,16 @@ function bodyHtml(
         }
         <p class="cn-topic__overview">${escapeHtml(topic.overview)}</p>
 
+        ${
+          topic.media
+            ? `<figure class="cn-lesson__figure">
+                 <img src="${escapeHtml(topic.media.url)}" alt="${escapeHtml(topic.media.caption)}"
+                      loading="lazy" decoding="async" />
+                 <figcaption>${escapeHtml(topic.media.caption)}</figcaption>
+               </figure>`
+            : ''
+        }
+
         <section class="cn-topic__block" style="margin-top: var(--cn-space-7)">
           <h2>What you should know</h2>
           <ul class="cn-keypoints">
@@ -271,24 +281,7 @@ function bodyHtml(
 
         ${relatedTermsHtml(topic, dictionary)}
 
-        <section class="cn-quest-end">
-          <p class="cn-quest-end__label">Ready to test yourself?</p>
-          <h2 class="cn-quest-end__title">${escapeHtml(topic.title)} · ${questions.length} questions</h2>
-          <p class="cn-quest-end__meta">
-            Reward +${questReward(questions.length)} XP · answers explained as you go
-          </p>
-          <div class="cn-quest-end__actions">
-            <a class="btn btn-cn-primary" href="#/games/quiz?topic=${encodeURIComponent(topic.id)}">
-              Start quest
-            </a>
-            <a class="btn btn-cn-ghost" href="#/games?topic=${encodeURIComponent(topic.id)}">
-              Other modes
-            </a>
-          </div>
-        </section>
-      </article>
-
-      ${practiceHtml(topic, questions)}
+        ${practiceHtml(topic, questions)}
         ${position ? lessonNavHtml(position) : ''}
       </article>
 

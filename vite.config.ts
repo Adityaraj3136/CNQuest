@@ -38,6 +38,18 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         runtimeCaching: [
           {
+            // Lesson diagrams are admin-supplied and live on arbitrary hosts, so the precache
+            // never sees them. Cached after first view so a lesson read once still shows its
+            // diagram offline.
+            urlPattern: ({ request }) => request.destination === 'image',
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'cn-lesson-media',
+              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
             // Firestore/Auth must never be served from a stale cache.
             urlPattern: /^https:\/\/(firestore|identitytoolkit|securetoken)\.googleapis\.com\/.*/i,
             handler: 'NetworkOnly',
