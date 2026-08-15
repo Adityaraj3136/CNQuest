@@ -873,3 +873,137 @@ body.cn-in-session {
     transform: none;
   }
 }
+
+/* ==================================================================== *
+ * Riddles — decoding a clue
+ * ==================================================================== */
+
+.cn-arena--riddle {
+  max-width: 720px;
+  margin-inline: auto;
+  padding: var(--cn-space-7) var(--cn-space-4) var(--cn-space-8);
+}
+
+.cn-riddle__label {
+  margin: 0 0 var(--cn-space-3);
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  font-weight: 700;
+  letter-spacing: var(--cn-tracking-label);
+  color: var(--cn-accent);
+}
+
+/* The clue is the whole screen. Large, quoted, and nothing competing with it. */
+.cn-riddle__clue {
+  margin: 0;
+  font-size: clamp(1.25rem, 1rem + 1.2vw, 1.75rem);
+  line-height: 1.45;
+  letter-spacing: var(--cn-tracking-snug);
+  padding-left: var(--cn-space-5);
+  border-left: 3px solid var(--cn-accent);
+}
+
+.cn-riddle__verdict {
+  display: flex;
+  align-items: center;
+  gap: var(--cn-space-2);
+  margin: 0 0 var(--cn-space-4);
+  font-size: var(--cn-text-lg);
+  font-weight: 700;
+}
+
+.cn-riddle__verdict[data-correct='true'] { color: var(--cn-mastered); }
+.cn-riddle__verdict[data-correct='false'] { color: var(--cn-negative); }
+
+/* The answer field is the one input on the screen, so it is sized like it. */
+.cn-riddle__input {
+  height: 3.5rem;
+  border-radius: var(--cn-radius-lg);
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-lg);
+  background: var(--cn-paper-raised);
+}
+
+.cn-riddle__input:focus {
+  border-color: var(--cn-accent);
+  box-shadow: var(--cn-shadow-focus);
+}
+
+/* ==================================================================== *
+ * Boss battle
+ * ==================================================================== */
+
+.cn-arena--boss {
+  max-width: 880px;
+  margin-inline: auto;
+  padding: var(--cn-space-6) var(--cn-space-4) var(--cn-space-8);
+}
+
+.cn-boss__head {
+  display: flex;
+  align-items: center;
+  gap: var(--cn-space-4);
+}
+
+/* Bosses are network infrastructure, not monsters: a node sigil, not a face. */
+.cn-boss__sigil {
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  flex: none;
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-special-wash);
+  color: var(--cn-special);
+  font-size: 1.6rem;
+}
+
+.cn-boss__name {
+  margin: 0;
+  font-size: clamp(1.4rem, 1.1rem + 1.2vw, 2rem);
+  letter-spacing: var(--cn-tracking-snug);
+}
+
+.cn-boss__subtitle {
+  margin: 2px 0 0;
+  color: var(--cn-ink-soft);
+  font-size: var(--cn-text-sm);
+}
+
+.cn-boss__bars {
+  display: grid;
+  gap: var(--cn-space-3);
+  margin-top: var(--cn-space-5);
+  padding: var(--cn-space-4);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-paper-raised);
+  border: var(--cn-hairline);
+}
+
+/* ==================================================================== *
+ * Rapid Fire — one clock, and it is the point
+ * ==================================================================== */
+
+.cn-rapid__clock {
+  display: block;
+  margin: var(--cn-space-5) auto var(--cn-space-2);
+  font-family: var(--cn-font-mono);
+  font-size: clamp(2.75rem, 2rem + 4vw, 4.5rem);
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  letter-spacing: -0.02em;
+  color: var(--cn-ink);
+  transition: color var(--cn-duration-fast) var(--cn-ease-out);
+}
+
+.cn-rapid__clock[data-low='true'] {
+  color: var(--cn-negative);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cn-rapid__clock {
+    transition: none;
+  }
+}

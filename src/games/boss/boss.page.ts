@@ -11,6 +11,7 @@ import { playCue } from '@/services/sound';
 import { getBosses, getQuestionRound } from '@/services/content.service';
 import { loaderHtml, stateHtml } from '@/components/loader';
 import { escapeHtml, qs, qsa } from '@/utils/dom';
+import { enterSession, exitSession, gameHudHtml, setHudLives } from '@/games/shared/game-hud';
 import type { Boss } from '@/models/content';
 import '@/styles/games.css';
 import '@/styles/arena.css';
@@ -74,12 +75,18 @@ function battleHtml(): string {
     .join('');
 
   return `
-    <div class="cn-container cn-arena">
+    ${gameHudHtml({
+      mode: 'Boss Battle',
+      lives: { remaining: view.playerHp, total: view.playerMaxHp },
+    })}
+
+    <div class="cn-arena cn-arena--boss">
       <header class="cn-boss__head">
-        <i class="bi ${escapeHtml(view.boss.icon)} cn-boss__sigil" aria-hidden="true"></i>
+        <span class="cn-boss__sigil" aria-hidden="true">
+          <i class="bi ${escapeHtml(view.boss.icon)}"></i>
+        </span>
         <div>
-          <span class="cn-label cn-label--marked">Boss battle</span>
-          <h1 class="cn-arena__title">${escapeHtml(view.boss.name)}</h1>
+          <h1 class="cn-boss__name">${escapeHtml(view.boss.name)}</h1>
           <p class="cn-boss__subtitle">${escapeHtml(view.boss.title)}</p>
         </div>
       </header>
@@ -117,7 +124,7 @@ function battleHtml(): string {
                </div>
              </div>`
           : `<div class="cn-arena__foot">
-               <button type="button" class="btn btn-cn-ghost btn-sm" id="cn-boss-flee">Flee (counts as a defeat)</button>
+               <button type="button" class="btn btn-cn-ghost btn-sm" id="cn-boss-flee">Retreat (counts as a defeat)</button>
              </div>`
       }
     </div>
@@ -134,7 +141,11 @@ function paint(): void {
     button.addEventListener('click', () => {
       const answer = engine!.answer(Number(button.dataset.index));
       playCue(answer?.isCorrect ? 'correct' : 'wrong');
+
       paint();
+      // Repainted first: the HUD lives inside the markup paint() replaces.
+      const view = engine!.view();
+      setHudLives(view.playerHp, view.playerMaxHp);
     });
   });
 
@@ -242,6 +253,7 @@ const bossPage: Page = {
   },
 
   async mount(ctx: PageContext) {
+    enterSession();
     const bossId = ctx.query.get('boss');
     const unitId = ctx.query.get('unit') ?? undefined;
 
@@ -268,6 +280,7 @@ const bossPage: Page = {
   },
 
   unmount() {
+    exitSession();
     engine = null;
     activeBoss = null;
   },

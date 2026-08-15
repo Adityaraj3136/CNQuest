@@ -46,6 +46,7 @@ function questionHtml(): string {
       seconds: view.secondsLeft,
     })}
 
+    <strong class="cn-rapid__clock" id="cn-rapid-clock" data-low="false">${view.secondsLeft}</strong>
     <p class="cn-quiz__topic">${escapeHtml(topicLabel)} · ${view.score} correct</p>
 
     <h1 class="cn-quiz__question">${escapeHtml(view.question.question)}</h1>
@@ -120,7 +121,12 @@ function startTimer(): void {
     if (fill) fill.style.width = `${(remaining / totalMs) * 100}%`;
 
     setHudTimer(engine.secondsLeft());
-    void low;
+
+    const clock = qs<HTMLElement>('#cn-rapid-clock');
+    if (clock) {
+      clock.textContent = String(engine.secondsLeft());
+      clock.dataset.low = String(low);
+    }
 
     if (remaining === 0) {
       stopTimer();

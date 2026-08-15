@@ -122,13 +122,13 @@ export const routes: readonly RouteDefinition[] = [
   },
   {
     path: '/games/riddles',
-    layout: 'app',
+    layout: 'bare',
     requiresAuth: true,
     load: () => import('@/games/riddles/riddle.page').then((m) => m.default),
   },
   {
     path: '/games/boss',
-    layout: 'app',
+    layout: 'bare',
     requiresAuth: true,
     load: () => import('@/games/boss/boss.page').then((m) => m.default),
   },

@@ -10,6 +10,7 @@ import { getRiddles } from '@/services/content.service';
 import { shuffle } from '@/services/content.filters';
 import { loaderHtml, stateHtml } from '@/components/loader';
 import { escapeHtml, qs } from '@/utils/dom';
+import { enterSession, exitSession, gameHudHtml } from '@/games/shared/game-hud';
 import type { Riddle } from '@/models/content';
 import '@/styles/games.css';
 import '@/styles/arena.css';
@@ -29,18 +30,14 @@ function askHtml(): string {
   const view = engine!.view();
 
   return `
-    <div class="cn-container cn-arena cn-arena--narrow">
-      <header class="cn-arena__head">
-        <div>
-          <span class="cn-label cn-label--marked">Riddle ${view.index} / ${view.total}</span>
-          <h1 class="cn-arena__title">Who am I?</h1>
-        </div>
-        <span class="cn-arena__stats">
-          <span>Solved <b>${view.score}</b></span>
-          <span>Worth <b>${view.xpAtStake} XP</b></span>
-        </span>
-      </header>
+    ${gameHudHtml({
+      mode: 'Network Riddles',
+      progress: { current: view.index, total: view.total },
+      xp: view.xpAtStake,
+    })}
 
+    <div class="cn-arena cn-arena--riddle">
+      <p class="cn-riddle__label">Clue ${String(view.index).padStart(2, '0')}</p>
       <p class="cn-riddle__clue">${escapeHtml(view.riddle.question)}</p>
 
       <div class="cn-riddle__hints" aria-live="polite">
@@ -53,7 +50,7 @@ function askHtml(): string {
       </div>
 
       <form id="cn-riddle-form" class="cn-riddle__form" novalidate>
-        <label class="cn-label" for="cn-riddle-answer">Your answer</label>
+        <label class="visually-hidden" for="cn-riddle-answer">Your answer</label>
         <input
           class="form-control cn-riddle__input"
           id="cn-riddle-answer"
@@ -62,10 +59,10 @@ function askHtml(): string {
           autocomplete="off"
           autocapitalize="off"
           spellcheck="false"
-          placeholder="Type the protocol, device or term"
+          placeholder="Name the protocol, device or term…"
         />
         <div class="cn-riddle__actions">
-          <button class="btn btn-cn-primary" type="submit">Submit</button>
+          <button class="btn btn-cn-primary" type="submit">Lock answer</button>
           <button class="btn btn-cn-ghost" type="button" id="cn-riddle-hint" ${
             view.hintsRemaining === 0 ? 'disabled' : ''
           }>
@@ -83,14 +80,17 @@ function feedbackHtml(): string {
   const attempt = view.lastAttempt!;
 
   return `
-    <div class="cn-container cn-arena cn-arena--narrow">
-      <header class="cn-arena__head">
-        <div>
-          <span class="cn-label cn-label--marked">Riddle ${view.index} / ${view.total}</span>
-          <h1 class="cn-arena__title">${attempt.isCorrect ? '✓ Correct' : '✗ Not quite'}</h1>
-        </div>
-        ${attempt.isCorrect ? `<span class="cn-arena__stats"><span>+${attempt.xpEarned} XP</span></span>` : ''}
-      </header>
+    ${gameHudHtml({
+      mode: 'Network Riddles',
+      progress: { current: view.index, total: view.total },
+      xp: attempt.isCorrect ? attempt.xpEarned : 0,
+    })}
+
+    <div class="cn-arena cn-arena--riddle">
+      <p class="cn-riddle__verdict" data-correct="${attempt.isCorrect}">
+        <i class="bi ${attempt.isCorrect ? 'bi-check-circle-fill' : 'bi-x-circle'}" aria-hidden="true"></i>
+        ${attempt.isCorrect ? 'Decoded' : 'Not quite'}
+      </p>
 
       <p class="cn-riddle__clue">${escapeHtml(attempt.question)}</p>
 
@@ -223,6 +223,7 @@ const riddlePage: Page = {
   },
 
   async mount(ctx: PageContext) {
+    enterSession();
     const topicId = ctx.query.get('topic') ?? undefined;
     const scoped = await getRiddles(topicId ? { topicId } : {});
     pool = scoped.length > 0 ? scoped : await getRiddles();
@@ -230,6 +231,7 @@ const riddlePage: Page = {
   },
 
   unmount() {
+    exitSession();
     engine?.abandon();
     engine = null;
   },
