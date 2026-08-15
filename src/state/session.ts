@@ -62,6 +62,13 @@ export function initSession(): Promise<void> {
       const auth = await getFirebaseAuth();
       const { onAuthStateChanged } = await import('firebase/auth');
 
+      // A student returning from Google's redirect flow arrives here with a pending
+      // credential. Processing it before the listener attaches means the first auth callback
+      // already carries the signed-in user, instead of reporting nobody and bouncing them
+      // back to the login screen.
+      const { completeGoogleRedirect } = await import('@/services/auth.service');
+      await completeGoogleRedirect();
+
       onAuthStateChanged(
         auth,
         (user) => {

@@ -170,6 +170,38 @@ export async function warmUpGoogleSignIn(): Promise<void> {
 }
 
 /**
+ * Finishes a redirect sign-in after the browser comes back from Google.
+ *
+ * Called once during session bootstrap. Without it the credential sits unprocessed and the
+ * student lands back on the login screen having apparently done nothing. Returns null on a
+ * normal load, when there is no redirect to complete.
+ */
+export async function completeGoogleRedirect(): Promise<User | null> {
+  if (!isFirebaseConfigured()) return null;
+
+  try {
+    const [{ getRedirectResult }, auth] = await Promise.all([
+      import('firebase/auth'),
+      getFirebaseAuth(),
+    ]);
+    const result = await getRedirectResult(auth);
+    if (!result) return null;
+
+    const { user } = result;
+    await ensureUserProfile({
+      uid: user.uid,
+      name: user.displayName?.trim() || user.email?.split('@')[0] || 'Student',
+      email: user.email ?? '',
+      ...(user.photoURL ? { photoURL: user.photoURL } : {}),
+    });
+    return user;
+  } catch (error) {
+    console.error('[auth] could not complete redirect sign-in', error);
+    return null;
+  }
+}
+
+/**
  * Signs in with Google.
  *
  * Google hands back a display name and photo but no Firestore profile, so this calls
@@ -202,12 +234,20 @@ export async function signInWithGoogle(remember = true): Promise<User> {
     const code = typeof error === 'object' && error && 'code' in error ? String(error.code) : '';
 
     // A popup is the better experience when it works, but plenty of environments refuse it:
-    // in-app browsers, strict popup blockers, and cross-origin isolation policies all fail
-    // here rather than at the provider. Redirecting keeps those students able to sign in.
-    if (POPUP_UNAVAILABLE_CODES.has(code)) {
+    // in-app browsers, strict popup blockers, and hosting the app on an origin that is not the
+    // auth domain, where the hidden gapi iframe the popup depends on fails to load at all.
+    // That last one throws a bare Error with no Firebase code, so anything uncoded falls back
+    // too. Redirect uses no iframe, which is exactly why it survives those environments.
+    //
+    // `popup-closed-by-user` is deliberately excluded: closing the window is an answer, and
+    // navigating the student to Google anyway would override a decision they just made.
+    const cancelled = code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request';
+
+    if (!cancelled && (POPUP_UNAVAILABLE_CODES.has(code) || !code)) {
+      console.warn('[auth] popup unavailable, falling back to redirect', code || error);
       const { signInWithRedirect } = await import('firebase/auth');
       await signInWithRedirect(auth, provider);
-      // The page navigates away; getRedirectResult() picks the session up on return.
+      // The page navigates away; completeGoogleRedirect() picks the session up on return.
       return new Promise<User>(() => {});
     }
 
