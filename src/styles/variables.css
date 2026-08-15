@@ -127,7 +127,7 @@
 
   /* Blueprint grid used as page atmosphere. */
   --cn-grid-size: 32px;
-  --cn-grid-line: rgba(22, 24, 29, 0.028);
+  --cn-grid-line: rgba(22, 24, 29, 0.015);
   --cn-grid-line-field: rgba(240, 239, 235, 0.06);
 }
 

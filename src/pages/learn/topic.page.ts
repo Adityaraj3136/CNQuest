@@ -218,7 +218,12 @@ function bodyHtml(
             ? `<p class="cn-topic__hook">${escapeHtml(topic.hook)}</p>`
             : ''
         }
-        <p class="cn-topic__overview">${escapeHtml(topic.overview)}</p>
+        ${topic.overview
+            .split(/\n\n+/)
+            .map((para) => para.trim())
+            .filter(Boolean)
+            .map((para) => `<p class="cn-topic__overview">${escapeHtml(para)}</p>`)
+            .join('')}
 
         ${
           topic.media

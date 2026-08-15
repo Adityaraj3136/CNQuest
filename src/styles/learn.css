@@ -551,24 +551,22 @@
 
 @media (min-width: 1020px) {
   /*
-   * The reading column is sized here rather than by a max-width on the article. Capping the
-   * article inside a 1fr column left it floating against the left edge with a wide dead gap
-   * before the companion, which is what made the page look unstructured.
-   *
-   * Sizing the column instead, and centring the pair, keeps the measure right and the two
-   * columns together.
+   * Lesson content is the main column (~70%), companion sidebar is ~30% on the right.
+   * max-width keeps the pair centred and at a comfortable reading width.
    */
   .cn-topic {
-    grid-template-columns: minmax(0, 68ch) 300px;
-    justify-content: center;
+    grid-template-columns: 1fr 300px;
+    max-width: 1120px;
+    margin-inline: auto;
     gap: var(--cn-space-7);
     align-items: start;
   }
 }
 
-/* 68ch keeps a line at a comfortable length regardless of viewport. */
+/* The article is the main reading column. max-width keeps lines comfortable. */
 .cn-lesson__article {
   min-width: 0;
+  max-width: 760px;
 }
 
 .cn-topic__breadcrumb {
@@ -668,18 +666,19 @@
 }
 
 .cn-questline__label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: normal;
+  line-height: 1.3;
 }
 
 /* --- Title and meta --- */
 
 .cn-topic__title {
   margin: 0;
-  font-size: clamp(1.8rem, 1.4rem + 1.8vw, 2.75rem);
-  line-height: 1.12;
+  font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2.1rem);
+  line-height: 1.18;
   letter-spacing: var(--cn-tracking-tight);
   text-transform: none;
 }
@@ -715,7 +714,6 @@
   display: grid;
   gap: var(--cn-space-4);
   align-content: start;
-  grid-row: 1;
 }
 
 @media (min-width: 1020px) {
@@ -880,8 +878,16 @@
 }
 
 @media (max-width: 1019.98px) {
-  /* The companion becomes a summary above the lesson rather than a column beside it. */
+  /*
+   * Below desktop: single-column stack.
+   * Order: article (lesson content) first, companion (progress/mastery) after.
+   */
+  .cn-lesson__article {
+    order: 1;
+  }
+
   .cn-companion {
+    order: 2;
     grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
     grid-auto-flow: row;
   }
@@ -943,13 +949,4 @@
 /* The practice card carried two headings; the label is enough above a single question line. */
 .cn-lesson__practice h2 {
   font-size: var(--cn-text-lg);
-}
-
-/* The companion sat below the article because a stray closing tag put the practice card and
-   the navigation into their own grid cells. With that fixed, this keeps it aligned to the top
-   of the first row on every screen size. */
-@media (max-width: 1019.98px) {
-  .cn-companion {
-    grid-row: auto;
-  }
 }
