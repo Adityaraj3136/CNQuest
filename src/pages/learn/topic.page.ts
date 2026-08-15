@@ -9,6 +9,7 @@ import { loadTopicProgress } from '@/services/progress-report.service';
 import { masteryBand } from '@/services/mastery.logic';
 import { escapeHtml, qs } from '@/utils/dom';
 import { loaderHtml, stateHtml } from '@/components/loader';
+import { editAffordanceHtml } from '@/components/edit-affordance';
 import type { DictionaryTerm, Question, Topic, Unit } from '@/models/content';
 import type { UserProgress } from '@/models/progress';
 import '@/styles/learn.css';
@@ -181,7 +182,9 @@ const topicPage: Page = {
 
       this.title = topic.title;
       document.title = `${topic.title} · CN Quest`;
-      root.innerHTML = bodyHtml(topic, unit, questions, dictionary, progress);
+      root.innerHTML =
+        bodyHtml(topic, unit, questions, dictionary, progress) +
+        editAffordanceHtml({ collection: 'topics', id: topic.id, label: 'topic' });
     } catch (error) {
       console.error('[topic] failed to load', error);
       root.innerHTML = `<div class="cn-container">${stateHtml({

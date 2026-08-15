@@ -16,12 +16,19 @@ export interface Preferences {
    * rule-based engine is the one students should get unless they choose otherwise.
    */
   experimentalAdaptive: boolean;
+  /**
+   * Admin editing mode. When on, the course owner sees an "Edit this" control on the content
+   * they are looking at. Off by default so the admin can read the app exactly as a student
+   * does, which is the only way to notice that something reads badly.
+   */
+  adminMode: boolean;
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
   soundEnabled: true,
   reduceMotion: false,
   experimentalAdaptive: false,
+  adminMode: false,
 };
 
 let cached: Preferences | null = null;

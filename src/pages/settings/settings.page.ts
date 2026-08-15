@@ -11,6 +11,7 @@ import { clearQueue, pendingCount, pendingResults } from '@/services/sync-queue'
 import { deleteGuestProgress, hasGuestProgress } from '@/state/guest';
 import { getSession } from '@/state/session';
 import { showToast } from '@/components/toast';
+import { isAdmin } from '@/services/admin.service';
 import { escapeHtml, qs } from '@/utils/dom';
 import '@/styles/settings.css';
 
@@ -90,6 +91,21 @@ function bodyHtml(): string {
       ${toggleHtml('cn-pref-sound', 'Sound effects', 'Short cues for correct answers, level-ups and boss victories.', prefs.soundEnabled)}
       ${toggleHtml('cn-pref-motion', 'Reduce animation', 'Removes transitions and reveals. Your system setting is always respected as well.', prefs.reduceMotion)}
     </section>
+
+    ${
+      isAdmin()
+        ? `
+      <section class="cn-settings__group cn-rise cn-rise-3">
+        <span class="cn-label cn-label--marked">Course owner</span>
+        ${toggleHtml(
+          'cn-pref-admin-mode',
+          'Admin editing mode',
+          'Shows an "Edit this" button on the topic and dictionary entry you are reading, opening it straight in the dashboard. Off by default so you can read the app exactly as a student does.',
+          prefs.adminMode,
+        )}
+      </section>`
+        : ''
+    }
 
     <section class="cn-settings__group cn-rise cn-rise-3">
       <span class="cn-label cn-label--marked">Adaptive learning</span>
@@ -177,6 +193,17 @@ function paint(): void {
   qs<HTMLInputElement>('#cn-pref-motion', root)?.addEventListener('change', (event) => {
     setPreference('reduceMotion', (event.target as HTMLInputElement).checked);
     showToast('Animation preference updated.', { variant: 'info' });
+  });
+
+  qs<HTMLInputElement>('#cn-pref-admin-mode', root)?.addEventListener('change', (event) => {
+    const on = (event.target as HTMLInputElement).checked;
+    setPreference('adminMode', on);
+    showToast(
+      on
+        ? 'Admin editing on. Open a topic or dictionary term to edit it in place.'
+        : 'Admin editing off. You are seeing the app as a student does.',
+      { title: 'Admin mode', variant: 'info' },
+    );
   });
 
   qs<HTMLInputElement>('#cn-pref-adaptive', root)?.addEventListener('change', (event) => {

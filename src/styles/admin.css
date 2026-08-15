@@ -253,3 +253,16 @@
   padding-block: var(--cn-space-3);
   background: linear-gradient(to top, var(--cn-paper) 70%, transparent);
 }
+
+/* Bundled documents are editable but not yet in Firestore; saving one publishes it. */
+.cn-admin__unpublished {
+  display: inline-block;
+  margin-left: var(--cn-space-2);
+  padding: 1px var(--cn-space-2);
+  border: var(--cn-hairline);
+  color: var(--cn-ink-faint);
+  font-family: var(--cn-font-sans);
+  font-size: var(--cn-text-micro);
+  letter-spacing: 0;
+  text-transform: none;
+}

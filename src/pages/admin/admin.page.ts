@@ -60,10 +60,7 @@ function tabsHtml(): string {
 function listHtml(): string {
   if (documents.length === 0) {
     return `
-      <p class="cn-admin__empty">
-        Nothing here yet. Students are reading the copy bundled with the app —
-        <strong>Publish bundled</strong> uploads it so you can edit it.
-      </p>
+      <p class="cn-admin__empty">Nothing in this collection yet. Use <strong>New</strong> to add the first one.</p>
     `;
   }
 
@@ -80,7 +77,10 @@ function listHtml(): string {
                 aria-pressed="${entry.id === selectedId}"
               >
                 <span class="cn-admin__row-summary">${escapeHtml(summarise(entry.data))}</span>
-                <span class="cn-admin__row-id">${escapeHtml(entry.id)}</span>
+                <span class="cn-admin__row-id">
+                  ${escapeHtml(entry.id)}
+                  ${entry.source === 'bundled' ? '<span class="cn-admin__unpublished">from app bundle</span>' : ''}
+                </span>
               </button>
             </li>
           `,
@@ -170,7 +170,7 @@ function panelHtml(): string {
         <div class="cn-admin__list-head">
           <h2 class="cn-admin__subtitle">
             ${escapeHtml(collection?.label ?? activeCollection)}
-            <span class="cn-admin__count">${documents.length} live · ${collection?.bundled.length ?? 0} bundled</span>
+            <span class="cn-admin__count">${documents.length} editable, ${documents.filter((entry) => entry.source === 'firestore').length} published</span>
           </h2>
           <button class="btn btn-cn-ghost btn-sm" type="button" id="cn-admin-publish">
             <i class="bi bi-cloud-upload" aria-hidden="true"></i> Publish bundled
@@ -433,6 +433,8 @@ const adminPage: Page = {
 
     const requested = ctx.query.get('collection');
     if (requested && collectionById(requested)) activeCollection = requested;
+    // Set by the "Edit this" button students never see; opens the document being viewed.
+    const requestedId = ctx.query.get('id');
 
     await refreshReferences();
     root.innerHTML = bodyHtml();
@@ -448,6 +450,12 @@ const adminPage: Page = {
     });
 
     await loadCollection(root);
+
+    if (requestedId && documents.some((entry) => entry.id === requestedId)) {
+      selectedId = requestedId;
+      repaintPanel(root);
+      qs('#cn-admin-form', root)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   },
 };
 

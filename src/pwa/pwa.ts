@@ -16,6 +16,9 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
+/** Marks that this tab has already been told about a pending update. */
+const UPDATE_NOTICE_KEY = 'cn-quest.update-notified';
+
 let deferredPrompt: BeforeInstallPromptEvent | null = null;
 let updateServiceWorker: ((reload?: boolean) => Promise<void>) | null = null;
 const installListeners = new Set<(available: boolean) => void>();
@@ -115,7 +118,13 @@ export function initPwa(): void {
 
   updateServiceWorker = registerSW({
     onNeedRefresh() {
-      showToast('A new version is ready. Reload to update — your progress is safe.', {
+      // The worker re-checks for updates on every navigation, so an unreloaded update
+      // re-fired this toast on every screen change. Once per session is a notice; on every
+      // page view it is nagging, and students learn to dismiss it without reading.
+      if (sessionStorage.getItem(UPDATE_NOTICE_KEY)) return;
+      sessionStorage.setItem(UPDATE_NOTICE_KEY, '1');
+
+      showToast('A new version is ready. Reload to update - your progress is safe.', {
         title: 'Update available',
         variant: 'info',
         durationMs: 0,

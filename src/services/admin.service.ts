@@ -77,16 +77,50 @@ export function isAdmin(): boolean {
 export interface AdminDocument {
   id: string;
   data: Record<string, unknown>;
+  /**
+   * `bundled` means this document ships in the app but does not exist in Firestore yet.
+   * Saving it writes it, so editing bundled content needs no separate publish step.
+   */
+  source: 'firestore' | 'bundled';
 }
 
+/**
+ * Everything the admin can edit: what is in Firestore, plus the bundled copy of anything
+ * that has not been published.
+ *
+ * Listing Firestore alone showed an empty screen on a fresh project, which read as "there is
+ * no content" when the truth was "all 207 documents are in the app bundle". Students are
+ * reading the bundled copy in exactly that state, so it is the thing an admin needs to edit.
+ */
 export async function listDocuments(collectionName: string): Promise<AdminDocument[]> {
-  const db = await getFirestoreDb();
-  const { collection, getDocs } = await import('firebase/firestore');
+  const entry = collectionById(collectionName);
+  const bundled = entry?.bundled ?? [];
 
-  const snapshot = await getDocs(collection(db, collectionName));
-  return snapshot.docs
-    .map((entry) => ({ id: entry.id, data: entry.data() as Record<string, unknown> }))
-    .sort((a, b) => a.id.localeCompare(b.id));
+  let live: AdminDocument[] = [];
+  try {
+    const db = await getFirestoreDb();
+    const { collection, getDocs } = await import('firebase/firestore');
+    const snapshot = await getDocs(collection(db, collectionName));
+    live = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      data: doc.data() as Record<string, unknown>,
+      source: 'firestore' as const,
+    }));
+  } catch (error) {
+    // Offline or rules refused: the bundled copy is still editable material to show.
+    console.error('[admin] could not read Firestore, showing bundled content only', error);
+  }
+
+  const liveIds = new Set(live.map((doc) => doc.id));
+  const unpublished: AdminDocument[] = bundled
+    .filter((item) => !liveIds.has(item.id))
+    .map((item) => ({
+      id: item.id,
+      data: item as unknown as Record<string, unknown>,
+      source: 'bundled' as const,
+    }));
+
+  return [...live, ...unpublished].sort((a, b) => a.id.localeCompare(b.id));
 }
 
 /**

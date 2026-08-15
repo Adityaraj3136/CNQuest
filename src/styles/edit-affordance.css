@@ -1,0 +1,70 @@
+/** The admin's floating "Edit this" control. Only ever rendered for the course owner. */
+
+.cn-edit-fab {
+  position: fixed;
+  /* Clears the iOS home indicator and Android gesture bar. */
+  bottom: calc(var(--cn-space-5) + env(safe-area-inset-bottom, 0px));
+  right: var(--cn-space-5);
+  /* Above page content, below toasts, which must stay readable over it. */
+  z-index: 40;
+
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cn-space-2);
+  padding: var(--cn-space-3) var(--cn-space-4);
+
+  background: var(--cn-ink);
+  color: var(--cn-paper);
+  border: 1px solid var(--cn-ink);
+  font-size: var(--cn-text-sm);
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 8px 30px rgb(18 21 26 / 0.22);
+  transition:
+    transform var(--cn-duration-fast) var(--cn-ease-out),
+    background-color var(--cn-duration-fast) var(--cn-ease-out);
+}
+
+.cn-edit-fab:hover,
+.cn-edit-fab:focus-visible {
+  background: var(--cn-accent);
+  border-color: var(--cn-accent);
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+.cn-edit-fab:active {
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cn-edit-fab {
+    transition: none;
+  }
+
+  .cn-edit-fab:hover,
+  .cn-edit-fab:focus-visible,
+  .cn-edit-fab:active {
+    transform: none;
+  }
+}
+
+/* On a phone the label would crowd the content it is meant to help edit. */
+@media (max-width: 560px) {
+  .cn-edit-fab span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .cn-edit-fab {
+    padding: var(--cn-space-3);
+    border-radius: 50%;
+  }
+}

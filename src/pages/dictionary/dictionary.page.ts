@@ -12,6 +12,7 @@ import { loadViewedTerms, recordTermView } from '@/services/dictionary.service';
 import { DICTIONARY_CATEGORIES } from '@/models/content';
 import { showToast } from '@/components/toast';
 import { loaderHtml, stateHtml } from '@/components/loader';
+import { editAffordanceHtml } from '@/components/edit-affordance';
 import { escapeHtml, qs, qsa } from '@/utils/dom';
 import type { DictionaryCategory, DictionaryTerm } from '@/models/content';
 import '@/styles/dictionary.css';
@@ -144,6 +145,7 @@ function detailHtml(): string {
     .filter((entry): entry is DictionaryTerm => Boolean(entry));
 
   return `
+    ${editAffordanceHtml({ collection: 'dictionary', id: term.id, label: 'term' })}
     <aside class="cn-dict__detail" aria-live="polite">
       <span class="cn-label cn-label--marked">${escapeHtml(term.category)}</span>
       <h2 class="cn-dict__title">${escapeHtml(term.term)}</h2>

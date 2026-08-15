@@ -41,16 +41,33 @@ const FRIENDLY_MESSAGES: Record<string, string> = {
     'This site is not an authorised domain for sign-in. Add it in Firebase Console → Authentication → Settings.',
 };
 
+/**
+ * Popup failures that are about the *environment*, not the student's choice. These fall back
+ * to a full-page redirect; `popup-closed-by-user` deliberately does not, since the student
+ * closing the window is an answer.
+ */
+const POPUP_UNAVAILABLE_CODES = new Set([
+  'auth/popup-blocked',
+  'auth/operation-not-supported-in-this-environment',
+  'auth/web-storage-unsupported',
+  'auth/internal-error',
+]);
+
 const NOT_CONFIGURED_MESSAGE =
   'CN Quest is not connected to Firebase yet. Copy .env.example to .env, add your Firebase keys, and restart the dev server.';
 
 function toAuthError(error: unknown): AuthServiceError {
   const code = typeof error === 'object' && error && 'code' in error ? String(error.code) : 'unknown';
   console.error('[auth]', code, error);
-  return new AuthServiceError(
-    FRIENDLY_MESSAGES[code] ?? 'Something went wrong. Please try again.',
-    code,
-  );
+  // An unmapped code used to surface as "Something went wrong", which tells nobody anything.
+  // The raw code is appended so a student can report it and it can be looked up.
+  const friendly =
+    FRIENDLY_MESSAGES[code] ??
+    (code && code !== 'unknown'
+      ? `Sign-in failed (${code}). Please try again or report this code.`
+      : 'Something went wrong. Please try again.');
+
+  return new AuthServiceError(friendly, code);
 }
 
 function assertConfigured(): void {
@@ -136,14 +153,27 @@ export async function signInWithGoogle(remember = true): Promise<User> {
     browserSessionPersistence,
   } = await import('firebase/auth');
 
+  const provider = new GoogleAuthProvider();
+  // Always show the chooser: shared and lab machines are the normal case here.
+  provider.setCustomParameters({ prompt: 'select_account' });
+
   let user: User;
   try {
     await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
-    const provider = new GoogleAuthProvider();
-    // Always show the chooser: shared and lab machines are the normal case here.
-    provider.setCustomParameters({ prompt: 'select_account' });
     user = (await signInWithPopup(auth, provider)).user;
   } catch (error) {
+    const code = typeof error === 'object' && error && 'code' in error ? String(error.code) : '';
+
+    // A popup is the better experience when it works, but plenty of environments refuse it:
+    // in-app browsers, strict popup blockers, and cross-origin isolation policies all fail
+    // here rather than at the provider. Redirecting keeps those students able to sign in.
+    if (POPUP_UNAVAILABLE_CODES.has(code)) {
+      const { signInWithRedirect } = await import('firebase/auth');
+      await signInWithRedirect(auth, provider);
+      // The page navigates away; getRedirectResult() picks the session up on return.
+      return new Promise<User>(() => {});
+    }
+
     throw toAuthError(error);
   }
 
