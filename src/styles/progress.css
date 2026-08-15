@@ -826,3 +826,88 @@
     transition: none;
   }
 }
+
+/* ==================================================================== *
+ * Progression fixes
+ * ==================================================================== */
+
+/*
+ * The unit rows stretched the full page width, so the band and the percentage ended up
+ * floating a long way from the name they describe. Capping the measure keeps a row readable
+ * as one line rather than two ends of a wide gap.
+ */
+.cn-path,
+.cn-journey__head,
+.cn-hops {
+  max-width: 860px;
+}
+
+.cn-path summary {
+  gap: var(--cn-space-4);
+}
+
+.cn-path__band {
+  margin-left: auto;
+}
+
+.cn-path__pct {
+  min-width: 3.5ch;
+  text-align: right;
+}
+
+/* An unstarted unit says so once, in the band, rather than repeating a grey zero. */
+.cn-path__unit[data-state="locked"] .cn-path__pct {
+  color: var(--cn-locked);
+}
+
+/* --- Records --- */
+
+.cn-modes-perf {
+  padding: var(--cn-space-5);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-paper-raised);
+  border: var(--cn-hairline);
+}
+
+.cn-records {
+  list-style: none;
+  margin: var(--cn-space-4) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--cn-space-3);
+}
+
+.cn-record {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas: "name best" "meta best";
+  align-items: center;
+  gap: 2px var(--cn-space-4);
+}
+
+.cn-record__name {
+  grid-area: name;
+  font-weight: 600;
+  font-size: var(--cn-text-sm);
+}
+
+.cn-record__meta {
+  grid-area: meta;
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-faint);
+}
+
+/* Best score is the number a player remembers, so it is the one set large. */
+.cn-record__best {
+  grid-area: best;
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-lg);
+  font-weight: 700;
+  color: var(--cn-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Both panels start at the same height instead of one floating beside a tall neighbour. */
+.cn-prog__pair > * {
+  height: 100%;
+}

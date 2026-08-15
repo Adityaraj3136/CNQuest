@@ -29,46 +29,41 @@ const MODE_LABELS: Record<GameType, string> = {
   'word-search': 'Word Search',
 };
 
+/**
+ * How each mode has gone. A six column table was a report; these are records.
+ *
+ * Best score leads because it is the number a player remembers, and a mode that has never
+ * been played is listed rather than hidden, so the set is always the full six.
+ */
 function modesHtml(report: ProgressReport): string {
   if (report.modes.length === 0) {
     return `
-      <section class="cn-prog__section">
-        <span class="cn-label cn-label--marked">Game performance</span>
-        <p class="cn-ink-soft mt-3">Play a round and each mode's record appears here.</p>
+      <section class="cn-modes-perf">
+        <h2 class="cn-activity__title">Your records</h2>
+        <p class="cn-activity__sub">Play a round and each mode keeps its best score here.</p>
+        <a class="btn btn-cn-ghost btn-sm" href="#/games">Pick a mode</a>
       </section>
     `;
   }
 
   return `
-    <section class="cn-prog__section">
-      <span class="cn-label cn-label--marked">Game performance</span>
-      <table class="cn-prog__table cn-prog__table--modes">
-        <thead>
-          <tr>
-            <th scope="col">Mode</th>
-            <th scope="col">Sessions</th>
-            <th scope="col">Questions</th>
-            <th scope="col">Accuracy</th>
-            <th scope="col">Best</th>
-            <th scope="col">XP</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${report.modes
-            .map(
-              (mode) => `
-                <tr>
-                  <th scope="row">${escapeHtml(MODE_LABELS[mode.gameType] ?? mode.gameType)}</th>
-                  <td>${mode.sessions}</td>
-                  <td>${mode.questions}</td>
-                  <td>${mode.accuracy}%</td>
-                  <td>${mode.bestAccuracy}%</td>
-                  <td>${mode.xpEarned}</td>
-                </tr>`,
-            )
-            .join('')}
-        </tbody>
-      </table>
+    <section class="cn-modes-perf">
+      <h2 class="cn-activity__title">Your records</h2>
+
+      <ul class="cn-records">
+        ${report.modes
+          .map(
+            (mode) => `
+              <li class="cn-record">
+                <span class="cn-record__name">${escapeHtml(MODE_LABELS[mode.gameType] ?? mode.gameType)}</span>
+                <span class="cn-record__best">${mode.bestAccuracy}%</span>
+                <span class="cn-record__meta">
+                  ${mode.sessions} ${mode.sessions === 1 ? 'round' : 'rounds'} · ${mode.xpEarned} XP
+                </span>
+              </li>`,
+          )
+          .join('')}
+      </ul>
     </section>
   `;
 }

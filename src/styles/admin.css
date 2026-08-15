@@ -302,3 +302,169 @@
   color: var(--cn-ink-soft);
   line-height: 1.45;
 }
+
+/* ==================================================================== *
+ * Admin polish
+ *
+ * Deliberately not game-styled. This is a content workspace, and the person using it is
+ * working rather than playing: quieter surfaces, more room, fewer lines.
+ * ==================================================================== */
+
+.cn-admin {
+  padding-block: var(--cn-space-5) var(--cn-space-8);
+}
+
+/* The tab strip becomes a segmented control rather than nine outlined buttons. */
+.cn-admin__tabs {
+  gap: 2px;
+  padding: 4px;
+  border: 0;
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-paper-sunken);
+  margin-bottom: var(--cn-space-6);
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex-wrap: nowrap;
+}
+
+.cn-admin__tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.cn-admin__tab {
+  border: 0;
+  border-radius: var(--cn-radius-md);
+  padding: var(--cn-space-2) var(--cn-space-4);
+  white-space: nowrap;
+  color: var(--cn-ink-soft);
+  font-weight: 550;
+}
+
+.cn-admin__tab:hover {
+  background: rgb(22 24 29 / 0.04);
+  color: var(--cn-ink);
+}
+
+.cn-admin__tab[aria-pressed="true"] {
+  background: var(--cn-paper-raised);
+  color: var(--cn-ink);
+  font-weight: 650;
+  box-shadow: var(--cn-shadow-sm);
+}
+
+/* A stable two-pane workspace: the index scrolls on its own, the editor keeps its place. */
+@media (min-width: 1000px) {
+  .cn-admin__panel {
+    grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+    gap: var(--cn-space-7);
+  }
+
+  .cn-admin__list-side {
+    position: sticky;
+    top: calc(var(--cn-header-height) + var(--cn-space-4));
+    max-height: calc(100vh - var(--cn-header-height) - var(--cn-space-7));
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cn-admin__list {
+    flex: 1;
+    max-height: none;
+  }
+}
+
+/* The document list is an index, so rows are separated by space rather than by a rule each. */
+.cn-admin__list {
+  padding-right: var(--cn-space-1);
+}
+
+.cn-admin__row {
+  border-bottom: 0;
+  border-radius: var(--cn-radius-md);
+  padding: var(--cn-space-3);
+}
+
+.cn-admin__row[aria-pressed="true"] {
+  background: var(--cn-accent-wash);
+  box-shadow: none;
+}
+
+.cn-admin__row[aria-pressed="true"] .cn-admin__row-summary {
+  color: var(--cn-accent);
+  font-weight: 650;
+}
+
+/* The editor is the work, so it sits on a surface of its own. */
+.cn-admin__editor {
+  padding: var(--cn-space-6);
+  border-radius: var(--cn-radius-xl);
+  background: var(--cn-paper-raised);
+  border: var(--cn-hairline);
+}
+
+.cn-admin__editor-head {
+  padding-bottom: var(--cn-space-4);
+  margin-bottom: var(--cn-space-5);
+  border-bottom: var(--cn-hairline);
+}
+
+.cn-admin__subtitle {
+  font-size: var(--cn-text-lg);
+}
+
+.cn-admin__field {
+  margin-bottom: var(--cn-space-5);
+}
+
+.cn-admin__field label {
+  font-size: var(--cn-text-sm);
+}
+
+.cn-admin__field .form-control,
+.cn-admin__field .form-select {
+  border-radius: var(--cn-radius-md);
+}
+
+.cn-admin__field .form-control:focus,
+.cn-admin__field .form-select:focus {
+  border-color: var(--cn-accent);
+  box-shadow: var(--cn-shadow-focus);
+}
+
+/* Actions stay reachable at the bottom of a long form without floating over the last field. */
+.cn-admin__actions {
+  gap: var(--cn-space-3);
+  padding-top: var(--cn-space-4);
+  margin-top: var(--cn-space-5);
+  border-top: var(--cn-hairline);
+  background: var(--cn-paper-raised);
+}
+
+.cn-admin__mode {
+  background: var(--cn-paper-sunken);
+  border: 0;
+  border-radius: var(--cn-radius-lg);
+}
+
+.cn-admin__unpublished {
+  border-radius: var(--cn-radius-pill);
+  background: var(--cn-paper-sunken);
+  border: 0;
+}
+
+.cn-admin__empty {
+  padding: var(--cn-space-6) var(--cn-space-4);
+  text-align: center;
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-paper-sunken);
+}
+
+@media (max-width: 999.98px) {
+  .cn-admin__list {
+    max-height: 22rem;
+  }
+
+  .cn-admin__editor {
+    padding: var(--cn-space-4);
+  }
+}
