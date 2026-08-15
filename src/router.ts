@@ -64,6 +64,15 @@ export function parseHash(rawHash: string): ParsedHash {
   };
 }
 
+/**
+ * Every hash this router owns starts with `#/`. A bare `#fragment` is a document position —
+ * the skip link's `#main-content`, or any in-page anchor — and resolving it as a route lands
+ * the student on "Route not found" for pressing Tab then Enter.
+ */
+export function isRouteHash(hash: string): boolean {
+  return hash === '' || hash === '#' || hash.startsWith('#/');
+}
+
 export function navigate(path: string, replace = false): void {
   const target = `#${path.startsWith('/') ? path : `/${path}`}`;
   if (replace) {
@@ -114,7 +123,21 @@ export class Router {
   }
 
   private async resolve(): Promise<void> {
-    const { path, query, anchor } = parseHash(window.location.hash);
+    const rawHash = window.location.hash;
+
+    // An in-page anchor must not tear down the screen the student is on.
+    if (!isRouteHash(rawHash)) {
+      // Unless nothing is rendered yet — someone deep-linked straight to `#main-content`,
+      // and an empty outlet is worse than starting at the landing page.
+      if (!this.currentPage) {
+        navigate('/', true);
+        return;
+      }
+      this.focusAnchor(rawHash.slice(1));
+      return;
+    }
+
+    const { path, query, anchor } = parseHash(rawHash);
     const token = ++this.renderToken;
 
     const match = this.routes
@@ -202,6 +225,17 @@ export class Router {
       actionLabel: 'Back to home',
       actionHref: '#/',
     });
+  }
+
+  /**
+   * Scrolls to an in-page anchor and moves keyboard focus there. Scrolling alone would leave
+   * a screen-reader or keyboard user's focus stranded at the top, which defeats a skip link.
+   */
+  private focusAnchor(id: string): void {
+    const target = document.getElementById(id);
+    if (!target) return;
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    target.focus({ preventScroll: true });
   }
 
   private restoreScroll(anchor: string): void {

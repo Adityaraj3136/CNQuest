@@ -61,7 +61,7 @@ export function renderNavbar(layout: Layout, currentPath: string): void {
     <nav class="cn-navbar" aria-label="Main navigation">
       <div class="cn-container cn-navbar__inner">
         <a class="cn-brand" href="#/">
-          <img src="/icons/icon.svg" alt="" width="34" height="34" />
+          <img src="${import.meta.env.BASE_URL}icons/icon.svg" alt="" width="34" height="34" />
           <span>${escapeHtml(APP.name)}</span>
         </a>
 

@@ -28,7 +28,7 @@ export function renderFooter(layout: Layout): void {
         <div class="cn-footer__grid">
           <div>
             <a class="cn-brand" href="#/">
-              <img src="/icons/icon.svg" alt="" width="34" height="34" />
+              <img src="${import.meta.env.BASE_URL}icons/icon.svg" alt="" width="34" height="34" />
               <span>${escapeHtml(APP.name)}</span>
             </a>
             <p class="mt-3 mb-0" style="font-size: var(--cn-text-sm); max-width: 36ch;">
