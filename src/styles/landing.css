@@ -150,77 +150,56 @@
 
 /* --- Console preview --- */
 
-.cn-console {
+/* --- Hero & band imagery --- */
+
+/* Photography sits inside the ruled system: hairline frame, no rounded corners, no shadow. */
+.cn-hero__figure,
+.cn-band__figure {
+  margin: 0;
   border: var(--cn-hairline-strong);
-  background: var(--cn-field);
-  color: var(--cn-field-ink);
+  background: var(--cn-paper-sunken);
+  overflow: hidden;
+}
+
+.cn-hero__figure img,
+.cn-band__figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* Reserving the ratio keeps the hero from reflowing when the photo lands (CLS). */
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  /* The palette is ink on paper; full-colour stock would be the only saturated thing here. */
+  filter: grayscale(1) contrast(1.05);
+}
+
+.cn-band__figure {
+  margin-bottom: var(--cn-space-6);
+}
+
+.cn-band__figure img {
+  aspect-ratio: 16 / 6;
+}
+
+.cn-ledger-band {
+  padding-block: clamp(2rem, 1rem + 2vw, 3rem);
+}
+
+/* --- Feature groups --- */
+
+/* Ten rows under one heading read as a data dump; three named clusters read as an index. */
+.cn-group + .cn-group {
+  margin-top: var(--cn-space-6);
+}
+
+.cn-group__name {
   font-family: var(--cn-font-mono);
   font-size: var(--cn-text-xs);
-  box-shadow: var(--cn-shadow-lift);
-}
-
-.cn-console__bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--cn-space-3);
-  padding: var(--cn-space-2) var(--cn-space-3);
-  border-bottom: 1px solid var(--cn-field-rule);
-  color: var(--cn-field-ink-soft);
-  letter-spacing: var(--cn-tracking-wide);
   text-transform: uppercase;
-  font-size: var(--cn-text-micro);
-}
-
-.cn-console__body {
-  padding: var(--cn-space-4);
-  display: grid;
-  gap: var(--cn-space-4);
-}
-
-.cn-console__row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--cn-space-3);
-}
-
-.cn-console__level {
-  font-size: var(--cn-text-lg);
-  font-weight: 700;
-  letter-spacing: var(--cn-tracking-snug);
-}
-
-.cn-console__xp {
-  color: var(--cn-reward);
-  font-weight: 700;
-}
-
-.cn-console__modes {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1px;
-  background: var(--cn-field-rule);
-  border: 1px solid var(--cn-field-rule);
-}
-
-.cn-console__mode {
-  background: var(--cn-field);
-  padding: var(--cn-space-2) var(--cn-space-3);
-  display: flex;
-  align-items: center;
-  gap: var(--cn-space-2);
-  color: var(--cn-field-ink-soft);
-  font-size: var(--cn-text-micro);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.cn-console__mode i {
+  letter-spacing: var(--cn-tracking-label);
   color: var(--cn-accent);
+  margin-bottom: var(--cn-space-2);
 }
-
-/* --- Feature index --- */
 
 .cn-index {
   border-top: var(--cn-hairline-strong);
@@ -228,7 +207,7 @@
 
 .cn-index__item {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: 1fr;
   gap: var(--cn-space-3) var(--cn-space-4);
   padding-block: var(--cn-space-4);
   border-bottom: var(--cn-hairline);
@@ -238,7 +217,7 @@
 
 @media (min-width: 768px) {
   .cn-index__item {
-    grid-template-columns: 4rem minmax(0, 15rem) 1fr;
+    grid-template-columns: minmax(0, 16rem) 1fr;
     gap: var(--cn-space-5);
     align-items: center;
   }
@@ -304,14 +283,6 @@
   gap: var(--cn-space-2);
   align-content: start;
   position: relative;
-}
-
-.cn-flow__step::before {
-  content: attr(data-step);
-  font-family: var(--cn-font-mono);
-  font-size: var(--cn-text-micro);
-  letter-spacing: var(--cn-tracking-label);
-  color: var(--cn-accent);
 }
 
 .cn-flow__step h3 {

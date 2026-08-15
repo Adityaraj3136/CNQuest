@@ -8,12 +8,12 @@ export const APP = {
   tagline: 'Master Computer Networks Through Interactive Challenges',
   subject: 'Computer Networks',
   version: '0.1.0',
-  /** Current development phase — surfaced in the footer for the academic demo. */
-  phase: 'Phase 11 — Adaptive Learning',
+  /** Current development phase, surfaced in the footer for the academic demo. */
+  phase: 'Phase 11 - Adaptive Learning',
 } as const;
 
 /**
- * The course owner's account. Mirrors `adminEmail()` in firestore.rules — change both together.
+ * The course owner's account. Mirrors `adminEmail()` in firestore.rules; change both together.
  *
  * This only decides what the *interface* offers. Firestore rules are what actually enforce it,
  * so editing this value in devtools reveals a dashboard whose every write is then refused.
@@ -56,6 +56,8 @@ export interface FeatureItem {
   icon: string;
   title: string;
   description: string;
+  /** Which cluster this belongs to on the landing page. Ten equal rows read as a data dump. */
+  group: 'Study' | 'Play' | 'Progress';
 }
 
 export const LANDING_FEATURES: readonly FeatureItem[] = [
@@ -63,51 +65,61 @@ export const LANDING_FEATURES: readonly FeatureItem[] = [
     icon: 'bi-book-half',
     title: 'Learn Computer Networks',
     description: 'Unit-wise revision notes from the OSI model to network security, written for quick recall.',
+    group: 'Study',
   },
   {
     icon: 'bi-lightning-charge',
     title: 'Quiz Blitz',
     description: 'Ten timed multiple-choice questions with instant feedback and explanations.',
+    group: 'Play',
   },
   {
     icon: 'bi-stopwatch',
     title: 'Rapid Fire',
     description: 'Sixty seconds, as many correct answers as you can chain together.',
+    group: 'Play',
   },
   {
     icon: 'bi-shield-shaded',
     title: 'Boss Battles',
     description: 'Defeat the Firewall Guardian and Subnet Overlord by answering unit questions correctly.',
+    group: 'Play',
   },
   {
     icon: 'bi-puzzle',
     title: 'Match & Pair',
     description: 'Pair protocols with ports, devices with layers, and terms with definitions.',
+    group: 'Play',
   },
   {
     icon: 'bi-question-diamond',
     title: 'Network Riddles',
-    description: 'Guess the protocol or device from a clue — hints cost you XP.',
+    description: 'Guess the protocol or device from a clue. Hints cost you XP.',
+    group: 'Play',
   },
   {
     icon: 'bi-grid-3x3',
     title: 'Word Search',
     description: 'Hunt networking vocabulary across generated grids in three difficulty modes.',
+    group: 'Play',
   },
   {
     icon: 'bi-star',
     title: 'XP, Levels & Streaks',
     description: 'Earn XP for every activity, climb the level ladder, and keep your daily streak alive.',
+    group: 'Progress',
   },
   {
     icon: 'bi-graph-up-arrow',
     title: 'Progress Tracking',
     description: 'Topic mastery, unit completion and accuracy trends in one analytics dashboard.',
+    group: 'Progress',
   },
   {
     icon: 'bi-wifi-off',
     title: 'Offline Learning',
     description: 'Install CN Quest, study offline, and let your results sync when you reconnect.',
+    group: 'Study',
   },
 ];
 
