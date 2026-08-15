@@ -7,6 +7,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  dailyQuest,
   lastActiveTopicId,
   overallProgress,
   recentPerformance,
@@ -134,3 +135,49 @@ test('the last active topic ignores mixed rounds', () => {
 });
 
 // Recommender tests moved to services/adaptive/adaptive.test.ts in Phase 11.
+
+// ---------------------------------------------------------------- daily quest
+
+test('the daily quest counts only correct answers from today', () => {
+  const today = new Date('2026-03-10T18:00:00');
+  const quest = dailyQuest(
+    [
+      attempt('2026-03-10T09:00:00', { correct: 6 }),
+      attempt('2026-03-09T22:00:00', { correct: 9 }),
+    ],
+    today,
+  );
+
+  assert.equal(quest.progress, 6);
+  assert.equal(quest.complete, false);
+});
+
+test('the daily quest reports completion once the target is reached', () => {
+  const today = new Date('2026-03-10T18:00:00');
+  const quest = dailyQuest(
+    [
+      attempt('2026-03-10T09:00:00', { correct: 7 }),
+      attempt('2026-03-10T17:00:00', { correct: 5 }),
+    ],
+    today,
+  );
+
+  assert.equal(quest.complete, true);
+});
+
+test('daily quest progress never exceeds the target', () => {
+  // Otherwise a 30-correct day renders a progress bar three times too long.
+  const today = new Date('2026-03-10T18:00:00');
+  const quest = dailyQuest([attempt('2026-03-10T09:00:00', { correct: 30, attempted: 30 })], today);
+
+  assert.equal(quest.progress, 10);
+  assert.equal(quest.percent, 100);
+});
+
+test('a day with no play reports zero rather than failing', () => {
+  const quest = dailyQuest([], new Date('2026-03-10T18:00:00'));
+
+  assert.equal(quest.progress, 0);
+  assert.equal(quest.percent, 0);
+  assert.equal(quest.complete, false);
+});

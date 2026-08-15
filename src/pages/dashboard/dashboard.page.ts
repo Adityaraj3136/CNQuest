@@ -28,39 +28,110 @@ const MODES = [
   { icon: 'bi-grid-3x3', name: 'Word Search', href: '#/games/word-search', note: 'Find words' },
 ] as const;
 
-function statHtml(label: string, value: string, meta = '', modifier = ''): string {
+/**
+ * The one thing a returning student should see first.
+ *
+ * The dashboard previously opened with four large statistics, which answered "how am I doing"
+ * before anyone had asked, and never answered "what do I do now". This does the reverse: one
+ * obvious action, with status compressed into a single row beneath it.
+ */
+function continueQuestHtml(data: DashboardData): string {
+  const { continueTopic, recommendedTopic, recommendation } = data;
+  const topic = continueTopic ?? recommendedTopic;
+
+  if (!topic) {
+    return `
+      <section class="cn-quest-hero cn-quest-hero--empty cn-rise cn-rise-1">
+        <p class="cn-quest-hero__eyebrow">Your first quest is waiting</p>
+        <h1 class="cn-quest-hero__title">Enter the Network</h1>
+        <p class="cn-quest-hero__meta">
+          Start with Introduction to Computer Networks and begin building your map of the subject.
+        </p>
+        <a class="btn btn-cn-primary" href="#/learn">Start first quest</a>
+      </section>
+    `;
+  }
+
+  const mastery = data.weakTopics.find((entry) => entry.progress.topicId === topic.id);
+  const percent = mastery ? Math.round(mastery.progress.mastery) : 0;
+  const resuming = continueTopic !== null;
+
   return `
-    <div class="cn-stat ${modifier}">
-      <span class="cn-stat__label">${escapeHtml(label)}</span>
-      <span class="cn-stat__value">${escapeHtml(value)}</span>
-      ${meta ? `<span class="cn-stat__meta">${escapeHtml(meta)}</span>` : ''}
-    </div>
+    <section class="cn-quest-hero cn-rise cn-rise-1" aria-labelledby="cn-quest-hero-title">
+      <div class="cn-quest-hero__body">
+        <p class="cn-quest-hero__eyebrow">${resuming ? 'Continue your quest' : 'Recommended next'}</p>
+        <h1 class="cn-quest-hero__title" id="cn-quest-hero-title">${escapeHtml(topic.title)}</h1>
+        <p class="cn-quest-hero__meta">
+          ${escapeHtml(topic.estimatedMinutes ? `${topic.estimatedMinutes} min read` : 'Short read')}
+          · ${percent}% mastered
+          ${resuming ? '' : `· ${escapeHtml(recommendation.reason)}`}
+        </p>
+
+        <div class="cn-quest-hero__bar" role="img" aria-label="${percent}% mastered">
+          <span style="width:${percent}%"></span>
+        </div>
+
+        <div class="cn-quest-hero__actions">
+          <a class="btn btn-cn-primary" href="#/learn/${escapeHtml(topic.id)}">Continue quest</a>
+          <a class="btn btn-cn-ghost" href="#/games/quiz?topic=${encodeURIComponent(topic.id)}">Practise now</a>
+        </div>
+      </div>
+
+      ${dailyQuestHtml(data)}
+    </section>
   `;
 }
 
-function levelPanelHtml(data: DashboardData): string {
-  const progress = levelProgress(data.profile.totalXP);
+/** Today's goal. Small, and deliberately the only thing competing with the hero action. */
+function dailyQuestHtml(data: DashboardData): string {
+  const { daily } = data;
 
   return `
-    <section class="cn-level cn-on-field cn-rise cn-rise-2" aria-label="Level and XP progress">
-      <div class="cn-level__top">
-        <div>
-          <span class="cn-label">Current level</span>
-          <div class="cn-level__number">${String(progress.level).padStart(2, '0')}</div>
-          <div class="cn-level__title">${escapeHtml(progress.title)}</div>
-        </div>
-        <div class="cn-level__xp">${progress.xpIntoLevel} / ${progress.xpForLevel} XP</div>
+    <aside class="cn-daily${daily.complete ? ' cn-daily--done' : ''}" aria-label="Daily quest">
+      <p class="cn-daily__label">Daily quest</p>
+      <p class="cn-daily__goal">Answer ${daily.target} questions correctly</p>
+
+      <div class="cn-daily__meter">
+        <div class="cn-daily__bar"><span style="width:${daily.percent}%"></span></div>
+        <span class="cn-daily__count">${daily.progress} / ${daily.target}</span>
       </div>
 
-      <div class="cn-progress cn-progress--reward">
-        <div class="cn-progress__bar" style="width:${progress.percent}%"></div>
-      </div>
+      <p class="cn-daily__reward">
+        ${daily.complete ? 'Complete' : `Reward +${daily.rewardXp} XP`}
+      </p>
+    </aside>
+  `;
+}
 
-      <div class="cn-level__foot">
-        <span>Total ${data.profile.totalXP} XP</span>
-        <span>${progress.percent}% to level ${progress.level + 1}</span>
-      </div>
-    </section>
+/** Level, streak, XP and mastery on one line, rather than four competing panels. */
+function statusRowHtml(data: DashboardData): string {
+  const progress = levelProgress(data.profile.totalXP);
+
+  const cells = [
+    { icon: 'bi-shield', value: `Level ${progress.level}`, meta: progress.title, tone: 'accent' },
+    {
+      icon: 'bi-fire',
+      value: `${data.profile.currentStreak} day${data.profile.currentStreak === 1 ? '' : 's'}`,
+      meta: data.streakAtRisk ? 'At risk today' : 'Streak',
+      tone: 'xp',
+    },
+    { icon: 'bi-star', value: `${data.profile.totalXP.toLocaleString()} XP`, meta: 'Earned', tone: 'xp' },
+    { icon: 'bi-graph-up', value: `${data.overallCompletion}%`, meta: 'Mastery', tone: 'mastered' },
+  ];
+
+  return `
+    <div class="cn-status cn-rise cn-rise-2">
+      ${cells
+        .map(
+          (cell) => `
+            <div class="cn-status__cell" data-tone="${cell.tone}">
+              <i class="bi ${cell.icon}" aria-hidden="true"></i>
+              <span class="cn-status__value">${escapeHtml(cell.value)}</span>
+              <span class="cn-status__meta">${escapeHtml(cell.meta)}</span>
+            </div>`,
+        )
+        .join('')}
+    </div>
   `;
 }
 
@@ -221,40 +292,9 @@ function guestNoticeHtml(): string {
 }
 
 function bodyHtml(data: DashboardData, isGuest: boolean): string {
-  const { profile, week } = data;
-  const accuracy =
-    profile.questionsAnswered === 0
-      ? '—'
-      : `${Math.round((profile.correctAnswers / profile.questionsAnswered) * 100)}%`;
-
   return `
-    <header class="cn-dash__head cn-rise cn-rise-1">
-      <div>
-        <span class="cn-label cn-label--marked">Dashboard</span>
-        <h1 class="cn-dash__greeting mt-2">Welcome back, ${escapeHtml(profile.name)}</h1>
-      </div>
-      <span class="cn-label ${data.streakAtRisk ? 'cn-label--reward' : ''}">
-        ${
-          data.streakAtRisk
-            ? 'Your streak lapsed — play today to start a new one'
-            : 'Ready to continue your networking quest?'
-        }
-      </span>
-    </header>
-
-    ${levelPanelHtml(data)}
-
-    <div class="cn-dash__stats cn-rise cn-rise-3">
-      ${statHtml(
-        'Daily streak',
-        `${profile.currentStreak}d`,
-        `Longest ${profile.longestStreak}d`,
-        'cn-stat--streak',
-      )}
-      ${statHtml('Games played', String(profile.gamesPlayed), 'All modes combined')}
-      ${statHtml('Accuracy', accuracy, `${profile.correctAnswers} of ${profile.questionsAnswered} correct`)}
-      ${statHtml('This week', `${week.xpEarned} XP`, `${week.games} games · ${week.questions} questions`)}
-    </div>
+    ${continueQuestHtml(data)}
+    ${statusRowHtml(data)}
 
     ${courseProgressHtml(data)}
     ${nextUpHtml(data)}

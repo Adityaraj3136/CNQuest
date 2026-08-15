@@ -33,17 +33,39 @@ export const PUBLIC_NAV: readonly NavItem[] = [
   { label: 'Install', href: '#/#install', icon: 'bi-download' },
 ];
 
-/** Navigation shown after sign-in. Screens arrive in later phases. */
+/**
+ * Primary navigation after sign-in. Five destinations, not ten.
+ *
+ * Ten equal-weight items forced a student to re-read the whole bar every visit and made
+ * nothing look important. These five answer "where am I going", and everything personal
+ * (profile, settings, sign out) moved into the account menu, where it is looked for
+ * deliberately rather than scanned past constantly.
+ */
 export const APP_NAV: readonly NavItem[] = [
-  { label: 'Dashboard', href: '#/dashboard', icon: 'bi-speedometer2' },
+  { label: 'Home', href: '#/dashboard', icon: 'bi-house' },
   { label: 'Learn', href: '#/learn', icon: 'bi-book' },
-  { label: 'Games', href: '#/games', icon: 'bi-controller' },
-  { label: 'Dictionary', href: '#/dictionary', icon: 'bi-journal-text' },
+  { label: 'Play', href: '#/games', icon: 'bi-controller' },
   { label: 'Progress', href: '#/progress', icon: 'bi-graph-up-arrow' },
+  { label: 'Library', href: '#/dictionary', icon: 'bi-journal-text' },
+];
+
+/**
+ * Everything that used to sit in the main bar. Reachable from the account menu, and on
+ * mobile from "More", so no destination was lost in the simplification.
+ */
+export const ACCOUNT_NAV: readonly NavItem[] = [
   { label: 'Achievements', href: '#/achievements', icon: 'bi-trophy' },
   { label: 'Leaderboard', href: '#/leaderboard', icon: 'bi-bar-chart-steps' },
   { label: 'Profile', href: '#/profile', icon: 'bi-person-circle' },
   { label: 'Settings', href: '#/settings', icon: 'bi-gear' },
+];
+
+/** Bottom bar on phones. Library and the account items live behind "More". */
+export const MOBILE_NAV: readonly NavItem[] = [
+  { label: 'Home', href: '#/dashboard', icon: 'bi-house' },
+  { label: 'Learn', href: '#/learn', icon: 'bi-book' },
+  { label: 'Play', href: '#/games', icon: 'bi-controller' },
+  { label: 'Progress', href: '#/progress', icon: 'bi-graph-up-arrow' },
 ];
 
 /** Appended to APP_NAV for the admin account only. */

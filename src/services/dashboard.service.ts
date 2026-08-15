@@ -9,9 +9,9 @@ import { activeStore, countersOf } from '@/services/progress.store';
 import { weakestTopics } from '@/services/mastery.logic';
 import { achievementProgress } from '@/services/achievement.logic';
 import { isStreakExpired } from '@/services/streak.logic';
-import { lastActiveTopicId, overallProgress, recentPerformance } from '@/services/insights.logic';
+import { dailyQuest, lastActiveTopicId, overallProgress, recentPerformance } from '@/services/insights.logic';
 import { activeEngine, buildStudentState } from '@/services/adaptive';
-import type { RecentPerformance } from '@/services/insights.logic';
+import type { DailyQuest, RecentPerformance } from '@/services/insights.logic';
 import type { Recommendation } from '@/services/adaptive/adaptive.types';
 import type { Achievement, Topic } from '@/models/content';
 import type { UserProgress } from '@/models/progress';
@@ -34,6 +34,8 @@ export interface DashboardData {
   continueTopic: Topic | null;
   weakTopics: WeakTopic[];
   week: RecentPerformance;
+  /** Today's goal, which is what makes coming back tomorrow feel like something. */
+  daily: DailyQuest;
   recommendation: Recommendation;
   recommendedTopic: Topic | null;
   recentAchievements: Achievement[];
@@ -106,6 +108,7 @@ export async function loadDashboard(): Promise<DashboardData | null> {
   return {
     profile,
     streakAtRisk: isStreakExpired(streakState),
+    daily: dailyQuest(attempts),
     overallCompletion: overallProgress(progress, topics.length),
     topicsStarted: progress.filter((entry) => entry.attempted > 0).length,
     topicsTotal: topics.length,

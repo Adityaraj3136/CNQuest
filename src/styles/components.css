@@ -407,3 +407,147 @@
 .cn-state .btn {
   margin-top: var(--cn-space-2);
 }
+
+/* ==================================================================== *
+ * Account menu and mobile tab bar (redesign)
+ * ==================================================================== */
+
+.cn-account {
+  position: relative;
+  flex: none;
+}
+
+.cn-account__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cn-space-2);
+  padding: var(--cn-space-2) var(--cn-space-3);
+  border: var(--cn-hairline);
+  border-radius: var(--cn-radius-pill);
+  background: var(--cn-paper-raised);
+  color: var(--cn-ink);
+  font-size: var(--cn-text-sm);
+  cursor: pointer;
+  transition: border-color var(--cn-duration-fast) var(--cn-ease-out);
+}
+
+.cn-account__trigger:hover {
+  border-color: var(--cn-rule-strong);
+}
+
+.cn-account__avatar {
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: var(--cn-radius-pill);
+  background: var(--cn-accent);
+  color: #fff;
+  font-size: var(--cn-text-xs);
+  font-weight: 700;
+}
+
+.cn-account__name {
+  max-width: 12ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cn-account__menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + var(--cn-space-2));
+  z-index: 50;
+  min-width: 15rem;
+  padding: var(--cn-space-3);
+  background: var(--cn-paper-raised);
+  border: var(--cn-hairline);
+  border-radius: var(--cn-radius-lg);
+  box-shadow: var(--cn-shadow-lift);
+}
+
+.cn-account__note {
+  margin: 0 0 var(--cn-space-2);
+  padding-inline: var(--cn-space-2);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cn-account__menu ul {
+  list-style: none;
+  margin: 0 0 var(--cn-space-2);
+  padding: 0;
+  border-bottom: var(--cn-hairline);
+  padding-bottom: var(--cn-space-2);
+}
+
+.cn-account__menu a {
+  display: flex;
+  align-items: center;
+  gap: var(--cn-space-3);
+  padding: var(--cn-space-2) var(--cn-space-2);
+  border-radius: var(--cn-radius-sm);
+  color: var(--cn-ink);
+  text-decoration: none;
+  font-size: var(--cn-text-sm);
+}
+
+.cn-account__menu a:hover,
+.cn-account__menu a[aria-current='page'] {
+  background: var(--cn-paper-sunken);
+}
+
+.cn-account__signout {
+  color: var(--cn-negative) !important;
+}
+
+/* --- Mobile tab bar --- */
+
+.cn-tabbar {
+  display: none;
+}
+
+@media (max-width: 767.98px) {
+  .cn-tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 45;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    background: var(--cn-paper-raised);
+    border-top: var(--cn-hairline);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .cn-tabbar__item {
+    display: grid;
+    justify-items: center;
+    gap: 2px;
+    padding: var(--cn-space-2) 0 var(--cn-space-3);
+    border: 0;
+    background: none;
+    color: var(--cn-ink-faint);
+    font-size: var(--cn-text-micro);
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .cn-tabbar__item i {
+    font-size: 1.15rem;
+  }
+
+  .cn-tabbar__item[aria-current='page'] {
+    color: var(--cn-accent);
+  }
+
+  /* Clears the bar so the last element on a page is never trapped underneath it. */
+  body.has-tabbar .app-main {
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  }
+}

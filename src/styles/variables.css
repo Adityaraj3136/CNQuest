@@ -1,40 +1,51 @@
 /**
- * CN Quest design tokens — "Technical Editorial".
+ * CN Quest design tokens — "Quiet Arcade".
  *
- * The idea: a networking instrument that happens to be a game. Ink on paper, hairline
- * rules, oversized display numerals, and monospace for anything that is *data* — XP,
- * timers, ports, masks, scores. One electric accent carries every interactive signal;
- * amber is reserved exclusively for reward (XP, streaks).
+ * A learning game a university would still take seriously. Warm paper, soft edges, generous
+ * space, and one electric blue meaning "this is the way forward". Colour is reserved for game
+ * state rather than decoration: amber is reward, emerald is mastered, violet is rare, grey is
+ * locked. A screen with nothing to celebrate stays neutral.
  *
  * Rules for anyone extending this:
- *   1. Data is monospace. Prose is sans. Never mix them up.
- *   2. Separation comes from hairline rules and space, not from boxes and shadows.
- *   3. One accent. If something needs to stand out, use scale or the rule, not a new colour.
+ *   1. Colour communicates state. If it is not XP, progress, success or a lock, it is grey.
+ *   2. Separation comes from space first, a soft surface second, a border only if needed.
+ *   3. Monospace is for data a student reads as a value: XP, levels, ports, masks.
+ *   4. Nothing is uppercase unless it is a genuine label of three words or fewer.
  */
 
 :root {
   color-scheme: light;
 
   /* ---- Ink & paper ---------------------------------------------------- */
-  --cn-paper: #f5f4f1;
+  --cn-paper: #fbfaf8;
   --cn-paper-raised: #ffffff;
-  --cn-paper-sunken: #edece8;
-  --cn-ink: #12151a;
-  --cn-ink-soft: #4a5058;
-  --cn-ink-faint: #878d96;
-  --cn-rule: #d9d7d1;
-  --cn-rule-strong: #b6b3ab;
+  --cn-paper-sunken: #f2f1ed;
+  --cn-ink: #16181d;
+  --cn-ink-soft: #545a63;
+  --cn-ink-faint: #8b919b;
+  --cn-rule: #e6e4de;
+  --cn-rule-strong: #cdcbc4;
 
   /* ---- Signal --------------------------------------------------------- */
   --cn-accent: #0b46ff;
   --cn-accent-deep: #0733bd;
-  --cn-accent-wash: #e8ecff;
+  --cn-accent-wash: #ecf0ff;
   --cn-reward: #ff8a00;
-  --cn-reward-wash: #fff0dd;
-  --cn-positive: #0a7a56;
-  --cn-positive-wash: #e2f4ee;
+  --cn-reward-wash: #fff4e5;
+  --cn-positive: #0f7a52;
+  --cn-positive-wash: #e6f5ef;
   --cn-negative: #c62b2b;
   --cn-negative-wash: #fbe9e9;
+
+  /* Game state. Each means one thing and is used nowhere else. */
+  --cn-xp: var(--cn-reward);
+  --cn-xp-wash: var(--cn-reward-wash);
+  --cn-mastered: var(--cn-positive);
+  --cn-mastered-wash: var(--cn-positive-wash);
+  --cn-special: #6d4aff;
+  --cn-special-wash: #efeaff;
+  --cn-locked: #a9aeb7;
+  --cn-locked-wash: #f1f1ef;
 
   /* Ink field — used for inverted bands, the hero and result screens. */
   --cn-field: #12151a;
@@ -65,8 +76,8 @@
 
   --cn-tracking-tight: -0.04em;
   --cn-tracking-snug: -0.02em;
-  --cn-tracking-wide: 0.08em;
-  --cn-tracking-label: 0.14em;
+  --cn-tracking-wide: 0.03em;
+  --cn-tracking-label: 0.07em;
 
   --cn-leading-display: 0.92;
   --cn-leading-tight: 1.15;
@@ -84,19 +95,21 @@
   --cn-space-9: 8rem;
 
   /* ---- Form ----------------------------------------------------------- */
-  /* Near-square. Editorial work does not round its corners. */
-  --cn-radius-sm: 2px;
-  --cn-radius-md: 3px;
-  --cn-radius-lg: 4px;
+  /* Soft, not bubbly. Controls stay tighter than the surfaces holding them. */
+  --cn-radius-sm: 6px;
+  --cn-radius-md: 8px;
+  --cn-radius-lg: 12px;
+  --cn-radius-xl: 16px;
   --cn-radius-pill: 999px;
 
   --cn-hairline: 1px solid var(--cn-rule);
-  --cn-hairline-strong: 1px solid var(--cn-ink);
+  --cn-hairline-strong: 1px solid var(--cn-rule-strong);
   --cn-border-heavy: 2px solid var(--cn-ink);
 
-  /* Shadows are near-absent by design; depth comes from the ink field and rules. */
-  --cn-shadow-sm: 0 1px 0 var(--cn-rule);
-  --cn-shadow-lift: 0 12px 30px -22px rgba(18, 21, 26, 0.5);
+  /* Depth is soft and short-range. A card should look lifted, never floating. */
+  --cn-shadow-sm: 0 1px 2px rgba(22, 24, 29, 0.05);
+  --cn-shadow-card: 0 1px 2px rgba(22, 24, 29, 0.04), 0 8px 20px -14px rgba(22, 24, 29, 0.28);
+  --cn-shadow-lift: 0 2px 4px rgba(22, 24, 29, 0.05), 0 16px 32px -18px rgba(22, 24, 29, 0.32);
   --cn-shadow-focus: 0 0 0 3px var(--cn-accent-wash), 0 0 0 4px var(--cn-accent);
 
   /* ---- Motion --------------------------------------------------------- */
@@ -107,14 +120,14 @@
   --cn-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 
   /* ---- Layout --------------------------------------------------------- */
-  --cn-header-height: 60px;
+  --cn-header-height: 64px;
   --cn-measure: 62ch;
   --cn-content-max: 1240px;
-  --cn-content-narrow: 760px;
+  --cn-content-narrow: 860px;
 
   /* Blueprint grid used as page atmosphere. */
   --cn-grid-size: 32px;
-  --cn-grid-line: rgba(18, 21, 26, 0.045);
+  --cn-grid-line: rgba(22, 24, 29, 0.028);
   --cn-grid-line-field: rgba(240, 239, 235, 0.06);
 }
 

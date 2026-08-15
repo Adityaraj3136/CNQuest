@@ -94,3 +94,47 @@ export function lastActiveTopicId(attempts: readonly GameAttempt[]): string | nu
 // The recommender that used to live here is now services/adaptive/rule-based.engine.ts,
 // behind the AdaptiveLearningEngine interface. Keeping a second copy here would have meant
 // two sources of truth for "what should this student do next".
+
+// ---------------------------------------------------------------- daily quest
+
+/** Correct answers needed to clear the daily quest, and what clearing it pays. */
+export const DAILY_QUEST_TARGET = 10;
+export const DAILY_QUEST_REWARD_XP = 75;
+
+export interface DailyQuest {
+  target: number;
+  /** Correct answers so far today, capped at the target so the bar cannot overfill. */
+  progress: number;
+  percent: number;
+  complete: boolean;
+  rewardXp: number;
+}
+
+/**
+ * Progress towards today's quest, measured in correct answers rather than rounds played.
+ *
+ * Counting rounds would reward opening and abandoning games; counting correct answers only
+ * moves when the student actually knew something. "Today" is the local calendar date, the
+ * same rule the streak uses, so the two can never disagree about when a day ended.
+ */
+export function dailyQuest(
+  attempts: readonly GameAttempt[],
+  today: Date = new Date(),
+  target: number = DAILY_QUEST_TARGET,
+): DailyQuest {
+  const key = toLocalDateKey(today);
+
+  const correctToday = attempts
+    .filter((attempt) => toLocalDateKey(new Date(attempt.createdAt)) === key)
+    .reduce((sum, attempt) => sum + attempt.correct, 0);
+
+  const progress = Math.min(correctToday, target);
+
+  return {
+    target,
+    progress,
+    percent: target === 0 ? 0 : Math.round((progress / target) * 100),
+    complete: correctToday >= target,
+    rewardXp: DAILY_QUEST_REWARD_XP,
+  };
+}

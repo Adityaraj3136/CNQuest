@@ -389,3 +389,194 @@ a.cn-mode-tile:focus .cn-mode-tile__note {
 .cn-badge-chip i {
   color: var(--cn-reward);
 }
+
+/* ==================================================================== *
+ * Quest hero, daily quest and status row (redesign)
+ * ==================================================================== */
+
+.cn-quest-hero {
+  display: grid;
+  gap: var(--cn-space-5);
+  padding: var(--cn-space-6);
+  margin-top: var(--cn-space-5);
+  background: var(--cn-paper-raised);
+  border: var(--cn-hairline);
+  border-radius: var(--cn-radius-xl);
+  box-shadow: var(--cn-shadow-card);
+}
+
+@media (min-width: 880px) {
+  .cn-quest-hero {
+    /* The action leads; today's goal sits beside it without competing for the first read. */
+    grid-template-columns: 1.55fr 1fr;
+    align-items: start;
+    gap: var(--cn-space-7);
+  }
+}
+
+.cn-quest-hero__eyebrow {
+  margin: 0 0 var(--cn-space-2);
+  font-size: var(--cn-text-sm);
+  font-weight: 600;
+  color: var(--cn-accent);
+}
+
+.cn-quest-hero__title {
+  margin: 0;
+  font-size: clamp(1.6rem, 1.1rem + 1.6vw, 2.4rem);
+  line-height: 1.15;
+  letter-spacing: var(--cn-tracking-snug);
+}
+
+.cn-quest-hero__meta {
+  margin: var(--cn-space-2) 0 0;
+  color: var(--cn-ink-soft);
+  font-size: var(--cn-text-sm);
+}
+
+.cn-quest-hero__bar {
+  height: 6px;
+  margin-top: var(--cn-space-4);
+  border-radius: var(--cn-radius-pill);
+  background: var(--cn-paper-sunken);
+  overflow: hidden;
+}
+
+.cn-quest-hero__bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--cn-accent);
+  transition: width var(--cn-duration-normal) var(--cn-ease-out);
+}
+
+.cn-quest-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cn-space-3);
+  margin-top: var(--cn-space-5);
+}
+
+.cn-quest-hero--empty {
+  grid-template-columns: 1fr;
+  text-align: left;
+}
+
+/* --- Daily quest --- */
+
+.cn-daily {
+  padding: var(--cn-space-4);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-xp-wash);
+  border: 1px solid rgb(255 138 0 / 0.22);
+}
+
+.cn-daily--done {
+  background: var(--cn-mastered-wash);
+  border-color: rgb(15 122 82 / 0.22);
+}
+
+.cn-daily__label {
+  margin: 0;
+  font-size: var(--cn-text-xs);
+  font-weight: 700;
+  color: var(--cn-xp);
+}
+
+.cn-daily--done .cn-daily__label {
+  color: var(--cn-mastered);
+}
+
+.cn-daily__goal {
+  margin: var(--cn-space-1) 0 var(--cn-space-3);
+  font-size: var(--cn-text-base);
+  font-weight: 600;
+}
+
+.cn-daily__meter {
+  display: flex;
+  align-items: center;
+  gap: var(--cn-space-3);
+}
+
+.cn-daily__bar {
+  flex: 1;
+  height: 6px;
+  border-radius: var(--cn-radius-pill);
+  background: rgb(22 24 29 / 0.08);
+  overflow: hidden;
+}
+
+.cn-daily__bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--cn-xp);
+  transition: width var(--cn-duration-normal) var(--cn-ease-out);
+}
+
+.cn-daily--done .cn-daily__bar span {
+  background: var(--cn-mastered);
+}
+
+.cn-daily__count {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.cn-daily__reward {
+  margin: var(--cn-space-3) 0 0;
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-soft);
+}
+
+/* --- Status row --- */
+
+.cn-status {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--cn-space-3);
+  margin-top: var(--cn-space-4);
+}
+
+@media (min-width: 720px) {
+  .cn-status {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.cn-status__cell {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas: 'icon value' 'icon meta';
+  column-gap: var(--cn-space-3);
+  align-items: center;
+  padding: var(--cn-space-3) var(--cn-space-4);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-paper-raised);
+  border: var(--cn-hairline);
+}
+
+.cn-status__cell i {
+  grid-area: icon;
+  font-size: 1.1rem;
+  color: var(--cn-ink-faint);
+}
+
+.cn-status__cell[data-tone='accent'] i { color: var(--cn-accent); }
+.cn-status__cell[data-tone='xp'] i { color: var(--cn-xp); }
+.cn-status__cell[data-tone='mastered'] i { color: var(--cn-mastered); }
+
+.cn-status__value {
+  grid-area: value;
+  font-weight: 650;
+  font-size: var(--cn-text-base);
+  font-variant-numeric: tabular-nums;
+}
+
+.cn-status__meta {
+  grid-area: meta;
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-faint);
+}
