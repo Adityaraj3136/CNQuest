@@ -24,46 +24,38 @@ let terms: DictionaryTerm[] = [];
 let viewed = new Set<string>();
 let query = '';
 let category: DictionaryCategory | typeof ALL = ALL;
-let letter: string | null = null;
 let selectedId: string | null = null;
 
 function root(): HTMLElement | null {
   return qs(`#${ROOT_ID}`);
 }
 
-/** Search, then category, then initial letter — narrowing in the order the controls read. */
+/** Search first, then category. Two controls narrow the whole library. */
 function visibleTerms(): DictionaryTerm[] {
   let result = searchDictionary(terms, query);
   if (category !== ALL) result = result.filter((term) => term.category === category);
-  if (letter) result = result.filter((term) => term.term.toUpperCase().startsWith(letter!));
   return result;
 }
 
-/** Only letters that actually have entries are offered. */
-function availableLetters(): string[] {
-  return [...new Set(terms.map((term) => term.term[0].toUpperCase()))].sort();
-}
 
 function controlsHtml(): string {
-  const letters = availableLetters();
-
   return `
     <div class="cn-dict__controls">
       <div class="cn-dict__search">
-        <label class="cn-label" for="cn-dict-search">Search</label>
+        <label class="visually-hidden" for="cn-dict-search">Search the library</label>
+        <i class="bi bi-search cn-dict__search-icon" aria-hidden="true"></i>
         <input
           class="form-control cn-dict__input"
           id="cn-dict-search"
           type="search"
           value="${escapeHtml(query)}"
-          placeholder="Term, definition or category"
+          placeholder="Search protocol, device or concept…"
           autocomplete="off"
           spellcheck="false"
         />
       </div>
 
       <div class="cn-dict__filters" role="group" aria-label="Filter by category">
-        <span class="cn-label">Category</span>
         <div class="cn-dict__chips">
           ${[ALL, ...DICTIONARY_CATEGORIES]
             .map(
@@ -76,19 +68,6 @@ function controlsHtml(): string {
         </div>
       </div>
 
-      <div class="cn-dict__filters" role="group" aria-label="Jump to letter">
-        <span class="cn-label">A–Z</span>
-        <div class="cn-dict__alpha">
-          <button type="button" class="cn-dict__letter" data-letter="" aria-pressed="${letter === null}">All</button>
-          ${letters
-            .map(
-              (entry) =>
-                `<button type="button" class="cn-dict__letter" data-letter="${entry}"
-                         aria-pressed="${letter === entry}">${entry}</button>`,
-            )
-            .join('')}
-        </div>
-      </div>
     </div>
   `;
 }
@@ -251,10 +230,6 @@ function bindControls(): void {
   const search = qs<HTMLInputElement>('#cn-dict-search');
   search?.addEventListener('input', () => {
     query = search.value;
-    letter = null; // a search overrides the A-Z jump, which would otherwise hide matches
-    qsa('.cn-dict__letter').forEach((button) =>
-      button.setAttribute('aria-pressed', String(button.getAttribute('data-letter') === '')),
-    );
     repaintResults();
   });
 
@@ -268,15 +243,6 @@ function bindControls(): void {
     });
   });
 
-  qsa<HTMLButtonElement>('.cn-dict__letter').forEach((button) => {
-    button.addEventListener('click', () => {
-      letter = button.dataset.letter || null;
-      qsa('.cn-dict__letter').forEach((entry) =>
-        entry.setAttribute('aria-pressed', String(entry === button)),
-      );
-      repaintResults();
-    });
-  });
 }
 
 const dictionaryPage: Page = {
@@ -296,7 +262,6 @@ const dictionaryPage: Page = {
 
     query = '';
     category = ALL;
-    letter = null;
 
     try {
       const [entries, alreadyViewed] = await Promise.all([getDictionary(), loadViewedTerms()]);
@@ -327,7 +292,6 @@ const dictionaryPage: Page = {
   unmount() {
     selectedId = null;
     query = '';
-    letter = null;
   },
 };
 

@@ -366,3 +366,139 @@
   color: var(--cn-ink-faint);
   text-decoration: line-through;
 }
+
+/* ==================================================================== *
+ * Quiz arena (redesign)
+ * ==================================================================== */
+
+.cn-quiz__count {
+  font-size: var(--cn-text-sm);
+  font-weight: 600;
+  color: var(--cn-ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.cn-quiz__stats {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cn-space-2);
+}
+
+.cn-quiz__xp {
+  padding: 2px var(--cn-space-2);
+  border-radius: var(--cn-radius-pill);
+  background: var(--cn-xp-wash);
+  color: var(--cn-xp);
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  font-weight: 700;
+}
+
+.cn-quiz__streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px var(--cn-space-2);
+  border-radius: var(--cn-radius-pill);
+  background: var(--cn-accent-wash);
+  color: var(--cn-accent);
+  font-size: var(--cn-text-xs);
+  font-weight: 700;
+}
+
+/* Answer targets are deliberately large: this is the one thing on the screen to touch. */
+.cn-options .cn-option {
+  border-radius: var(--cn-radius-lg);
+  padding: var(--cn-space-4) var(--cn-space-5);
+  min-height: 3.5rem;
+  transition:
+    border-color var(--cn-duration-fast) var(--cn-ease-out),
+    background-color var(--cn-duration-fast) var(--cn-ease-out),
+    transform var(--cn-duration-fast) var(--cn-ease-out);
+}
+
+.cn-options .cn-option:not(:disabled):hover {
+  border-color: var(--cn-accent);
+  background: var(--cn-accent-wash);
+}
+
+/* A physical press, so tapping an answer feels like committing to it. */
+.cn-options .cn-option:not(:disabled):active {
+  transform: scale(0.985);
+}
+
+.cn-option[data-state='correct'] {
+  animation: cn-answer-right 280ms var(--cn-ease-out);
+}
+
+.cn-option[data-state='wrong'] {
+  animation: cn-answer-wrong 280ms var(--cn-ease-out);
+}
+
+@keyframes cn-answer-right {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+@keyframes cn-answer-wrong {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+/* --- Feedback --- */
+
+.cn-feedback {
+  border-radius: var(--cn-radius-lg);
+  animation: cn-feedback-in 220ms var(--cn-ease-out);
+}
+
+@keyframes cn-feedback-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.cn-feedback__title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cn-space-2);
+  font-size: var(--cn-text-lg);
+  font-weight: 650;
+}
+
+.cn-feedback[data-correct='true'] .cn-feedback__title {
+  color: var(--cn-mastered);
+}
+
+.cn-feedback[data-correct='false'] .cn-feedback__title {
+  color: var(--cn-negative);
+}
+
+/* XP lands a beat after the answer resolves, so the reward reads as a consequence. */
+.cn-feedback__xp {
+  display: inline-block;
+  color: var(--cn-xp);
+  font-family: var(--cn-font-mono);
+  font-weight: 700;
+  animation: cn-xp-pop 340ms var(--cn-ease-out) 80ms both;
+}
+
+@keyframes cn-xp-pop {
+  0% { opacity: 0; transform: translateY(8px) scale(0.9); }
+  60% { opacity: 1; transform: translateY(-2px) scale(1.06); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cn-option[data-state='correct'],
+  .cn-option[data-state='wrong'],
+  .cn-feedback,
+  .cn-feedback__xp {
+    animation: none;
+  }
+
+  .cn-options .cn-option:not(:disabled):active {
+    transform: none;
+  }
+}

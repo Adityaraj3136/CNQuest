@@ -253,3 +253,85 @@
     grid-column: 1 / -1;
   }
 }
+
+/* ==================================================================== *
+ * Rank header (redesign)
+ * ==================================================================== */
+
+.cn-rank {
+  padding: var(--cn-space-6);
+  margin-top: var(--cn-space-5);
+  border-radius: var(--cn-radius-xl);
+  background: var(--cn-paper-raised);
+  border: var(--cn-hairline);
+  box-shadow: var(--cn-shadow-card);
+}
+
+.cn-rank__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cn-space-4);
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.cn-rank__level {
+  margin: 0;
+  font-size: var(--cn-text-sm);
+  font-weight: 600;
+  color: var(--cn-accent);
+}
+
+.cn-rank__title {
+  margin: var(--cn-space-1) 0 0;
+  font-size: clamp(1.5rem, 1.1rem + 1.4vw, 2.1rem);
+  letter-spacing: var(--cn-tracking-snug);
+}
+
+.cn-rank__xp {
+  margin: 0;
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.cn-rank__xp span {
+  color: var(--cn-xp);
+  font-weight: 700;
+}
+
+.cn-rank__bar {
+  height: 10px;
+  margin-top: var(--cn-space-4);
+  border-radius: var(--cn-radius-pill);
+  background: var(--cn-paper-sunken);
+  overflow: hidden;
+}
+
+.cn-rank__bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--cn-xp), #ffb347);
+  transition: width var(--cn-duration-slow) var(--cn-ease-out);
+}
+
+.cn-rank__next {
+  margin: var(--cn-space-3) 0 0;
+  font-size: var(--cn-text-sm);
+  color: var(--cn-ink-soft);
+}
+
+.cn-prog__figures {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--cn-space-3);
+  margin-top: var(--cn-space-4);
+}
+
+@media (min-width: 760px) {
+  .cn-prog__figures {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

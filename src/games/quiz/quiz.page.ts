@@ -33,11 +33,23 @@ let topicLabel = 'Computer Networks';
 
 // ---------------------------------------------------------------- rendering
 
+/**
+ * What the student is playing for, right now.
+ *
+ * A running streak only appears once it is worth protecting. Showing "Streak 0" on the first
+ * question sets a target that has already been missed, which is the opposite of encouraging.
+ */
 function statChipsHtml(): string {
   const view = engine!.view();
+  const xpAvailable = view.question.difficulty === 'hard' ? 15 : view.question.difficulty === 'medium' ? 12 : 10;
+
   return `
-    <span>Correct <b>${view.score}</b></span>
-    <span>Streak <b>${view.currentStreak}</b></span>
+    <span class="cn-quiz__xp">+${xpAvailable} XP</span>
+    ${
+      view.currentStreak >= 2
+        ? `<span class="cn-quiz__streak"><i class="bi bi-fire" aria-hidden="true"></i>${view.currentStreak}</span>`
+        : ''
+    }
   `;
 }
 
@@ -82,7 +94,7 @@ function questionHtml(): string {
   return `
     <div class="cn-quiz__bar">
       <span class="cn-quiz__count">
-        Q${String(view.questionNumber).padStart(2, '0')} / ${String(view.totalQuestions).padStart(2, '0')}
+        Question ${view.questionNumber} <span aria-hidden="true">/</span> ${view.totalQuestions}
       </span>
       <span class="cn-quiz__stats">${statChipsHtml()}</span>
     </div>
@@ -106,12 +118,17 @@ function questionHtml(): string {
 
 function feedbackHtml(answer: AnsweredQuestion): string {
   const timedOut = answer.selectedAnswer === null;
-  const heading = answer.isCorrect ? '✓ Correct' : timedOut ? '✗ Time up' : '✗ Incorrect';
+  // "Not quite" rather than "Incorrect": the student already knows they got it wrong, and
+  // the next twenty seconds go better if they are not being told off first.
+  const heading = answer.isCorrect ? 'Correct' : timedOut ? 'Time up' : 'Not quite';
 
   return `
     <div class="cn-feedback" data-correct="${answer.isCorrect}">
       <div class="cn-feedback__head">
-        <span>${heading}</span>
+        <span class="cn-feedback__title">
+          <i class="bi ${answer.isCorrect ? 'bi-check-circle-fill' : 'bi-x-circle'}" aria-hidden="true"></i>
+          ${heading}
+        </span>
         ${answer.isCorrect ? `<span class="cn-feedback__xp">+${answer.xpEarned} XP</span>` : ''}
       </div>
       ${
@@ -122,7 +139,7 @@ function feedbackHtml(answer: AnsweredQuestion): string {
       <p>${escapeHtml(answer.explanation)}</p>
       <div class="cn-feedback__actions">
         <button type="button" class="btn btn-cn-primary" id="cn-next-btn">
-          Next <i class="bi bi-arrow-right" aria-hidden="true"></i>
+          Next question <i class="bi bi-arrow-right" aria-hidden="true"></i>
         </button>
       </div>
     </div>

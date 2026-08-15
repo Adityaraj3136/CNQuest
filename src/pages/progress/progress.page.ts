@@ -37,22 +37,45 @@ function statHtml(label: string, value: string, meta = ''): string {
   `;
 }
 
+/**
+ * Progress opens with the student's rank, not with eight statistics.
+ *
+ * Eight equal tiles is a business dashboard: it reports on someone rather than to them. The
+ * level and the XP still owed to the next one is what a player actually wants to know, so it
+ * gets the space, and the counting is demoted to a single row underneath.
+ */
 function headlineHtml(report: ProgressReport): string {
   const level = levelProgress(report.profile.totalXP);
+  const xpToNext = Math.max(0, level.xpForLevel - level.xpIntoLevel);
+
+  // "Mastered" uses the same 80% bar as a unit, so Learn and Progress cannot disagree.
+  const allTopics = report.units.flatMap((row) => row.topics);
+  const mastered = allTopics.filter((row) => (row.progress?.mastery ?? 0) >= 80).length;
 
   return `
-    <div class="cn-dash__stats cn-rise cn-rise-2">
-      ${statHtml('Total XP', String(report.profile.totalXP), `Level ${level.level} · ${level.title}`)}
-      ${statHtml('Course complete', `${report.overallCompletion}%`, 'Mastery across all topics')}
-      ${statHtml('Accuracy', `${report.overallAccuracy}%`, `${report.correctAnswers} of ${report.questionsAnswered} correct`)}
-      ${statHtml('Streak', `${report.profile.currentStreak}d`, `Longest ${report.profile.longestStreak}d`)}
-    </div>
+    <section class="cn-rank cn-rise cn-rise-2" aria-label="Level progress">
+      <div class="cn-rank__head">
+        <div>
+          <p class="cn-rank__level">Level ${level.level}</p>
+          <h2 class="cn-rank__title">${escapeHtml(level.title)}</h2>
+        </div>
+        <p class="cn-rank__xp">
+          <span>${level.xpIntoLevel.toLocaleString()}</span> / ${level.xpForLevel.toLocaleString()} XP
+        </p>
+      </div>
 
-    <div class="cn-dash__stats cn-rise cn-rise-3">
-      ${statHtml('Games played', String(report.profile.gamesPlayed), `${report.minutesPlayed} minutes total`)}
-      ${statHtml('Boss victories', String(report.bossWins), 'Across all bosses')}
-      ${statHtml('Achievements', `${report.achievementsUnlocked}/${report.achievementsTotal}`, 'Badges unlocked')}
-      ${statHtml('Questions', String(report.questionsAnswered), 'Lifetime attempts')}
+      <div class="cn-rank__bar"><span style="width:${level.percent}%"></span></div>
+
+      <p class="cn-rank__next">
+        ${xpToNext === 0 ? 'Ready to level up' : `${xpToNext.toLocaleString()} XP to level ${level.level + 1}`}
+      </p>
+    </section>
+
+    <div class="cn-prog__figures cn-rise cn-rise-3">
+      ${statHtml('Overall mastery', `${report.overallCompletion}%`, 'Across the syllabus')}
+      ${statHtml('Topics mastered', `${mastered}/${allTopics.length}`, 'At 80% or above')}
+      ${statHtml('Current streak', `${report.profile.currentStreak}d`, `Longest ${report.profile.longestStreak}d`)}
+      ${statHtml('Questions answered', String(report.questionsAnswered), `${report.overallAccuracy}% correct`)}
     </div>
   `;
 }
