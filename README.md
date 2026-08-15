@@ -8,11 +8,15 @@ levels, daily streaks, achievements and topic-wise mastery tracking.
 
 It is designed as a **supplement to textbooks and classroom teaching**, not a replacement.
 
-> **Status: Phase 12 — feature complete.** Every phase of the specification is built: six game
-> modes, the gamification engine, dashboard, dictionary, analytics, an installable offline-capable
-> PWA and a two-implementation adaptive engine. 156 automated self-checks pass, the security rules
-> are hardened, and the manual test plan lives in [TESTING.md](TESTING.md). Deployment needs only
-> your Firebase project.
+> **Status: live and feature complete.** Six game modes, the gamification engine, dashboard,
+> quest-based Learn, networking library, progression screen, leaderboard, achievements, an
+> admin content workspace, an installable offline-capable PWA and a two-implementation adaptive
+> engine. **239 automated self-checks pass**, the security rules are hardened and deployed, and
+> the manual test plan lives in [TESTING.md](TESTING.md).
+>
+> **Live:** [cn-quest.web.app](https://cn-quest.web.app) (Firebase Hosting) and
+> [adityaraj3136.github.io/CNQuest](https://adityaraj3136.github.io/CNQuest/) (GitHub Pages).
+> Both serve the same build against the same Firestore project.
 
 ---
 
@@ -217,29 +221,40 @@ and the adaptive learning engine.
 
 ---
 
-## Design system — "Technical Editorial"
+## Design system — "Quiet Arcade"
 
-CN Quest commits to one visual direction: **a networking instrument that happens to be a game.**
-Ink on paper, hairline rules, oversized display type, and monospace for anything that is *data*.
+CN Quest is **a learning game a university would still take seriously.** Warm paper, soft edges,
+generous space, and one electric blue meaning "this is the way forward".
 
 | Element | Decision |
 | --- | --- |
-| Canvas | Warm paper `#f5f4f1` under a faint blueprint grid — drafting paper, not a blank page |
-| Ink | Near-black `#12151a`; an inverted "field" panel carries weight on hero, dashboard and results |
-| Accent | One electric blue `#0b46ff` for every interactive signal |
+| Canvas | Warm off-white `#fbfaf8`; a faint blueprint grid on the hero and syllabus only |
+| Ink | Near-black `#16181d` for headings, softer `#545a63` for prose |
+| Accent | One electric blue `#0b46ff` for every interactive signal and active state |
 | Reward | Amber `#ff8a00`, reserved **exclusively** for XP and streaks |
-| Type | System sans for prose; monospace for all data (XP, timers, scores, ports, masks) |
-| Radius | 2-4px. Editorial work does not round its corners |
-| Depth | Rules and space, not shadows and floating cards |
-| Motion | One staged rise on load, one packet-trace line that draws itself, a draining timer rule |
+| Mastered | Emerald `#0f7a52` for a finished topic or unit |
+| Rare | Violet `#6d4aff` for bosses and level-ups, nothing else |
+| Locked | Grey `#a9aeb7` for content not yet reached |
+| Type | Sans for everything readable; monospace only for values (XP, timers, ports, masks) |
+| Radius | 6px controls, 8px buttons, 12px cards, 16px feature panels. Nothing larger |
+| Depth | Short-range shadows. A card looks lifted, never floating |
 
-Three rules for anyone extending it (also stated at the top of `variables.css`):
+Four rules for anyone extending it (also stated at the top of `variables.css`):
 
-1. **Data is monospace, prose is sans.** Never mix them up.
-2. **Separation comes from hairline rules and space**, not from boxes and shadows.
-3. **One accent.** If something must stand out, use scale or a rule — not a new colour.
+1. **Colour communicates state.** If it is not XP, progress, success or a lock, it is grey.
+2. **Separation comes from space first**, a soft surface second, a border only if needed.
+3. **Monospace is for values a student reads as data**, not for interface text.
+4. **Nothing is uppercase** unless it is a genuine label of three words or fewer.
 
-No web fonts: the app must install and run offline, and the artifact CSP would block a CDN anyway.
+Games take this further into a **session mode**: entering any mode drops the navbar, footer and
+tab bar entirely, replacing them with a 64px HUD carrying exit, progress, streak, XP and timer.
+The blueprint grid switches off during a round. A game is a focused task, and the site chrome
+around it was the main thing making the modes read as pages that happened to contain a quiz.
+
+The Library deliberately runs quieter than the games: no XP, no streaks, no HUD. It is a
+reference tool used during revision, and the contrast is the point.
+
+No web fonts: the app must install and run offline, and a CDN link would be blocked anyway.
 Character comes from scale, weight, tracking and case instead.
 
 Bootstrap 5 is still the base layer (reset, grid, form controls, spacing utilities) as the project
@@ -425,7 +440,7 @@ The attack cases to run against a live project are in [TESTING.md](TESTING.md#7-
 ## Deployment
 
 ```bash
-npm run verify                 # typecheck + 156 tests + production build
+npm run verify                 # typecheck + 239 tests + production build
 npx firebase-tools login
 npx firebase-tools use --add   # select your Firebase project
 npm run deploy                 # verify, then deploy hosting + rules
@@ -435,8 +450,28 @@ Targeted deploys:
 
 ```bash
 npm run deploy:hosting         # app only
-npm run deploy:rules           # security rules only — do this before students register
+npm run deploy:rules           # Firestore rules only — do this before students register
+npx firebase-tools deploy --only firestore:indexes   # composite indexes
+npx firebase-tools deploy --only storage             # Storage rules, once Storage is enabled
 ```
+
+### Two hosts
+
+The app is deployed twice from one build:
+
+| Host | URL | How |
+| --- | --- | --- |
+| Firebase Hosting | `cn-quest.web.app` | `npm run deploy:hosting` |
+| GitHub Pages | `adityaraj3136.github.io/CNQuest/` | `.github/workflows/deploy-pages.yml` on push to `main` |
+
+Pages must be set to source **GitHub Actions**, not a branch: the repository root holds source,
+and GitHub serves `.ts` as `video/mp2t`, which the browser refuses to execute. The workflow
+builds with `BASE_PATH=/CNQuest/` so every asset URL carries the project-site prefix, and reads
+the six `VITE_FIREBASE_*` values from repository secrets.
+
+Google sign-in is more reliable on the Firebase-hosted origin. The popup loads a hidden frame
+from the auth domain, and serving the app from an unrelated origin can break it; the app falls
+back to a full-page redirect when that happens.
 
 `firebase.json` serves `dist/`, rewrites all paths to `index.html`, applies immutable caching to
 hashed assets, and leaves `index.html` and the manifest uncached so updates are picked up.
@@ -470,11 +505,11 @@ public-safe slice of `users/{uid}`, written by the owner on every profile save.
 ## Testing
 
 ```bash
-npm run verify        # typecheck + 156 self-checks + production build
+npm run verify        # typecheck + 239 self-checks + production build
 npm run test:units    # self-checks only
 ```
 
-**156 automated self-checks** run on Node's built-in test runner with no framework — see the
+**239 automated self-checks** run on Node's built-in test runner with no framework — see the
 coverage table in [TESTING.md](TESTING.md#1-automated-coverage). They cover the logic that
 silently breaks a gamified app: streak dates across DST and year boundaries, mastery that must
 never exceed 100, achievements that must never award twice, seed-data cross-references, the
