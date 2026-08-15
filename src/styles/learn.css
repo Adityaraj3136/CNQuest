@@ -20,10 +20,6 @@
 
 /* --- Unit --- */
 
-.cn-unit {
-  margin-bottom: var(--cn-space-7);
-}
-
 .cn-unit__head {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -31,28 +27,6 @@
   align-items: baseline;
   padding-bottom: var(--cn-space-3);
   border-bottom: var(--cn-hairline-strong);
-}
-
-.cn-unit__number {
-  font-family: var(--cn-font-mono);
-  font-size: clamp(1.5rem, 1rem + 1.6vw, 2.25rem);
-  font-weight: 700;
-  line-height: 1;
-  color: var(--cn-accent);
-  letter-spacing: var(--cn-tracking-tight);
-}
-
-.cn-unit__title {
-  font-size: var(--cn-text-xl);
-  text-transform: uppercase;
-  letter-spacing: var(--cn-tracking-snug);
-}
-
-.cn-unit__desc {
-  grid-column: 2;
-  color: var(--cn-ink-soft);
-  font-size: var(--cn-text-sm);
-  max-width: var(--cn-measure);
 }
 
 /* --- Topic rows --- */
@@ -131,38 +105,6 @@
 }
 
 /* --- Topic detail --- */
-
-.cn-topic {
-  padding-block: var(--cn-space-6) var(--cn-space-8);
-  display: grid;
-  gap: var(--cn-space-6);
-  align-items: start;
-}
-
-@media (min-width: 992px) {
-  .cn-topic {
-    grid-template-columns: minmax(0, 1fr) minmax(260px, 22rem);
-    gap: var(--cn-space-8);
-  }
-}
-
-.cn-topic__breadcrumb {
-  font-family: var(--cn-font-mono);
-  font-size: var(--cn-text-micro);
-  letter-spacing: var(--cn-tracking-wide);
-  text-transform: uppercase;
-  color: var(--cn-ink-faint);
-  margin-bottom: var(--cn-space-3);
-}
-
-.cn-topic__title {
-  font-size: var(--cn-text-3xl);
-  text-transform: uppercase;
-  letter-spacing: var(--cn-tracking-tight);
-  line-height: var(--cn-leading-tight);
-  padding-bottom: var(--cn-space-4);
-  border-bottom: var(--cn-hairline-strong);
-}
 
 .cn-topic__overview {
   font-size: var(--cn-text-lg);
@@ -262,35 +204,8 @@
 
 /* --- Aside --- */
 
-.cn-topic__aside {
-  display: grid;
-  gap: var(--cn-space-5);
-  border-top: var(--cn-hairline-strong);
-  padding-top: var(--cn-space-4);
-}
-
 /* Sticky only once there is a second column to stick beside. In the single-column mobile
    layout it would pin mid-scroll and cover the notes. */
-@media (min-width: 992px) {
-  .cn-topic__aside {
-    position: sticky;
-    top: calc(var(--cn-header-height) + var(--cn-space-4));
-  }
-}
-
-.cn-topic__aside section {
-  display: grid;
-  gap: var(--cn-space-3);
-}
-
-.cn-topic__aside h2 {
-  font-family: var(--cn-font-mono);
-  font-size: var(--cn-text-micro);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--cn-tracking-label);
-  color: var(--cn-ink-faint);
-}
 
 .cn-topic__actions {
   display: grid;
@@ -610,9 +525,6 @@
  * ==================================================================== */
 
 /* The grid made a reading page look like documentation. It stops at the lesson. */
-.cn-topic {
-  background: var(--cn-paper);
-}
 
 .cn-reading {
   position: sticky;
@@ -634,11 +546,21 @@
   display: grid;
   gap: var(--cn-space-6);
   padding-block: var(--cn-space-5) var(--cn-space-8);
+  background: var(--cn-paper);
 }
 
 @media (min-width: 1020px) {
+  /*
+   * The reading column is sized here rather than by a max-width on the article. Capping the
+   * article inside a 1fr column left it floating against the left edge with a wide dead gap
+   * before the companion, which is what made the page look unstructured.
+   *
+   * Sizing the column instead, and centring the pair, keeps the measure right and the two
+   * columns together.
+   */
   .cn-topic {
-    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-columns: minmax(0, 68ch) 300px;
+    justify-content: center;
     gap: var(--cn-space-7);
     align-items: start;
   }
@@ -646,7 +568,7 @@
 
 /* 68ch keeps a line at a comfortable length regardless of viewport. */
 .cn-lesson__article {
-  max-width: 68ch;
+  min-width: 0;
 }
 
 .cn-topic__breadcrumb {
@@ -793,6 +715,7 @@
   display: grid;
   gap: var(--cn-space-4);
   align-content: start;
+  grid-row: 1;
 }
 
 @media (min-width: 1020px) {
@@ -878,6 +801,7 @@
   border-radius: var(--cn-radius-xl);
   background: var(--cn-accent-wash);
   border: 1px solid rgb(11 70 255 / 0.16);
+  padding: var(--cn-space-5);
 }
 
 .cn-lesson__practice h2 {
@@ -1021,17 +945,9 @@
   font-size: var(--cn-text-lg);
 }
 
-.cn-lesson__practice {
-  padding: var(--cn-space-5);
-}
-
 /* The companion sat below the article because a stray closing tag put the practice card and
    the navigation into their own grid cells. With that fixed, this keeps it aligned to the top
    of the first row on every screen size. */
-.cn-companion {
-  grid-row: 1;
-}
-
 @media (max-width: 1019.98px) {
   .cn-companion {
     grid-row: auto;
