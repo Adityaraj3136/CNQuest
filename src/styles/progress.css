@@ -335,3 +335,494 @@
     grid-template-columns: repeat(4, 1fr);
   }
 }
+
+/* ==================================================================== *
+ * Player progression (redesign)
+ * ==================================================================== */
+
+.cn-prog__head {
+  padding-top: var(--cn-space-5);
+}
+
+.cn-prog__title {
+  margin: 0;
+  font-size: clamp(1.75rem, 1.3rem + 1.8vw, 2.4rem);
+  letter-spacing: var(--cn-tracking-snug);
+}
+
+.cn-prog__sub {
+  margin: var(--cn-space-2) 0 0;
+  color: var(--cn-ink-soft);
+}
+
+/* --- Level: compact, and the next title is the point of the bar --- */
+
+.cn-lvl {
+  display: grid;
+  gap: var(--cn-space-5);
+  margin-top: var(--cn-space-5);
+  padding: var(--cn-space-5);
+  border-radius: var(--cn-radius-xl);
+  background: var(--cn-paper-raised);
+  border: var(--cn-hairline);
+}
+
+@media (min-width: 760px) {
+  .cn-lvl {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: var(--cn-space-7);
+  }
+}
+
+.cn-lvl__num {
+  margin: 0;
+  font-size: var(--cn-text-xs);
+  font-weight: 700;
+  color: var(--cn-ink-faint);
+}
+
+.cn-lvl__title {
+  margin: 2px 0 var(--cn-space-4);
+  font-size: clamp(1.4rem, 1.1rem + 1vw, 1.85rem);
+  letter-spacing: var(--cn-tracking-snug);
+}
+
+.cn-lvl__bar {
+  height: 10px;
+  border-radius: var(--cn-radius-pill);
+  background: var(--cn-paper-sunken);
+  overflow: hidden;
+}
+
+.cn-lvl__bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--cn-xp);
+  transition: width var(--cn-duration-slow) var(--cn-ease-out);
+}
+
+.cn-lvl__xp {
+  margin: var(--cn-space-2) 0 0;
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.cn-lvl__xp b {
+  color: var(--cn-xp);
+}
+
+/* The next level is an unlock, so it is named rather than counted down to. */
+.cn-lvl__next {
+  padding: var(--cn-space-4);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-special-wash);
+  min-width: 12rem;
+}
+
+.cn-lvl__nextlabel {
+  margin: 0;
+  font-size: var(--cn-text-micro);
+  font-weight: 700;
+  letter-spacing: var(--cn-tracking-label);
+  color: var(--cn-special);
+}
+
+.cn-lvl__nexttitle {
+  margin: var(--cn-space-1) 0 0;
+  font-weight: 700;
+  font-size: var(--cn-text-base);
+}
+
+.cn-lvl__nextmeta {
+  margin: 2px 0 0;
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-soft);
+}
+
+/* --- Metrics --- */
+
+.cn-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--cn-space-3);
+  margin-top: var(--cn-space-4);
+}
+
+@media (min-width: 760px) {
+  .cn-metrics {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.cn-metric {
+  padding: var(--cn-space-4);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-paper-raised);
+  border: var(--cn-hairline);
+}
+
+.cn-metric__label {
+  margin: 0;
+  font-size: var(--cn-text-xs);
+  font-weight: 650;
+  color: var(--cn-ink-faint);
+}
+
+.cn-metric__value {
+  margin: var(--cn-space-1) 0 0;
+  font-size: clamp(1.5rem, 1.2rem + 1vw, 1.9rem);
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.cn-metric[data-tone="accent"] .cn-metric__value { color: var(--cn-accent); }
+.cn-metric[data-tone="mastered"] .cn-metric__value { color: var(--cn-mastered); }
+.cn-metric[data-tone="xp"] .cn-metric__value { color: var(--cn-xp); }
+
+.cn-metric__meta {
+  margin: var(--cn-space-1) 0 0;
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-faint);
+}
+
+/* --- Next goal --- */
+
+.cn-goal {
+  margin-top: var(--cn-space-5);
+  padding: var(--cn-space-6);
+  border-radius: var(--cn-radius-xl);
+  background: var(--cn-accent-wash);
+  border: 1px solid rgb(11 70 255 / 0.16);
+}
+
+/* A lapsing streak is the one goal with a deadline, so it is coloured like one. */
+.cn-goal[data-kind="keep-streak"] {
+  background: var(--cn-xp-wash);
+  border-color: rgb(255 138 0 / 0.24);
+}
+
+.cn-goal__label {
+  margin: 0;
+  font-size: var(--cn-text-xs);
+  font-weight: 700;
+  color: var(--cn-accent);
+}
+
+.cn-goal[data-kind="keep-streak"] .cn-goal__label {
+  color: var(--cn-xp);
+}
+
+.cn-goal__title {
+  margin: var(--cn-space-2) 0 0;
+  font-size: var(--cn-text-xl);
+  letter-spacing: var(--cn-tracking-snug);
+}
+
+.cn-goal__detail {
+  margin: var(--cn-space-2) 0 var(--cn-space-4);
+  color: var(--cn-ink-soft);
+  font-size: var(--cn-text-sm);
+}
+
+/* --- The network metaphor --- */
+
+.cn-journey {
+  margin-top: var(--cn-space-7);
+}
+
+.cn-journey__title {
+  margin: 0;
+  font-size: var(--cn-text-xl);
+  letter-spacing: var(--cn-tracking-snug);
+}
+
+.cn-journey__sub {
+  margin: var(--cn-space-1) 0 0;
+  color: var(--cn-ink-soft);
+  font-size: var(--cn-text-sm);
+}
+
+.cn-hops {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  margin: var(--cn-space-5) 0 0;
+  padding: 0;
+}
+
+.cn-hop {
+  display: grid;
+  justify-items: center;
+  gap: var(--cn-space-2);
+  flex: 1;
+  position: relative;
+}
+
+/* The link between hops, drawn behind the dots. */
+.cn-hop + .cn-hop::before {
+  content: "";
+  position: absolute;
+  right: 50%;
+  left: -50%;
+  top: 7px;
+  height: 2px;
+  background: var(--cn-rule);
+}
+
+.cn-hop[data-on="true"] + .cn-hop::before {
+  background: var(--cn-accent);
+}
+
+.cn-hop__dot {
+  position: relative;
+  z-index: 1;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--cn-radius-pill);
+  background: var(--cn-paper);
+  border: 2px solid var(--cn-rule-strong);
+}
+
+.cn-hop[data-on="true"] .cn-hop__dot {
+  background: var(--cn-accent);
+  border-color: var(--cn-accent);
+}
+
+.cn-hop__label {
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-faint);
+}
+
+.cn-hop[data-on="true"] .cn-hop__label {
+  color: var(--cn-ink);
+  font-weight: 600;
+}
+
+/* --- The unit path --- */
+
+.cn-path {
+  list-style: none;
+  margin: var(--cn-space-6) 0 0;
+  padding: 0;
+}
+
+.cn-path__unit {
+  position: relative;
+  padding-left: var(--cn-space-6);
+  padding-bottom: var(--cn-space-4);
+}
+
+/* The connecting line between unit nodes: the syllabus as a route. */
+.cn-path__unit:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 20px;
+  bottom: 0;
+  width: 2px;
+  background: var(--cn-rule);
+}
+
+.cn-path__node {
+  position: absolute;
+  left: 0;
+  top: 10px;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--cn-radius-pill);
+  background: var(--cn-paper);
+  border: 2px solid var(--cn-rule-strong);
+}
+
+.cn-path__unit[data-state="mastered"] .cn-path__node {
+  background: var(--cn-mastered);
+  border-color: var(--cn-mastered);
+}
+
+.cn-path__unit[data-state="current"] .cn-path__node {
+  background: var(--cn-accent);
+  border-color: var(--cn-accent);
+  box-shadow: 0 0 0 4px var(--cn-accent-wash);
+}
+
+.cn-path__unit[data-state="started"] .cn-path__node {
+  border-color: var(--cn-accent);
+}
+
+.cn-path summary {
+  display: flex;
+  align-items: center;
+  gap: var(--cn-space-3);
+  cursor: pointer;
+  padding: var(--cn-space-2) 0;
+}
+
+.cn-path__num {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-faint);
+}
+
+.cn-path__name {
+  font-weight: 650;
+  flex: 1;
+  min-width: 0;
+}
+
+.cn-path__band {
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-faint);
+}
+
+.cn-path__pct {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-sm);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.cn-path__unit[data-state="mastered"] .cn-path__pct { color: var(--cn-mastered); }
+.cn-path__unit[data-state="current"] .cn-path__pct { color: var(--cn-accent); }
+
+.cn-path__body {
+  padding: var(--cn-space-2) 0;
+}
+
+.cn-path__bar {
+  height: 6px;
+  border-radius: var(--cn-radius-pill);
+  background: var(--cn-paper-sunken);
+  overflow: hidden;
+}
+
+.cn-path__bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--cn-accent);
+}
+
+.cn-path__unit[data-state="mastered"] .cn-path__bar span {
+  background: var(--cn-mastered);
+}
+
+.cn-path__meta {
+  margin: var(--cn-space-2) 0 var(--cn-space-3);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-faint);
+}
+
+.cn-path__topics {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--cn-space-2);
+}
+
+.cn-path__topics li {
+  display: flex;
+  align-items: center;
+  gap: var(--cn-space-3);
+  font-size: var(--cn-text-sm);
+}
+
+.cn-path__topics i {
+  color: var(--cn-rule-strong);
+}
+
+.cn-path__topics a {
+  flex: 1;
+  color: var(--cn-ink);
+  text-decoration: none;
+}
+
+.cn-path__topics a:hover {
+  color: var(--cn-accent);
+}
+
+.cn-path__topics span {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-faint);
+}
+
+/* --- Activity --- */
+
+.cn-prog__pair {
+  display: grid;
+  gap: var(--cn-space-5);
+  margin-top: var(--cn-space-7);
+}
+
+@media (min-width: 880px) {
+  .cn-prog__pair {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+}
+
+.cn-activity {
+  padding: var(--cn-space-5);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-paper-raised);
+  border: var(--cn-hairline);
+}
+
+.cn-activity__title {
+  margin: 0;
+  font-size: var(--cn-text-lg);
+  letter-spacing: var(--cn-tracking-snug);
+}
+
+.cn-activity__sub {
+  margin: var(--cn-space-2) 0 var(--cn-space-3);
+  color: var(--cn-ink-soft);
+  font-size: var(--cn-text-sm);
+}
+
+.cn-strip {
+  display: flex;
+  gap: 4px;
+  list-style: none;
+  margin: var(--cn-space-4) 0 0;
+  padding: 0;
+}
+
+.cn-strip__day {
+  flex: 1;
+}
+
+.cn-strip__day span {
+  display: block;
+  height: 28px;
+  border-radius: 5px;
+  background: var(--cn-paper-sunken);
+}
+
+.cn-strip__day[data-on="true"] span {
+  background: var(--cn-accent);
+}
+
+.cn-activity__summary {
+  margin: var(--cn-space-3) 0 0;
+  font-size: var(--cn-text-sm);
+  color: var(--cn-ink-soft);
+}
+
+.cn-activity__summary b {
+  color: var(--cn-xp);
+  font-family: var(--cn-font-mono);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cn-lvl__bar span {
+    transition: none;
+  }
+}

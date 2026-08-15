@@ -1,18 +1,20 @@
 /**
- * Progress — the analytics screen.
+ * Progress — player progression.
  *
- * Four levels of progress, as the spec requires: overall course, per unit, per topic and
- * per game mode, plus a 14-day XP and accuracy trend and a recent-activity log.
+ * Not an analytics report. The order answers, in sequence: what level am I, what have I
+ * mastered, what should I do next, how far along the syllabus am I, and what have I been
+ * doing lately. Numbers appear in service of those questions, not instead of them.
  */
 
 import type { Page } from '@/types/page';
 import { loadProgressReport } from '@/services/progress-report.service';
 import { masteryBand } from '@/services/mastery.logic';
-import { levelProgress } from '@/config/level.config';
-import { axisLabelsHtml, barChartSvg, lineChartSvg } from '@/components/chart';
+import { levelProgress, levelTitle } from '@/config/level.config';
+import { isStreakExpired } from '@/services/streak.logic';
+import { networkStage, nextGoal, unitStates } from '@/services/progression.logic';
 import { loaderHtml, stateHtml } from '@/components/loader';
 import { escapeHtml, qs } from '@/utils/dom';
-import type { ProgressReport, UnitRow } from '@/services/progress-report.service';
+import type { ProgressReport } from '@/services/progress-report.service';
 import type { GameType } from '@/models/content';
 import '@/styles/progress.css';
 
@@ -26,149 +28,6 @@ const MODE_LABELS: Record<GameType, string> = {
   riddle: 'Network Riddles',
   'word-search': 'Word Search',
 };
-
-function statHtml(label: string, value: string, meta = ''): string {
-  return `
-    <div class="cn-stat">
-      <span class="cn-stat__label">${escapeHtml(label)}</span>
-      <span class="cn-stat__value">${escapeHtml(value)}</span>
-      ${meta ? `<span class="cn-stat__meta">${escapeHtml(meta)}</span>` : ''}
-    </div>
-  `;
-}
-
-/**
- * Progress opens with the student's rank, not with eight statistics.
- *
- * Eight equal tiles is a business dashboard: it reports on someone rather than to them. The
- * level and the XP still owed to the next one is what a player actually wants to know, so it
- * gets the space, and the counting is demoted to a single row underneath.
- */
-function headlineHtml(report: ProgressReport): string {
-  const level = levelProgress(report.profile.totalXP);
-  const xpToNext = Math.max(0, level.xpForLevel - level.xpIntoLevel);
-
-  // "Mastered" uses the same 80% bar as a unit, so Learn and Progress cannot disagree.
-  const allTopics = report.units.flatMap((row) => row.topics);
-  const mastered = allTopics.filter((row) => (row.progress?.mastery ?? 0) >= 80).length;
-
-  return `
-    <section class="cn-rank cn-rise cn-rise-2" aria-label="Level progress">
-      <div class="cn-rank__head">
-        <div>
-          <p class="cn-rank__level">Level ${level.level}</p>
-          <h2 class="cn-rank__title">${escapeHtml(level.title)}</h2>
-        </div>
-        <p class="cn-rank__xp">
-          <span>${level.xpIntoLevel.toLocaleString()}</span> / ${level.xpForLevel.toLocaleString()} XP
-        </p>
-      </div>
-
-      <div class="cn-rank__bar"><span style="width:${level.percent}%"></span></div>
-
-      <p class="cn-rank__next">
-        ${xpToNext === 0 ? 'Ready to level up' : `${xpToNext.toLocaleString()} XP to level ${level.level + 1}`}
-      </p>
-    </section>
-
-    <div class="cn-prog__figures cn-rise cn-rise-3">
-      ${statHtml('Overall mastery', `${report.overallCompletion}%`, 'Across the syllabus')}
-      ${statHtml('Topics mastered', `${mastered}/${allTopics.length}`, 'At 80% or above')}
-      ${statHtml('Current streak', `${report.profile.currentStreak}d`, `Longest ${report.profile.longestStreak}d`)}
-      ${statHtml('Questions answered', String(report.questionsAnswered), `${report.overallAccuracy}% correct`)}
-    </div>
-  `;
-}
-
-function trendsHtml(report: ProgressReport): string {
-  const hasActivity = report.series.some((point) => point.questions > 0);
-
-  if (!hasActivity) {
-    return `
-      <section class="cn-prog__section">
-        <span class="cn-label cn-label--marked">Last 14 days</span>
-        <p class="cn-ink-soft mt-3">No activity in the last fortnight — play a round to start the trend.</p>
-      </section>
-    `;
-  }
-
-  const labels = report.series.map((point) => point.label);
-
-  return `
-    <section class="cn-prog__section">
-      <span class="cn-label cn-label--marked">Last 14 days</span>
-      <div class="cn-prog__charts">
-        <figure class="cn-prog__chart">
-          <figcaption class="cn-label">XP earned per day</figcaption>
-          ${barChartSvg(
-            report.series.map((point) => ({ label: point.date, value: point.xp })),
-            `Daily XP over the last 14 days, ending ${report.series.at(-1)?.date}`,
-          )}
-          ${axisLabelsHtml(labels)}
-        </figure>
-
-        <figure class="cn-prog__chart">
-          <figcaption class="cn-label">Accuracy per day</figcaption>
-          ${lineChartSvg(
-            report.series.map((point) => ({ label: point.date, value: point.accuracy })),
-            'Daily accuracy percentage over the last 14 days',
-          )}
-          ${axisLabelsHtml(labels)}
-        </figure>
-      </div>
-    </section>
-  `;
-}
-
-function unitHtml(row: UnitRow): string {
-  const started = row.topics.filter((entry) => entry.progress && entry.progress.attempted > 0);
-
-  return `
-    <details class="cn-prog__unit" ${row.mastery > 0 ? 'open' : ''}>
-      <summary class="cn-prog__unit-head">
-        <span class="cn-prog__unit-num">${String(row.unit.number).padStart(2, '0')}</span>
-        <span class="cn-prog__unit-title">${escapeHtml(row.unit.title)}</span>
-        <span class="cn-prog__unit-meta">${row.topicsStarted}/${row.topicsTotal} topics</span>
-        <span class="cn-prog__unit-value">${row.mastery}%</span>
-        <span class="cn-progress cn-progress--accent cn-prog__unit-bar">
-          <span class="cn-progress__bar" style="width:${row.mastery}%"></span>
-        </span>
-      </summary>
-
-      ${
-        started.length === 0
-          ? '<p class="cn-prog__none">No topics attempted in this unit yet.</p>'
-          : `<table class="cn-prog__table">
-               <thead>
-                 <tr>
-                   <th scope="col">Topic</th>
-                   <th scope="col">Attempted</th>
-                   <th scope="col">Correct</th>
-                   <th scope="col">Accuracy</th>
-                   <th scope="col">Mastery</th>
-                   <th scope="col">Band</th>
-                 </tr>
-               </thead>
-               <tbody>
-                 ${started
-                   .map(
-                     ({ topic, progress }) => `
-                       <tr>
-                         <th scope="row"><a href="#/learn/${escapeHtml(topic.id)}">${escapeHtml(topic.title)}</a></th>
-                         <td>${progress!.attempted}</td>
-                         <td>${progress!.correct}</td>
-                         <td>${progress!.accuracy}%</td>
-                         <td>${progress!.mastery}%</td>
-                         <td><span class="cn-chip">${escapeHtml(masteryBand(progress!.mastery))}</span></td>
-                       </tr>`,
-                   )
-                   .join('')}
-               </tbody>
-             </table>`
-      }
-    </details>
-  `;
-}
 
 function modesHtml(report: ProgressReport): string {
   if (report.modes.length === 0) {
@@ -214,92 +73,266 @@ function modesHtml(report: ProgressReport): string {
   `;
 }
 
-function rankingHtml(
-  title: string,
-  rows: ProgressReport['weakest'],
-  emptyMessage: string,
-): string {
-  if (rows.length === 0) {
-    return `
-      <section>
-        <span class="cn-label cn-label--marked">${escapeHtml(title)}</span>
-        <p class="cn-ink-soft mt-3" style="font-size: var(--cn-text-sm)">${escapeHtml(emptyMessage)}</p>
-      </section>
-    `;
-  }
+// ---------------------------------------------------------------- progression
+
+/** Level, title, and what the next level is actually called. Compact by design. */
+function levelCardHtml(report: ProgressReport): string {
+  const level = levelProgress(report.profile.totalXP);
+  const xpToNext = Math.max(0, level.xpForLevel - level.xpIntoLevel);
+  const nextTitle = levelTitle(level.level + 1);
 
   return `
-    <section>
-      <span class="cn-label cn-label--marked">${escapeHtml(title)}</span>
-      <div class="cn-weak">
-        ${rows
-          .map(
-            ({ topic, progress }) => `
-              <a class="cn-weak__row" href="#/learn/${escapeHtml(progress.topicId)}">
-                <span class="cn-weak__name">${escapeHtml(topic?.title ?? progress.topicId)}</span>
-                <span class="cn-weak__band">${escapeHtml(masteryBand(progress.mastery))}</span>
-                <span class="cn-weak__value">${progress.mastery}%</span>
-                <span class="cn-progress cn-progress--accent cn-weak__bar">
-                  <span class="cn-progress__bar" style="width:${progress.mastery}%"></span>
-                </span>
-              </a>`,
-          )
-          .join('')}
+    <section class="cn-lvl cn-rise cn-rise-2" aria-label="Level progress">
+      <div class="cn-lvl__main">
+        <p class="cn-lvl__num">Level ${level.level}</p>
+        <h2 class="cn-lvl__title">${escapeHtml(level.title)}</h2>
+
+        <div class="cn-lvl__bar"><span style="width:${level.percent}%"></span></div>
+
+        <p class="cn-lvl__xp">
+          <b>${level.xpIntoLevel.toLocaleString()}</b> / ${level.xpForLevel.toLocaleString()} XP
+        </p>
       </div>
+
+      <aside class="cn-lvl__next">
+        <p class="cn-lvl__nextlabel">Next unlock</p>
+        <p class="cn-lvl__nexttitle">${escapeHtml(nextTitle)}</p>
+        <p class="cn-lvl__nextmeta">
+          ${xpToNext === 0 ? 'Ready now' : `${xpToNext.toLocaleString()} XP remaining`}
+        </p>
+      </aside>
     </section>
   `;
 }
 
-function recentHtml(report: ProgressReport): string {
-  if (report.recentAttempts.length === 0) return '';
+/** Four numbers, scannable. Each carries its own copy while it is still zero. */
+function metricsHtml(report: ProgressReport): string {
+  const allTopics = report.units.flatMap((row) => row.topics);
+  const mastered = allTopics.filter((row) => (row.progress?.mastery ?? 0) >= 80).length;
+  const { profile } = report;
+
+  const cells = [
+    {
+      label: 'Mastery',
+      value: `${report.overallCompletion}%`,
+      meta: report.overallCompletion === 0 ? 'Finish a topic to start' : 'Across the syllabus',
+      tone: 'accent',
+    },
+    {
+      label: 'Topics mastered',
+      value: `${mastered}/${allTopics.length}`,
+      meta: mastered === 0 ? 'Your first is waiting' : 'At 80% or above',
+      tone: 'mastered',
+    },
+    {
+      label: 'Streak',
+      value: profile.currentStreak === 0 ? '—' : `${profile.currentStreak}d`,
+      meta: profile.currentStreak === 0 ? 'Play today to start one' : `Best ${profile.longestStreak}d`,
+      tone: 'xp',
+    },
+    {
+      label: 'Questions',
+      value: report.questionsAnswered.toLocaleString(),
+      meta: report.questionsAnswered === 0 ? 'None yet' : `${report.overallAccuracy}% correct`,
+      tone: 'neutral',
+    },
+  ];
 
   return `
-    <section class="cn-prog__section">
-      <span class="cn-label cn-label--marked">Recent activity</span>
-      <div class="cn-prog__log">
-        ${report.recentAttempts
+    <div class="cn-metrics cn-rise cn-rise-3">
+      ${cells
+        .map(
+          (cell) => `
+            <div class="cn-metric" data-tone="${cell.tone}">
+              <p class="cn-metric__label">${escapeHtml(cell.label)}</p>
+              <p class="cn-metric__value">${escapeHtml(cell.value)}</p>
+              <p class="cn-metric__meta">${escapeHtml(cell.meta)}</p>
+            </div>`,
+        )
+        .join('')}
+    </div>
+  `;
+}
+
+/** The most useful thing on the page: what to do next, derived from real state only. */
+function goalHtml(report: ProgressReport): string {
+  const level = levelProgress(report.profile.totalXP);
+
+  const goal = nextGoal({
+    questionsAnswered: report.questionsAnswered,
+    xpToNextLevel: Math.max(0, level.xpForLevel - level.xpIntoLevel),
+    nextLevelTitle: levelTitle(level.level + 1),
+    currentStreak: report.profile.currentStreak,
+    streakAtRisk: isStreakExpired({
+      currentStreak: report.profile.currentStreak,
+      longestStreak: report.profile.longestStreak,
+      ...(report.profile.lastActiveDate ? { lastActiveDate: report.profile.lastActiveDate } : {}),
+    }),
+    topics: report.units
+      .flatMap((row) => row.topics)
+      .map((row) => ({
+        id: row.topic.id,
+        title: row.topic.title,
+        mastery: row.progress?.mastery ?? 0,
+      })),
+  });
+
+  return `
+    <section class="cn-goal cn-rise cn-rise-4" data-kind="${goal.kind}">
+      <p class="cn-goal__label">Next goal</p>
+      <h2 class="cn-goal__title">${escapeHtml(goal.title)}</h2>
+      <p class="cn-goal__detail">${escapeHtml(goal.detail)}</p>
+      <a class="btn btn-cn-primary" href="${escapeHtml(goal.actionHref)}">${escapeHtml(goal.actionLabel)}</a>
+    </section>
+  `;
+}
+
+/**
+ * The syllabus as a route rather than a table.
+ *
+ * Six units on a connected path, each a node with its own state. The host to server metaphor
+ * sits above it and lights up in four stages, so overall progress has a shape and not only a
+ * percentage. Topics stay folded away until a unit is opened.
+ */
+function journeyHtml(report: ProgressReport): string {
+  const masteries = report.units.map((row) => row.mastery);
+  const states = unitStates(masteries);
+  const stage = networkStage(report.overallCompletion);
+  const hops = ['Host', 'Switch', 'Router', 'Server'];
+
+  return `
+    <section class="cn-journey cn-rise cn-rise-5">
+      <header class="cn-journey__head">
+        <h2 class="cn-journey__title">Your network</h2>
+        <p class="cn-journey__sub">
+          ${
+            stage === 0
+              ? 'Complete your first quest and your network starts building.'
+              : `${report.overallCompletion}% of the syllabus mastered.`
+          }
+        </p>
+      </header>
+
+      <ol class="cn-hops" aria-label="Overall progress">
+        ${hops
           .map(
-            (attempt) => `
-              <div class="cn-prog__log-row">
-                <span class="cn-prog__log-date">${escapeHtml(attempt.createdAt.slice(0, 10))}</span>
-                <span class="cn-prog__log-mode">${escapeHtml(MODE_LABELS[attempt.gameType] ?? attempt.gameType)}</span>
-                <span class="cn-prog__log-score">${attempt.correct}/${attempt.attempted}</span>
-                <span class="cn-prog__log-acc">${attempt.accuracy}%</span>
-                <span class="cn-prog__log-xp">+${attempt.xpEarned} XP</span>
-              </div>`,
+            (hop, index) => `
+              <li class="cn-hop" data-on="${index < stage}">
+                <span class="cn-hop__dot" aria-hidden="true"></span>
+                <span class="cn-hop__label">${escapeHtml(hop)}</span>
+              </li>`,
           )
           .join('')}
-      </div>
+      </ol>
+
+      <ol class="cn-path">
+        ${report.units
+          .map((row, index) => {
+            const state = states[index];
+            const done = row.topics.filter((topic) => (topic.progress?.mastery ?? 0) >= 80).length;
+
+            return `
+              <li class="cn-path__unit" data-state="${state}">
+                <span class="cn-path__node" aria-hidden="true"></span>
+
+                <details ${state === 'current' ? 'open' : ''}>
+                  <summary>
+                    <span class="cn-path__num">${String(row.unit.number).padStart(2, '0')}</span>
+                    <span class="cn-path__name">${escapeHtml(row.unit.title)}</span>
+                    <span class="cn-path__band">${escapeHtml(masteryBand(row.mastery))}</span>
+                    <span class="cn-path__pct">${row.mastery}%</span>
+                  </summary>
+
+                  <div class="cn-path__body">
+                    <div class="cn-path__bar"><span style="width:${row.mastery}%"></span></div>
+                    <p class="cn-path__meta">${done} of ${row.topics.length} topics mastered</p>
+
+                    <ul class="cn-path__topics">
+                      ${row.topics
+                        .map((topic) => {
+                          const mastery = Math.round(topic.progress?.mastery ?? 0);
+                          const icon =
+                            mastery >= 80
+                              ? 'bi-check-circle-fill'
+                              : mastery > 0
+                                ? 'bi-play-circle'
+                                : 'bi-circle';
+                          return `
+                            <li>
+                              <i class="bi ${icon}" aria-hidden="true"></i>
+                              <a href="#/learn/${escapeHtml(topic.topic.id)}">${escapeHtml(topic.topic.title)}</a>
+                              <span>${mastery === 0 ? 'Not started' : `${mastery}%`}</span>
+                            </li>`;
+                        })
+                        .join('')}
+                    </ul>
+                  </div>
+                </details>
+              </li>`;
+          })
+          .join('')}
+      </ol>
+    </section>
+  `;
+}
+
+/** Fourteen days as dots, or an honest empty state. Never a chart of almost nothing. */
+function activityHtml(report: ProgressReport): string {
+  const active = report.series.filter((day) => day.questions > 0).length;
+
+  if (active < 2) {
+    return `
+      <section class="cn-activity cn-rise cn-rise-6">
+        <h2 class="cn-activity__title">Your activity will appear here</h2>
+        <p class="cn-activity__sub">Play a few rounds and your learning pattern shows up.</p>
+        <a class="btn btn-cn-ghost btn-sm" href="#/games">Play a game</a>
+      </section>
+    `;
+  }
+
+  const week = report.series.slice(-7);
+  const weekXp = week.reduce((sum, day) => sum + day.xp, 0);
+  const weekQuestions = week.reduce((sum, day) => sum + day.questions, 0);
+
+  return `
+    <section class="cn-activity cn-rise cn-rise-6">
+      <h2 class="cn-activity__title">Recent activity</h2>
+
+      <ol class="cn-strip" aria-label="Last 14 days">
+        ${report.series
+          .map(
+            (day) => `
+              <li class="cn-strip__day" data-on="${day.questions > 0}"
+                  title="${escapeHtml(day.date)} · ${day.questions} questions">
+                <span></span>
+              </li>`,
+          )
+          .join('')}
+      </ol>
+
+      <p class="cn-activity__summary">
+        This week: <b>+${weekXp} XP</b> · ${weekQuestions} questions
+      </p>
     </section>
   `;
 }
 
 function bodyHtml(report: ProgressReport): string {
   return `
-    <header class="cn-dash__head cn-rise cn-rise-1">
-      <div>
-        <span class="cn-label cn-label--marked">Analytics</span>
-        <h1 class="cn-dash__greeting mt-2">Your progress</h1>
-      </div>
-      <span class="cn-label">Computer Networks · ${report.units.length} units</span>
+    <header class="cn-prog__head cn-rise cn-rise-1">
+      <h1 class="cn-prog__title">Your journey</h1>
+      <p class="cn-prog__sub">What you have mastered, and what comes next.</p>
     </header>
 
-    ${headlineHtml(report)}
-    ${trendsHtml(report)}
+    ${levelCardHtml(report)}
+    ${metricsHtml(report)}
+    ${goalHtml(report)}
+    ${journeyHtml(report)}
 
-    <section class="cn-prog__section">
-      <span class="cn-label cn-label--marked">Mastery by unit and topic</span>
-      <div class="cn-prog__units">${report.units.map(unitHtml).join('')}</div>
-    </section>
-
-    ${modesHtml(report)}
-
-    <div class="cn-dash__panels">
-      ${rankingHtml('Topics to practise', report.weakest, 'Play a few rounds to see your weakest topics.')}
-      ${rankingHtml('Strongest topics', report.strongest, 'Your best topics will be listed here.')}
+    <div class="cn-prog__pair">
+      ${activityHtml(report)}
+      ${modesHtml(report)}
     </div>
-
-    ${recentHtml(report)}
   `;
 }
 
