@@ -1,0 +1,130 @@
+/** Profile — identity block, stat ledger, badges and the small edit form. */
+
+.cn-profile {
+  padding-block: var(--cn-space-6) var(--cn-space-8);
+}
+
+.cn-profile__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cn-space-5);
+  align-items: flex-end;
+  justify-content: space-between;
+  padding-bottom: var(--cn-space-5);
+  border-bottom: var(--cn-hairline-strong);
+}
+
+.cn-profile__identity {
+  display: flex;
+  align-items: center;
+  gap: var(--cn-space-4);
+  min-width: 0;
+}
+
+.cn-profile__avatar {
+  font-size: 3rem;
+  color: var(--cn-accent);
+  flex: 0 0 auto;
+}
+
+.cn-profile__name {
+  font-size: var(--cn-text-2xl);
+  letter-spacing: var(--cn-tracking-tight);
+  margin-top: var(--cn-space-1);
+  overflow-wrap: anywhere;
+}
+
+.cn-profile__meta {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-faint);
+  overflow-wrap: anywhere;
+}
+
+.cn-profile__level {
+  display: grid;
+  gap: var(--cn-space-2);
+  min-width: min(280px, 100%);
+  flex: 1 1 260px;
+  max-width: 340px;
+}
+
+.cn-profile__title {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--cn-tracking-wide);
+  font-size: var(--cn-text-sm);
+}
+
+.cn-profile__section {
+  margin-top: var(--cn-space-7);
+}
+
+.cn-profile__form {
+  display: grid;
+  gap: var(--cn-space-4);
+  max-width: 480px;
+  margin-top: var(--cn-space-4);
+}
+
+.cn-profile__form .form-control {
+  border: 0;
+  border-bottom: 2px solid var(--cn-rule-strong);
+  border-radius: 0;
+  background: transparent;
+  padding: 0.6rem 0;
+}
+
+.cn-profile__form .form-control:focus {
+  border-bottom-color: var(--cn-accent);
+  box-shadow: none;
+  background: transparent;
+}
+
+.cn-avatar-picker {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--cn-space-2);
+}
+
+.cn-avatar-picker legend {
+  float: none;
+  width: auto;
+  padding: 0;
+  margin-bottom: var(--cn-space-2);
+}
+
+.cn-avatar-picker__grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cn-space-2);
+}
+
+.cn-avatar-option {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border: var(--cn-hairline);
+  background: var(--cn-paper-raised);
+  color: var(--cn-ink-soft);
+  font-size: 1.35rem;
+  cursor: pointer;
+  transition:
+    border-color var(--cn-duration-fast) var(--cn-ease-out),
+    color var(--cn-duration-fast) var(--cn-ease-out);
+}
+
+.cn-avatar-option:hover {
+  border-color: var(--cn-ink);
+  color: var(--cn-ink);
+}
+
+.cn-avatar-option[aria-pressed='true'] {
+  border-color: var(--cn-accent);
+  border-width: 2px;
+  color: var(--cn-accent);
+  background: var(--cn-accent-wash);
+}

@@ -1,0 +1,302 @@
+/**
+ * Learn browser and topic detail.
+ * The syllabus reads as a printed contents page: numbered units, ruled topic rows.
+ */
+
+.cn-learn {
+  padding-block: var(--cn-space-6) var(--cn-space-7);
+}
+
+.cn-learn__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cn-space-4);
+  align-items: flex-end;
+  justify-content: space-between;
+  padding-bottom: var(--cn-space-4);
+  border-bottom: var(--cn-hairline-strong);
+  margin-bottom: var(--cn-space-6);
+}
+
+/* --- Unit --- */
+
+.cn-unit {
+  margin-bottom: var(--cn-space-7);
+}
+
+.cn-unit__head {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--cn-space-3) var(--cn-space-4);
+  align-items: baseline;
+  padding-bottom: var(--cn-space-3);
+  border-bottom: var(--cn-hairline-strong);
+}
+
+.cn-unit__number {
+  font-family: var(--cn-font-mono);
+  font-size: clamp(1.5rem, 1rem + 1.6vw, 2.25rem);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--cn-accent);
+  letter-spacing: var(--cn-tracking-tight);
+}
+
+.cn-unit__title {
+  font-size: var(--cn-text-xl);
+  text-transform: uppercase;
+  letter-spacing: var(--cn-tracking-snug);
+}
+
+.cn-unit__desc {
+  grid-column: 2;
+  color: var(--cn-ink-soft);
+  font-size: var(--cn-text-sm);
+  max-width: var(--cn-measure);
+}
+
+/* --- Topic rows --- */
+
+.cn-topic-list {
+  display: grid;
+}
+
+.cn-topic-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--cn-space-2) var(--cn-space-4);
+  padding: var(--cn-space-4) var(--cn-space-3) var(--cn-space-4) 0;
+  border-bottom: var(--cn-hairline);
+  color: inherit;
+  align-items: baseline;
+  transition:
+    background-color var(--cn-duration-fast) var(--cn-ease-out),
+    padding-inline-start var(--cn-duration-fast) var(--cn-ease-out);
+}
+
+@media (min-width: 768px) {
+  .cn-topic-row {
+    grid-template-columns: 3rem minmax(0, 18rem) 1fr auto;
+    align-items: center;
+    gap: var(--cn-space-4);
+  }
+}
+
+.cn-topic-row:hover,
+.cn-topic-row:focus {
+  background: var(--cn-paper-raised);
+  padding-inline-start: var(--cn-space-3);
+  text-decoration: none;
+  color: inherit;
+}
+
+.cn-topic-row__index {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-faint);
+}
+
+.cn-topic-row__title {
+  font-size: var(--cn-text-base);
+  font-weight: 700;
+  letter-spacing: var(--cn-tracking-snug);
+  margin: 0;
+}
+
+.cn-topic-row__desc {
+  grid-column: 2 / -1;
+  font-size: var(--cn-text-sm);
+  color: var(--cn-ink-soft);
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  .cn-topic-row__desc {
+    grid-column: auto;
+  }
+}
+
+.cn-topic-row__meta {
+  grid-column: 2 / -1;
+  display: flex;
+  gap: var(--cn-space-2);
+  flex-wrap: wrap;
+}
+
+@media (min-width: 768px) {
+  .cn-topic-row__meta {
+    grid-column: auto;
+    justify-content: flex-end;
+  }
+}
+
+/* --- Topic detail --- */
+
+.cn-topic {
+  padding-block: var(--cn-space-6) var(--cn-space-8);
+  display: grid;
+  gap: var(--cn-space-6);
+  align-items: start;
+}
+
+@media (min-width: 992px) {
+  .cn-topic {
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 22rem);
+    gap: var(--cn-space-8);
+  }
+}
+
+.cn-topic__breadcrumb {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-micro);
+  letter-spacing: var(--cn-tracking-wide);
+  text-transform: uppercase;
+  color: var(--cn-ink-faint);
+  margin-bottom: var(--cn-space-3);
+}
+
+.cn-topic__title {
+  font-size: var(--cn-text-3xl);
+  text-transform: uppercase;
+  letter-spacing: var(--cn-tracking-tight);
+  line-height: var(--cn-leading-tight);
+  padding-bottom: var(--cn-space-4);
+  border-bottom: var(--cn-hairline-strong);
+}
+
+.cn-topic__overview {
+  font-size: var(--cn-text-lg);
+  color: var(--cn-ink-soft);
+  max-width: var(--cn-measure);
+  margin-top: var(--cn-space-4);
+}
+
+.cn-topic__block + .cn-topic__block {
+  margin-top: var(--cn-space-6);
+}
+
+.cn-topic__block h2 {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-micro);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--cn-tracking-label);
+  color: var(--cn-ink-faint);
+  padding-bottom: var(--cn-space-3);
+  border-bottom: var(--cn-hairline);
+  margin-bottom: var(--cn-space-4);
+}
+
+.cn-keypoints {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--cn-space-3);
+  max-width: var(--cn-measure);
+}
+
+.cn-keypoints li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--cn-space-3);
+  align-items: baseline;
+}
+
+.cn-keypoints li::before {
+  content: attr(data-n);
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-accent);
+}
+
+.cn-deflist {
+  display: grid;
+  margin: 0;
+  max-width: var(--cn-measure);
+}
+
+.cn-deflist__row {
+  display: grid;
+  gap: 0.2rem;
+  padding-block: var(--cn-space-3);
+  border-bottom: var(--cn-hairline);
+}
+
+@media (min-width: 640px) {
+  .cn-deflist__row {
+    grid-template-columns: minmax(0, 12rem) 1fr;
+    gap: var(--cn-space-4);
+  }
+}
+
+.cn-deflist__term {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-sm);
+  font-weight: 700;
+}
+
+.cn-deflist__meaning {
+  color: var(--cn-ink-soft);
+  font-size: var(--cn-text-sm);
+}
+
+.cn-example {
+  padding: var(--cn-space-3) var(--cn-space-4);
+  border-left: 2px solid var(--cn-accent);
+  background: var(--cn-paper-raised);
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-ink-soft);
+  max-width: var(--cn-measure);
+}
+
+.cn-termlist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cn-space-2);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+/* --- Aside --- */
+
+.cn-topic__aside {
+  display: grid;
+  gap: var(--cn-space-5);
+  border-top: var(--cn-hairline-strong);
+  padding-top: var(--cn-space-4);
+}
+
+/* Sticky only once there is a second column to stick beside. In the single-column mobile
+   layout it would pin mid-scroll and cover the notes. */
+@media (min-width: 992px) {
+  .cn-topic__aside {
+    position: sticky;
+    top: calc(var(--cn-header-height) + var(--cn-space-4));
+  }
+}
+
+.cn-topic__aside section {
+  display: grid;
+  gap: var(--cn-space-3);
+}
+
+.cn-topic__aside h2 {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-micro);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--cn-tracking-label);
+  color: var(--cn-ink-faint);
+}
+
+.cn-topic__actions {
+  display: grid;
+  gap: var(--cn-space-2);
+}
+
+.cn-topic__actions .btn {
+  justify-content: center;
+}

@@ -1,0 +1,104 @@
+/** Leaderboard — a ruled results sheet. Place and XP are data, so they are monospace. */
+
+.cn-lead {
+  padding-block: var(--cn-space-6) var(--cn-space-8);
+}
+
+.cn-lead__head {
+  padding-bottom: var(--cn-space-4);
+  border-bottom: var(--cn-hairline-strong);
+  margin-bottom: var(--cn-space-2);
+}
+
+.cn-ranks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cn-rank {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr auto;
+  grid-template-areas:
+    'place name xp'
+    'place title level';
+  gap: 0 var(--cn-space-4);
+  align-items: center;
+  padding-block: var(--cn-space-3);
+  border-bottom: var(--cn-hairline);
+}
+
+@media (min-width: 720px) {
+  .cn-rank {
+    grid-template-columns: 3rem 1fr auto auto auto;
+    grid-template-areas: 'place name title level xp';
+    gap: var(--cn-space-5);
+  }
+}
+
+/* The student's own row is the one thing worth finding on a page of names. */
+.cn-rank[data-self='true'] {
+  background: var(--cn-accent-wash);
+  box-shadow: inset 3px 0 0 var(--cn-accent);
+  padding-inline: var(--cn-space-3);
+}
+
+.cn-rank__place {
+  grid-area: place;
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xl);
+  color: var(--cn-ink-faint);
+  text-align: right;
+}
+
+.cn-rank__place--none {
+  font-size: var(--cn-text-base);
+}
+
+/* Top three carry the accent; below that the number is just a coordinate. */
+.cn-rank:nth-child(-n + 3) .cn-rank__place {
+  color: var(--cn-accent);
+  font-weight: 600;
+}
+
+.cn-rank__name {
+  grid-area: name;
+  font-weight: 600;
+  letter-spacing: var(--cn-tracking-snug);
+}
+
+.cn-rank__you {
+  font-size: var(--cn-text-micro);
+  text-transform: uppercase;
+  letter-spacing: var(--cn-tracking-label);
+  color: var(--cn-accent);
+  margin-left: var(--cn-space-2);
+}
+
+.cn-rank__title {
+  grid-area: title;
+  font-size: var(--cn-text-sm);
+  color: var(--cn-ink-soft);
+}
+
+.cn-rank__level {
+  grid-area: level;
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-faint);
+}
+
+.cn-rank__xp {
+  grid-area: xp;
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-reward);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.cn-rank__outside {
+  margin-top: var(--cn-space-6);
+  padding-top: var(--cn-space-4);
+  border-top: var(--cn-hairline-strong);
+}

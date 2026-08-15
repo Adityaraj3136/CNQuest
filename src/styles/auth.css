@@ -1,0 +1,208 @@
+/**
+ * Authentication screens.
+ * A split composition: form on paper, an inverted panel of hairline "specimen" data beside it.
+ */
+
+.cn-auth {
+  display: grid;
+  min-height: calc(100vh - var(--cn-header-height));
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 992px) {
+  .cn-auth {
+    grid-template-columns: 1fr 0.85fr;
+  }
+}
+
+.cn-auth__form-side {
+  display: grid;
+  align-content: center;
+  padding: clamp(2rem, 1rem + 4vw, 4.5rem) clamp(1.25rem, 0.5rem + 3vw, 4rem);
+}
+
+.cn-auth__card {
+  width: min(440px, 100%);
+}
+
+.cn-auth__title {
+  font-size: var(--cn-text-2xl);
+  text-transform: uppercase;
+  letter-spacing: var(--cn-tracking-tight);
+  margin-block: var(--cn-space-3) var(--cn-space-2);
+}
+
+.cn-auth__subtitle {
+  color: var(--cn-ink-soft);
+  margin-bottom: var(--cn-space-6);
+}
+
+.cn-auth form {
+  display: grid;
+  gap: var(--cn-space-4);
+}
+
+/* --- Fields: underlined, not boxed --- */
+
+.cn-field label {
+  display: block;
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-micro);
+  font-weight: 600;
+  letter-spacing: var(--cn-tracking-label);
+  text-transform: uppercase;
+  color: var(--cn-ink-faint);
+  margin-bottom: var(--cn-space-2);
+}
+
+.cn-field .form-control {
+  border: 0;
+  border-bottom: 1px solid var(--cn-rule-strong);
+  border-radius: 0;
+  background: transparent;
+  padding: 0.6rem 0;
+  font-size: var(--cn-text-base);
+  color: var(--cn-ink);
+  transition: border-color var(--cn-duration-fast) var(--cn-ease-out);
+}
+
+.cn-field .form-control::placeholder {
+  color: var(--cn-ink-faint);
+}
+
+.cn-field .form-control:focus {
+  border-bottom-color: var(--cn-accent);
+  border-bottom-width: 2px;
+  box-shadow: none;
+  background: transparent;
+  outline: none;
+}
+
+.cn-field .form-control[aria-invalid='true'] {
+  border-bottom-color: var(--cn-negative);
+  border-bottom-width: 2px;
+}
+
+.cn-field__hint {
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-faint);
+  margin-top: var(--cn-space-2);
+}
+
+.cn-field__error {
+  display: none;
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-negative);
+  margin-top: var(--cn-space-2);
+}
+
+.cn-field__error:not(:empty) {
+  display: block;
+}
+
+.cn-field__error:not(:empty)::before {
+  content: '✗ ';
+}
+
+.cn-auth__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--cn-space-3);
+  font-size: var(--cn-text-sm);
+}
+
+.cn-auth__meta .form-check-label {
+  font-size: var(--cn-text-sm);
+  color: var(--cn-ink-soft);
+}
+
+.cn-auth__meta .form-check-input:checked {
+  background-color: var(--cn-ink);
+  border-color: var(--cn-ink);
+}
+
+.cn-auth__alt {
+  font-size: var(--cn-text-sm);
+  color: var(--cn-ink-soft);
+  padding-top: var(--cn-space-4);
+  border-top: var(--cn-hairline);
+}
+
+.cn-auth__divider {
+  display: flex;
+  align-items: center;
+  gap: var(--cn-space-3);
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-micro);
+  letter-spacing: var(--cn-tracking-label);
+  text-transform: uppercase;
+  color: var(--cn-ink-faint);
+}
+
+.cn-auth__divider::before,
+.cn-auth__divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--cn-rule);
+}
+
+/* --- Specimen panel --- */
+
+.cn-auth__aside {
+  display: none;
+  position: relative;
+  padding: clamp(2.5rem, 1rem + 4vw, 5rem) clamp(2rem, 1rem + 3vw, 4rem);
+  background: var(--cn-field);
+  color: var(--cn-field-ink);
+  align-content: center;
+  gap: var(--cn-space-5);
+  background-image:
+    linear-gradient(var(--cn-grid-line-field) 1px, transparent 1px),
+    linear-gradient(90deg, var(--cn-grid-line-field) 1px, transparent 1px);
+  background-size: var(--cn-grid-size) var(--cn-grid-size);
+}
+
+@media (min-width: 992px) {
+  .cn-auth__aside {
+    display: grid;
+  }
+}
+
+.cn-auth__aside h2 {
+  font-size: var(--cn-text-3xl);
+  text-transform: uppercase;
+  letter-spacing: var(--cn-tracking-tight);
+  line-height: var(--cn-leading-tight);
+}
+
+.cn-auth__aside p {
+  color: var(--cn-field-ink-soft);
+  max-width: 40ch;
+}
+
+.cn-auth__aside .cn-label {
+  color: var(--cn-field-ink-soft);
+}
+
+.cn-auth__perks {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-top: 1px solid var(--cn-field-rule);
+}
+
+.cn-auth__perks li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--cn-space-3);
+  padding-block: var(--cn-space-3);
+  border-bottom: 1px solid var(--cn-field-rule);
+  font-size: var(--cn-text-sm);
+}
+
+.cn-auth__perks .cn-index__num {
+  color: var(--cn-accent);
+}

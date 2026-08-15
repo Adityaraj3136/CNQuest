@@ -1,0 +1,134 @@
+/**
+ * CN Quest design tokens — "Technical Editorial".
+ *
+ * The idea: a networking instrument that happens to be a game. Ink on paper, hairline
+ * rules, oversized display numerals, and monospace for anything that is *data* — XP,
+ * timers, ports, masks, scores. One electric accent carries every interactive signal;
+ * amber is reserved exclusively for reward (XP, streaks).
+ *
+ * Rules for anyone extending this:
+ *   1. Data is monospace. Prose is sans. Never mix them up.
+ *   2. Separation comes from hairline rules and space, not from boxes and shadows.
+ *   3. One accent. If something needs to stand out, use scale or the rule, not a new colour.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* ---- Ink & paper ---------------------------------------------------- */
+  --cn-paper: #f5f4f1;
+  --cn-paper-raised: #ffffff;
+  --cn-paper-sunken: #edece8;
+  --cn-ink: #12151a;
+  --cn-ink-soft: #4a5058;
+  --cn-ink-faint: #878d96;
+  --cn-rule: #d9d7d1;
+  --cn-rule-strong: #b6b3ab;
+
+  /* ---- Signal --------------------------------------------------------- */
+  --cn-accent: #0b46ff;
+  --cn-accent-deep: #0733bd;
+  --cn-accent-wash: #e8ecff;
+  --cn-reward: #ff8a00;
+  --cn-reward-wash: #fff0dd;
+  --cn-positive: #0a7a56;
+  --cn-positive-wash: #e2f4ee;
+  --cn-negative: #c62b2b;
+  --cn-negative-wash: #fbe9e9;
+
+  /* Ink field — used for inverted bands, the hero and result screens. */
+  --cn-field: #12151a;
+  --cn-field-soft: #1d2229;
+  --cn-field-ink: #f0efeb;
+  --cn-field-ink-soft: #9aa1ab;
+  --cn-field-rule: #2c323b;
+
+  /* ---- Type ----------------------------------------------------------- */
+  /* No web fonts: the app must install and run offline, and a CDN link would be
+     blocked anyway. Character comes from scale, weight, tracking and case. */
+  --cn-font-sans: "Inter", "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system,
+    "Helvetica Neue", Arial, sans-serif;
+  --cn-font-mono: "Cascadia Mono", "JetBrains Mono", ui-monospace, "SF Mono", Consolas,
+    "Liberation Mono", monospace;
+
+  --cn-text-micro: 0.6875rem;
+  --cn-text-xs: 0.75rem;
+  --cn-text-sm: 0.875rem;
+  --cn-text-base: 1rem;
+  --cn-text-lg: 1.125rem;
+  --cn-text-xl: 1.375rem;
+  --cn-text-2xl: clamp(1.75rem, 1.3rem + 1.8vw, 2.5rem);
+  --cn-text-3xl: clamp(2.25rem, 1.5rem + 3vw, 3.5rem);
+  /* The hero. Deliberately enormous — this is the one memorable thing on the page. */
+  --cn-text-display: clamp(2.75rem, 0.5rem + 9vw, 8rem);
+  --cn-text-numeral: clamp(2.5rem, 1.5rem + 4vw, 4.5rem);
+
+  --cn-tracking-tight: -0.04em;
+  --cn-tracking-snug: -0.02em;
+  --cn-tracking-wide: 0.08em;
+  --cn-tracking-label: 0.14em;
+
+  --cn-leading-display: 0.92;
+  --cn-leading-tight: 1.15;
+  --cn-leading-body: 1.62;
+
+  /* ---- Space ---------------------------------------------------------- */
+  --cn-space-1: 0.25rem;
+  --cn-space-2: 0.5rem;
+  --cn-space-3: 0.75rem;
+  --cn-space-4: 1rem;
+  --cn-space-5: 1.5rem;
+  --cn-space-6: 2.25rem;
+  --cn-space-7: 3.5rem;
+  --cn-space-8: 5.5rem;
+  --cn-space-9: 8rem;
+
+  /* ---- Form ----------------------------------------------------------- */
+  /* Near-square. Editorial work does not round its corners. */
+  --cn-radius-sm: 2px;
+  --cn-radius-md: 3px;
+  --cn-radius-lg: 4px;
+  --cn-radius-pill: 999px;
+
+  --cn-hairline: 1px solid var(--cn-rule);
+  --cn-hairline-strong: 1px solid var(--cn-ink);
+  --cn-border-heavy: 2px solid var(--cn-ink);
+
+  /* Shadows are near-absent by design; depth comes from the ink field and rules. */
+  --cn-shadow-sm: 0 1px 0 var(--cn-rule);
+  --cn-shadow-lift: 0 12px 30px -22px rgba(18, 21, 26, 0.5);
+  --cn-shadow-focus: 0 0 0 3px var(--cn-accent-wash), 0 0 0 4px var(--cn-accent);
+
+  /* ---- Motion --------------------------------------------------------- */
+  --cn-duration-fast: 120ms;
+  --cn-duration-normal: 260ms;
+  --cn-duration-slow: 620ms;
+  --cn-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --cn-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* ---- Layout --------------------------------------------------------- */
+  --cn-header-height: 60px;
+  --cn-measure: 62ch;
+  --cn-content-max: 1240px;
+  --cn-content-narrow: 760px;
+
+  /* Blueprint grid used as page atmosphere. */
+  --cn-grid-size: 32px;
+  --cn-grid-line: rgba(18, 21, 26, 0.045);
+  --cn-grid-line-field: rgba(240, 239, 235, 0.06);
+}
+
+/* Bootstrap bridge — Bootstrap ships the reset, grid and form base; the palette is ours. */
+:root {
+  --bs-primary: var(--cn-accent);
+  --bs-primary-rgb: 11, 70, 255;
+  --bs-body-bg: var(--cn-paper);
+  --bs-body-color: var(--cn-ink);
+  --bs-border-color: var(--cn-rule);
+  --bs-border-radius: var(--cn-radius-md);
+  --bs-font-sans-serif: var(--cn-font-sans);
+  --bs-font-monospace: var(--cn-font-mono);
+  --bs-link-color: var(--cn-accent);
+  --bs-link-hover-color: var(--cn-accent-deep);
+  --bs-body-font-size: 1rem;
+}

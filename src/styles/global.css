@@ -1,0 +1,535 @@
+/**
+ * Global elements, layout shell and the shared editorial primitives.
+ * Primitives here are used on every screen: rules, labels, data figures, buttons, meters.
+ */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  font-family: var(--cn-font-sans);
+  font-size: var(--cn-text-base);
+  line-height: var(--cn-leading-body);
+  color: var(--cn-ink);
+  background-color: var(--cn-paper);
+  /* Blueprint grid: the page reads as drafting paper, not a blank canvas. */
+  background-image:
+    linear-gradient(var(--cn-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--cn-grid-line) 1px, transparent 1px);
+  background-size: var(--cn-grid-size) var(--cn-grid-size);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 800;
+  letter-spacing: var(--cn-tracking-snug);
+  line-height: var(--cn-leading-tight);
+  margin: 0;
+  text-wrap: balance;
+  /* Long unbroken strings — an email, a URL, a 39-character IPv6 address — must break
+     rather than push the layout sideways on a 320px screen. */
+  overflow-wrap: break-word;
+}
+
+p,
+dd,
+li,
+td,
+th,
+.cn-example,
+.cn-mono {
+  overflow-wrap: break-word;
+}
+
+p {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+a {
+  color: var(--cn-accent);
+  text-decoration: none;
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  color: var(--cn-accent-deep);
+  text-decoration: underline;
+}
+
+:focus-visible {
+  outline: 2px solid var(--cn-accent);
+  outline-offset: 3px;
+  border-radius: var(--cn-radius-sm);
+}
+
+::selection {
+  background: var(--cn-ink);
+  color: var(--cn-paper);
+}
+
+/* ---------- Shell ---------- */
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+.app-main {
+  flex: 1 0 auto;
+}
+
+.app-main:focus {
+  outline: none;
+}
+
+.cn-container {
+  width: 100%;
+  max-width: var(--cn-content-max);
+  margin-inline: auto;
+  /* env() keeps content clear of a notch or rounded corner in landscape on modern phones. */
+  padding-inline: max(clamp(1rem, 0.4rem + 2.4vw, 3rem), env(safe-area-inset-left));
+}
+
+.cn-container--narrow {
+  max-width: var(--cn-content-narrow);
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 1100;
+  padding: var(--cn-space-3) var(--cn-space-4);
+  background: var(--cn-ink);
+  color: var(--cn-paper);
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  letter-spacing: var(--cn-tracking-wide);
+  text-transform: uppercase;
+}
+
+.skip-link:focus {
+  left: 0;
+  color: var(--cn-paper);
+}
+
+/* ---------- Editorial primitives ---------- */
+
+/* Small uppercase monospace label. The workhorse of this system. */
+.cn-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cn-space-2);
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-micro);
+  font-weight: 600;
+  letter-spacing: var(--cn-tracking-label);
+  text-transform: uppercase;
+  color: var(--cn-ink-faint);
+}
+
+.cn-label--accent {
+  color: var(--cn-accent);
+}
+
+.cn-label--reward {
+  color: var(--cn-reward);
+}
+
+/* Label with a leading rule — used to open a section. */
+.cn-label--marked::before {
+  content: '';
+  width: 22px;
+  height: 1px;
+  background: currentColor;
+  flex: 0 0 auto;
+}
+
+.cn-rule {
+  height: 1px;
+  border: 0;
+  background: var(--cn-rule);
+  margin: 0;
+}
+
+.cn-rule--ink {
+  background: var(--cn-ink);
+}
+
+/* Big monospace figure: XP, scores, counts, timers. */
+.cn-figure {
+  font-family: var(--cn-font-mono);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--cn-tracking-tight);
+  line-height: 1;
+}
+
+.cn-figure--xl {
+  font-size: var(--cn-text-numeral);
+}
+
+.cn-mono {
+  font-family: var(--cn-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.cn-measure {
+  max-width: var(--cn-measure);
+}
+
+.cn-ink-soft {
+  color: var(--cn-ink-soft);
+}
+
+.cn-stack {
+  display: grid;
+  gap: var(--cn-space-4);
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- Sections ---------- */
+
+.cn-section {
+  padding-block: clamp(3.5rem, 2rem + 6vw, 7rem);
+  position: relative;
+}
+
+.cn-section + .cn-section {
+  border-top: var(--cn-hairline);
+}
+
+/* Inverted band. Used sparingly — one or two per page, for weight. */
+.cn-section--field {
+  background-color: var(--cn-field);
+  color: var(--cn-field-ink);
+  border-top: 0;
+  background-image:
+    linear-gradient(var(--cn-grid-line-field) 1px, transparent 1px),
+    linear-gradient(90deg, var(--cn-grid-line-field) 1px, transparent 1px);
+  background-size: var(--cn-grid-size) var(--cn-grid-size);
+}
+
+.cn-section--field .cn-label {
+  color: var(--cn-field-ink-soft);
+}
+
+.cn-section--field .cn-rule {
+  background: var(--cn-field-rule);
+}
+
+.cn-section__title {
+  font-size: var(--cn-text-2xl);
+  letter-spacing: var(--cn-tracking-tight);
+}
+
+.cn-section__lead {
+  color: var(--cn-ink-soft);
+  max-width: var(--cn-measure);
+  font-size: var(--cn-text-lg);
+}
+
+.cn-section--field .cn-section__lead {
+  color: var(--cn-field-ink-soft);
+}
+
+/* Section header: label, title, lead, closing rule. */
+.cn-head {
+  display: grid;
+  gap: var(--cn-space-3);
+  margin-bottom: var(--cn-space-6);
+}
+
+/* ---------- Surfaces ---------- */
+
+/* A "card" here is a ruled block, not a floating rounded box. */
+.cn-card {
+  background: var(--cn-paper-raised);
+  border: var(--cn-hairline);
+  border-radius: var(--cn-radius-md);
+  padding: var(--cn-space-5);
+}
+
+.cn-card--interactive {
+  transition:
+    border-color var(--cn-duration-fast) var(--cn-ease-out),
+    background-color var(--cn-duration-fast) var(--cn-ease-out),
+    transform var(--cn-duration-fast) var(--cn-ease-out);
+}
+
+.cn-card--interactive:hover,
+.cn-card--interactive:focus-within {
+  border-color: var(--cn-ink);
+  transform: translateY(-2px);
+}
+
+/* ---------- Buttons ---------- */
+
+.btn {
+  --bs-btn-border-radius: var(--cn-radius-md);
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  font-weight: 700;
+  letter-spacing: var(--cn-tracking-wide);
+  text-transform: uppercase;
+  padding: 0.85rem 1.5rem;
+  border-radius: var(--cn-radius-md);
+  transition:
+    background-color var(--cn-duration-fast) var(--cn-ease-out),
+    color var(--cn-duration-fast) var(--cn-ease-out),
+    border-color var(--cn-duration-fast) var(--cn-ease-out),
+    transform var(--cn-duration-fast) var(--cn-ease-out);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-cn-primary {
+  background: var(--cn-ink);
+  border: 1px solid var(--cn-ink);
+  color: var(--cn-paper-raised);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cn-space-2);
+}
+
+.btn-cn-primary:hover,
+.btn-cn-primary:focus {
+  background: var(--cn-accent);
+  border-color: var(--cn-accent);
+  color: #fff;
+  text-decoration: none;
+}
+
+.btn-cn-ghost {
+  background: transparent;
+  border: 1px solid var(--cn-rule-strong);
+  color: var(--cn-ink);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cn-space-2);
+}
+
+.btn-cn-ghost:hover,
+.btn-cn-ghost:focus {
+  border-color: var(--cn-ink);
+  background: var(--cn-ink);
+  color: var(--cn-paper-raised);
+  text-decoration: none;
+}
+
+.btn-cn-ghost:disabled,
+.btn:disabled {
+  opacity: 0.45;
+  transform: none;
+}
+
+/* On the ink field the button polarity flips. */
+.cn-section--field .btn-cn-primary,
+.cn-on-field .btn-cn-primary {
+  background: var(--cn-field-ink);
+  border-color: var(--cn-field-ink);
+  color: var(--cn-field);
+}
+
+.cn-section--field .btn-cn-primary:hover,
+.cn-on-field .btn-cn-primary:hover {
+  background: var(--cn-accent);
+  border-color: var(--cn-accent);
+  color: #fff;
+}
+
+.cn-section--field .btn-cn-ghost,
+.cn-on-field .btn-cn-ghost {
+  border-color: var(--cn-field-rule);
+  color: var(--cn-field-ink);
+}
+
+.cn-section--field .btn-cn-ghost:hover,
+.cn-on-field .btn-cn-ghost:hover {
+  background: var(--cn-field-ink);
+  color: var(--cn-field);
+  border-color: var(--cn-field-ink);
+}
+
+.btn-sm {
+  padding: 0.5rem 0.9rem;
+  font-size: var(--cn-text-micro);
+}
+
+/* ---------- Meter ---------- */
+
+/* Progress is a rule that fills, not a rounded pill. */
+.cn-progress {
+  height: 3px;
+  background: var(--cn-rule);
+  overflow: hidden;
+}
+
+.cn-progress__bar {
+  height: 100%;
+  background: var(--cn-ink);
+  transition: width var(--cn-duration-slow) var(--cn-ease-out);
+}
+
+.cn-progress--reward .cn-progress__bar {
+  background: var(--cn-reward);
+}
+
+.cn-progress--accent .cn-progress__bar {
+  background: var(--cn-accent);
+}
+
+.cn-section--field .cn-progress,
+.cn-on-field .cn-progress {
+  background: var(--cn-field-rule);
+}
+
+.cn-section--field .cn-progress__bar,
+.cn-on-field .cn-progress__bar {
+  background: var(--cn-field-ink);
+}
+
+/* ---------- Chips & tags ---------- */
+
+.cn-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.6rem;
+  border: var(--cn-hairline);
+  border-radius: var(--cn-radius-sm);
+  background: var(--cn-paper-raised);
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-micro);
+  letter-spacing: var(--cn-tracking-wide);
+  text-transform: uppercase;
+  color: var(--cn-ink-soft);
+  white-space: nowrap;
+}
+
+a.cn-chip:hover {
+  border-color: var(--cn-ink);
+  color: var(--cn-ink);
+  text-decoration: none;
+}
+
+.cn-chip--easy {
+  border-color: var(--cn-positive);
+  color: var(--cn-positive);
+}
+.cn-chip--medium {
+  border-color: var(--cn-reward);
+  color: #a45900;
+}
+.cn-chip--hard {
+  border-color: var(--cn-negative);
+  color: var(--cn-negative);
+}
+.cn-chip--accent {
+  border-color: var(--cn-accent);
+  color: var(--cn-accent);
+}
+
+/* ---------- Notices ---------- */
+
+.cn-notice {
+  display: flex;
+  gap: var(--cn-space-3);
+  padding: var(--cn-space-3) var(--cn-space-4);
+  border: var(--cn-hairline);
+  border-left: 2px solid var(--cn-accent);
+  background: var(--cn-paper-raised);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-ink-soft);
+}
+
+.cn-notice--reward {
+  border-left-color: var(--cn-reward);
+  background: var(--cn-reward-wash);
+  color: #7a4400;
+}
+
+.cn-notice--reward a {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+/* ---------- Motion ---------- */
+
+/* One staged reveal per page load. Elements rise into place in sequence. */
+@keyframes cn-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.cn-rise {
+  animation: cn-rise var(--cn-duration-slow) var(--cn-ease-out) backwards;
+}
+
+.cn-rise-1 { animation-delay: 40ms; }
+.cn-rise-2 { animation-delay: 110ms; }
+.cn-rise-3 { animation-delay: 180ms; }
+.cn-rise-4 { animation-delay: 250ms; }
+.cn-rise-5 { animation-delay: 320ms; }
+
+/* Honour both the OS setting and the in-app toggle from Settings. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+html[data-reduce-motion] {
+  scroll-behavior: auto;
+}
+
+html[data-reduce-motion] *,
+html[data-reduce-motion] *::before,
+html[data-reduce-motion] *::after {
+  animation-duration: 0.01ms !important;
+  animation-delay: 0ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}

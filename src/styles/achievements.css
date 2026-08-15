@@ -1,0 +1,109 @@
+/** Achievements — a ruled ledger of badges, locked ones dimmed rather than hidden. */
+
+.cn-ach {
+  padding-block: var(--cn-space-6) var(--cn-space-8);
+}
+
+.cn-ach__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cn-space-4);
+  align-items: flex-end;
+  justify-content: space-between;
+  padding-bottom: var(--cn-space-4);
+  border-bottom: var(--cn-hairline-strong);
+  margin-bottom: var(--cn-space-2);
+}
+
+.cn-ach__meter {
+  flex: 1 1 220px;
+  max-width: 320px;
+}
+
+.cn-badges {
+  display: grid;
+}
+
+.cn-badge {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--cn-space-2) var(--cn-space-4);
+  padding-block: var(--cn-space-4);
+  border-bottom: var(--cn-hairline);
+  align-items: start;
+}
+
+@media (min-width: 720px) {
+  .cn-badge {
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: var(--cn-space-5);
+  }
+}
+
+.cn-badge__icon {
+  font-size: 1.5rem;
+  color: var(--cn-ink-faint);
+}
+
+.cn-badge[data-unlocked='true'] .cn-badge__icon {
+  color: var(--cn-reward);
+}
+
+.cn-badge[data-unlocked='false'] .cn-badge__name,
+.cn-badge[data-unlocked='false'] .cn-badge__desc {
+  color: var(--cn-ink-faint);
+}
+
+.cn-badge__body {
+  display: grid;
+  gap: var(--cn-space-2);
+  min-width: 0;
+}
+
+.cn-badge__name {
+  font-size: var(--cn-text-base);
+  margin: 0;
+}
+
+.cn-badge__desc {
+  font-size: var(--cn-text-sm);
+  color: var(--cn-ink-soft);
+  margin: 0;
+}
+
+.cn-badge__meta {
+  grid-column: 2 / -1;
+  display: flex;
+  gap: var(--cn-space-3);
+  align-items: baseline;
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  white-space: nowrap;
+}
+
+@media (min-width: 720px) {
+  .cn-badge__meta {
+    grid-column: auto;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--cn-space-1);
+  }
+}
+
+.cn-badge__status {
+  color: var(--cn-ink-soft);
+}
+
+.cn-badge[data-unlocked='true'] .cn-badge__status {
+  color: var(--cn-positive);
+  font-weight: 700;
+}
+
+.cn-badge__xp {
+  color: var(--cn-ink-faint);
+}
+
+.cn-badge[data-unlocked='true'] .cn-badge__xp {
+  color: var(--cn-reward);
+}

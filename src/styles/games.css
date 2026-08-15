@@ -1,0 +1,533 @@
+/**
+ * Games hub and Quiz Blitz.
+ *
+ * The quiz is the app's most focused screen: one question at a time, a draining rule for the
+ * timer, options as ruled rows with monospace keys. Results invert to the ink field.
+ */
+
+.cn-games {
+  padding-block: var(--cn-space-6) var(--cn-space-8);
+}
+
+.cn-games__head {
+  padding-bottom: var(--cn-space-4);
+  border-bottom: var(--cn-hairline-strong);
+  margin-bottom: var(--cn-space-2);
+}
+
+/* --- Mode list: ruled rows, not a card pile --- */
+
+.cn-mode {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--cn-space-3) var(--cn-space-4);
+  padding-block: var(--cn-space-5);
+  border-bottom: var(--cn-hairline);
+  align-items: baseline;
+  transition: background-color var(--cn-duration-fast) var(--cn-ease-out);
+}
+
+@media (min-width: 820px) {
+  .cn-mode {
+    grid-template-columns: 3.5rem minmax(0, 14rem) 1fr auto;
+    align-items: center;
+    gap: var(--cn-space-5);
+  }
+}
+
+.cn-mode:hover {
+  background: var(--cn-paper-raised);
+}
+
+.cn-mode__num {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-faint);
+}
+
+.cn-mode__name {
+  display: flex;
+  align-items: center;
+  gap: var(--cn-space-3);
+  font-size: var(--cn-text-lg);
+  font-weight: 700;
+  letter-spacing: var(--cn-tracking-snug);
+  margin: 0;
+}
+
+.cn-mode__name i {
+  color: var(--cn-accent);
+  font-size: 1rem;
+}
+
+.cn-mode__desc {
+  grid-column: 2 / -1;
+  font-size: var(--cn-text-sm);
+  color: var(--cn-ink-soft);
+  margin: 0;
+}
+
+.cn-mode__action {
+  grid-column: 2 / -1;
+}
+
+@media (min-width: 820px) {
+  .cn-mode__desc,
+  .cn-mode__action {
+    grid-column: auto;
+  }
+  .cn-mode__action {
+    justify-self: end;
+  }
+}
+
+.cn-mode--locked {
+  color: var(--cn-ink-faint);
+}
+
+.cn-mode--locked .cn-mode__name,
+.cn-mode--locked .cn-mode__name i {
+  color: var(--cn-ink-faint);
+}
+
+/* ---------------- Quiz play ---------------- */
+
+.cn-quiz {
+  max-width: 780px;
+  margin-inline: auto;
+  padding-block: var(--cn-space-6) var(--cn-space-8);
+}
+
+.cn-quiz__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--cn-space-3);
+  flex-wrap: wrap;
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-micro);
+  letter-spacing: var(--cn-tracking-wide);
+  text-transform: uppercase;
+  color: var(--cn-ink-faint);
+  padding-bottom: var(--cn-space-2);
+}
+
+.cn-quiz__count {
+  color: var(--cn-ink);
+  font-weight: 700;
+}
+
+.cn-quiz__stats {
+  display: flex;
+  gap: var(--cn-space-4);
+  margin-inline-start: auto;
+}
+
+.cn-quiz__stats b {
+  color: var(--cn-ink);
+}
+
+/* The timer IS the rule under the header — it drains left to right. */
+.cn-quiz__timerbar {
+  height: 3px;
+  background: var(--cn-rule);
+  overflow: hidden;
+  margin-bottom: var(--cn-space-2);
+}
+
+.cn-quiz__timerbar span {
+  display: block;
+  height: 100%;
+  background: var(--cn-ink);
+  transition: width 120ms linear;
+}
+
+.cn-quiz__timerbar[data-low='true'] span {
+  background: var(--cn-negative);
+}
+
+.cn-quiz__timer {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-micro);
+  letter-spacing: var(--cn-tracking-wide);
+  text-transform: uppercase;
+  color: var(--cn-ink-faint);
+  margin-bottom: var(--cn-space-6);
+}
+
+.cn-quiz__timer[data-low='true'] {
+  color: var(--cn-negative);
+}
+
+.cn-quiz__question {
+  font-size: clamp(1.4rem, 1.1rem + 1.4vw, 2rem);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: var(--cn-tracking-snug);
+  margin-bottom: var(--cn-space-6);
+  text-wrap: balance;
+}
+
+/* --- Options --- */
+
+.cn-options {
+  display: grid;
+  border-top: var(--cn-hairline-strong);
+}
+
+.cn-option {
+  display: flex;
+  align-items: center;
+  gap: var(--cn-space-4);
+  width: 100%;
+  text-align: start;
+  padding: var(--cn-space-4) var(--cn-space-3);
+  border: 0;
+  border-bottom: var(--cn-hairline);
+  background: transparent;
+  font-size: var(--cn-text-base);
+  font-weight: 500;
+  color: var(--cn-ink);
+  cursor: pointer;
+  transition:
+    background-color var(--cn-duration-fast) var(--cn-ease-out),
+    padding-inline-start var(--cn-duration-fast) var(--cn-ease-out);
+}
+
+.cn-option:hover:not(:disabled) {
+  background: var(--cn-paper-raised);
+  padding-inline-start: var(--cn-space-4);
+}
+
+.cn-option:disabled {
+  cursor: default;
+}
+
+.cn-option__key {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  border: var(--cn-hairline);
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  font-weight: 700;
+  color: var(--cn-ink-faint);
+}
+
+.cn-option:hover:not(:disabled) .cn-option__key {
+  border-color: var(--cn-ink);
+  color: var(--cn-ink);
+}
+
+.cn-option__mark {
+  margin-inline-start: auto;
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-sm);
+  font-weight: 700;
+  letter-spacing: var(--cn-tracking-wide);
+  white-space: nowrap;
+}
+
+/* State carries an icon and a word, never colour alone. */
+.cn-option[data-state='correct'] {
+  background: var(--cn-positive-wash);
+  color: #08543c;
+  box-shadow: inset 2px 0 0 var(--cn-positive);
+}
+
+.cn-option[data-state='correct'] .cn-option__key {
+  border-color: var(--cn-positive);
+  color: var(--cn-positive);
+}
+
+.cn-option[data-state='wrong'] {
+  background: var(--cn-negative-wash);
+  color: #8c2126;
+  box-shadow: inset 2px 0 0 var(--cn-negative);
+}
+
+.cn-option[data-state='wrong'] .cn-option__key {
+  border-color: var(--cn-negative);
+  color: var(--cn-negative);
+}
+
+.cn-option[data-state='muted'] {
+  color: var(--cn-ink-faint);
+}
+
+/* --- Feedback --- */
+
+.cn-feedback {
+  margin-top: var(--cn-space-5);
+  padding: var(--cn-space-4);
+  border: var(--cn-hairline);
+  border-left: 2px solid var(--cn-ink);
+  background: var(--cn-paper-raised);
+}
+
+.cn-feedback[data-correct='true'] {
+  border-left-color: var(--cn-positive);
+}
+
+.cn-feedback[data-correct='false'] {
+  border-left-color: var(--cn-negative);
+}
+
+.cn-feedback__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--cn-space-3);
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  font-weight: 700;
+  letter-spacing: var(--cn-tracking-wide);
+  text-transform: uppercase;
+  margin-bottom: var(--cn-space-3);
+}
+
+.cn-feedback[data-correct='true'] .cn-feedback__head {
+  color: var(--cn-positive);
+}
+
+.cn-feedback[data-correct='false'] .cn-feedback__head {
+  color: var(--cn-negative);
+}
+
+.cn-feedback__xp {
+  margin-inline-start: auto;
+  color: var(--cn-reward);
+}
+
+.cn-feedback p {
+  font-size: var(--cn-text-sm);
+  color: var(--cn-ink-soft);
+  max-width: var(--cn-measure);
+}
+
+.cn-feedback__actions {
+  margin-top: var(--cn-space-4);
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ---------------- Results ---------------- */
+
+.cn-result {
+  max-width: 780px;
+  margin-inline: auto;
+  padding-block: var(--cn-space-6) var(--cn-space-8);
+}
+
+.cn-result__hero {
+  background: var(--cn-field);
+  color: var(--cn-field-ink);
+  padding: clamp(2rem, 1rem + 3vw, 3.5rem);
+  display: grid;
+  gap: var(--cn-space-3);
+  background-image:
+    linear-gradient(var(--cn-grid-line-field) 1px, transparent 1px),
+    linear-gradient(90deg, var(--cn-grid-line-field) 1px, transparent 1px);
+  background-size: var(--cn-grid-size) var(--cn-grid-size);
+}
+
+.cn-result__score {
+  font-family: var(--cn-font-mono);
+  font-size: clamp(3.5rem, 2rem + 8vw, 7rem);
+  font-weight: 700;
+  line-height: 0.85;
+  letter-spacing: var(--cn-tracking-tight);
+}
+
+.cn-result__score small {
+  font-size: 0.35em;
+  color: var(--cn-field-ink-soft);
+}
+
+.cn-result__xp {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xl);
+  font-weight: 700;
+  color: var(--cn-reward);
+}
+
+.cn-result__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  border-top: var(--cn-hairline-strong);
+}
+
+@media (min-width: 640px) {
+  .cn-result__grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* --- Level up --- */
+
+.cn-levelup {
+  margin-top: var(--cn-space-5);
+  padding: var(--cn-space-5);
+  border: var(--cn-border-heavy);
+  border-left-width: 4px;
+  border-left-color: var(--cn-reward);
+  background: var(--cn-paper-raised);
+  display: grid;
+  gap: var(--cn-space-1);
+}
+
+.cn-levelup .cn-label {
+  color: var(--cn-reward);
+}
+
+.cn-levelup__number {
+  font-family: var(--cn-font-mono);
+  font-size: clamp(2.5rem, 1.8rem + 3vw, 4rem);
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: var(--cn-tracking-tight);
+}
+
+.cn-levelup__title {
+  text-transform: uppercase;
+  letter-spacing: var(--cn-tracking-wide);
+  font-weight: 700;
+  font-size: var(--cn-text-sm);
+}
+
+.cn-levelup__meta {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-faint);
+}
+
+/* --- Achievement unlocks --- */
+
+.cn-unlocks {
+  display: grid;
+  border-top: var(--cn-hairline-strong);
+}
+
+.cn-unlock {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--cn-space-4);
+  align-items: center;
+  padding-block: var(--cn-space-4);
+  border-bottom: var(--cn-hairline);
+}
+
+.cn-unlock > i {
+  font-size: 1.4rem;
+  color: var(--cn-reward);
+}
+
+.cn-unlock h3 {
+  font-size: var(--cn-text-base);
+  margin: 0;
+}
+
+.cn-unlock p {
+  font-size: var(--cn-text-sm);
+  color: var(--cn-ink-soft);
+  margin: 0;
+}
+
+.cn-unlock__xp {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-sm);
+  font-weight: 700;
+  color: var(--cn-reward);
+  white-space: nowrap;
+}
+
+/* --- XP ledger --- */
+
+.cn-xp-rows {
+  display: grid;
+  margin-top: var(--cn-space-6);
+}
+
+.cn-xp-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--cn-space-4);
+  padding-block: var(--cn-space-3);
+  border-bottom: var(--cn-hairline);
+  font-size: var(--cn-text-sm);
+}
+
+.cn-xp-row span:last-child {
+  font-family: var(--cn-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.cn-xp-row--total {
+  border-bottom: 0;
+  border-top: var(--cn-hairline-strong);
+  font-weight: 800;
+  font-size: var(--cn-text-base);
+}
+
+.cn-xp-row--total span:last-child {
+  color: var(--cn-reward);
+}
+
+.cn-result__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cn-space-3);
+  margin-top: var(--cn-space-6);
+}
+
+.cn-result__actions .btn {
+  flex: 1 1 190px;
+  justify-content: center;
+}
+
+/* --- Review --- */
+
+.cn-review {
+  display: grid;
+  margin-top: var(--cn-space-6);
+  border-top: var(--cn-hairline-strong);
+}
+
+.cn-review__item {
+  padding-block: var(--cn-space-4);
+  border-bottom: var(--cn-hairline);
+  box-shadow: inset 2px 0 0 var(--cn-negative);
+  padding-inline-start: var(--cn-space-4);
+}
+
+.cn-review__item[data-correct='true'] {
+  box-shadow: inset 2px 0 0 var(--cn-positive);
+}
+
+.cn-review__q {
+  font-weight: 700;
+  margin-bottom: var(--cn-space-2);
+}
+
+.cn-review__line {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  margin: 0;
+}
+
+.cn-review__line--yours {
+  color: var(--cn-negative);
+}
+
+.cn-review__line--right {
+  color: var(--cn-positive);
+}
+
+.cn-review__why {
+  margin-top: var(--cn-space-2);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-ink-soft);
+  max-width: var(--cn-measure);
+}

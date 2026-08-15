@@ -1,0 +1,34 @@
+{
+  "name": "CN Quest — Gamified Computer Networks Learning",
+  "short_name": "CN Quest",
+  "description": "Master Computer Networks through interactive challenges, XP, streaks and boss battles.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f6f8fc",
+  "theme_color": "#3d5afe",
+  "categories": ["education", "games"],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    { "name": "Dashboard", "url": "/#/dashboard" },
+    { "name": "Quiz Blitz", "url": "/#/games/quiz" },
+    { "name": "Dictionary", "url": "/#/dictionary" }
+  ]
+}

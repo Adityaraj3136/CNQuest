@@ -1,0 +1,255 @@
+/**
+ * Progress analytics — dense but ruled. Tables read like a printed report card,
+ * charts are inline SVG stretched to width.
+ */
+
+.cn-prog {
+  padding-block: var(--cn-space-6) var(--cn-space-8);
+}
+
+.cn-prog__section {
+  margin-top: var(--cn-space-7);
+}
+
+/* --- Charts --- */
+
+.cn-prog__charts {
+  display: grid;
+  gap: var(--cn-space-5);
+  margin-top: var(--cn-space-4);
+}
+
+@media (min-width: 800px) {
+  .cn-prog__charts {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--cn-space-6);
+  }
+}
+
+.cn-prog__chart {
+  margin: 0;
+  display: grid;
+  gap: var(--cn-space-2);
+  padding: var(--cn-space-4);
+  border: var(--cn-hairline);
+  background: var(--cn-paper-raised);
+}
+
+.cn-chart {
+  width: 100%;
+  height: 110px;
+  display: block;
+}
+
+.cn-chart--bars rect {
+  fill: var(--cn-reward);
+}
+
+.cn-chart--bars rect[data-empty='true'] {
+  fill: var(--cn-rule-strong);
+}
+
+.cn-chart--line polyline {
+  fill: none;
+  stroke: var(--cn-accent);
+  /* preserveAspectRatio="none" stretches the stroke, so keep it thin and let it scale. */
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+}
+
+.cn-chart--line circle {
+  fill: var(--cn-accent);
+  vector-effect: non-scaling-stroke;
+}
+
+.cn-chart__grid {
+  stroke: var(--cn-rule);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 2 3;
+}
+
+.cn-chart__axis {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-micro);
+  color: var(--cn-ink-faint);
+}
+
+/* --- Units --- */
+
+.cn-prog__units {
+  margin-top: var(--cn-space-4);
+  border-top: var(--cn-hairline-strong);
+}
+
+.cn-prog__unit {
+  border-bottom: var(--cn-hairline);
+}
+
+.cn-prog__unit-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--cn-space-2) var(--cn-space-3);
+  align-items: baseline;
+  padding: var(--cn-space-4) var(--cn-space-2);
+  cursor: pointer;
+  list-style: none;
+}
+
+.cn-prog__unit-head::-webkit-details-marker {
+  display: none;
+}
+
+.cn-prog__unit-head:hover {
+  background: var(--cn-paper-raised);
+}
+
+.cn-prog__unit-num {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-sm);
+  font-weight: 700;
+  color: var(--cn-accent);
+}
+
+.cn-prog__unit-title {
+  font-weight: 700;
+  letter-spacing: var(--cn-tracking-snug);
+}
+
+.cn-prog__unit-meta {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-micro);
+  letter-spacing: var(--cn-tracking-wide);
+  text-transform: uppercase;
+  color: var(--cn-ink-faint);
+  grid-column: 2;
+}
+
+.cn-prog__unit-value {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-lg);
+  font-weight: 700;
+  grid-row: 1 / 3;
+  grid-column: 3;
+  align-self: center;
+}
+
+.cn-prog__unit-bar {
+  grid-column: 1 / -1;
+  display: block;
+}
+
+.cn-prog__none {
+  padding: 0 var(--cn-space-2) var(--cn-space-4);
+  color: var(--cn-ink-soft);
+  font-size: var(--cn-text-sm);
+}
+
+/* --- Tables --- */
+
+.cn-prog__table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: var(--cn-space-4);
+  font-size: var(--cn-text-sm);
+  /* Narrow screens scroll the table, never the page. */
+  display: block;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+@media (min-width: 720px) {
+  .cn-prog__table {
+    display: table;
+    white-space: normal;
+  }
+}
+
+.cn-prog__table--modes {
+  margin-top: var(--cn-space-4);
+}
+
+.cn-prog__table th,
+.cn-prog__table td {
+  padding: var(--cn-space-2) var(--cn-space-3);
+  text-align: right;
+  border-bottom: var(--cn-hairline);
+}
+
+.cn-prog__table th:first-child,
+.cn-prog__table td:first-child {
+  text-align: left;
+}
+
+.cn-prog__table thead th {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-micro);
+  font-weight: 600;
+  letter-spacing: var(--cn-tracking-label);
+  text-transform: uppercase;
+  color: var(--cn-ink-faint);
+  border-bottom: var(--cn-hairline-strong);
+}
+
+.cn-prog__table tbody th {
+  font-weight: 700;
+}
+
+.cn-prog__table td {
+  font-family: var(--cn-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Activity log --- */
+
+.cn-prog__log {
+  margin-top: var(--cn-space-4);
+  border-top: var(--cn-hairline-strong);
+}
+
+.cn-prog__log-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: var(--cn-space-2) var(--cn-space-3);
+  padding-block: var(--cn-space-3);
+  border-bottom: var(--cn-hairline);
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  align-items: baseline;
+}
+
+.cn-prog__log-date {
+  color: var(--cn-ink-faint);
+}
+
+.cn-prog__log-mode {
+  font-family: var(--cn-font-sans);
+  font-weight: 700;
+  font-size: var(--cn-text-sm);
+}
+
+.cn-prog__log-score {
+  font-weight: 700;
+}
+
+.cn-prog__log-acc {
+  color: var(--cn-ink-soft);
+}
+
+.cn-prog__log-xp {
+  grid-column: 4;
+  color: var(--cn-reward);
+  font-weight: 700;
+}
+
+@media (max-width: 560px) {
+  .cn-prog__log-row {
+    grid-template-columns: 1fr auto;
+  }
+  .cn-prog__log-date {
+    grid-column: 1 / -1;
+  }
+}

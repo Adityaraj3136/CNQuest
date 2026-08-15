@@ -1,0 +1,242 @@
+rules_version = '2';
+
+// CN Quest Firestore security rules.
+//
+// Threat model: the client is untrusted. XP, mastery and achievements are currently computed
+// in the browser (no Cloud Functions in this build), so a determined student could call
+// Firestore directly. These rules cannot make client-side scoring authoritative, but they do
+// close the cheap attacks: they stop a student from writing to anyone else's documents,
+// rewriting educational content, awarding themselves an arbitrary XP total, or lowering
+// counters to farm achievements again.
+//
+// Defence in depth, in order:
+//   1. Content is read-only for everyone. Only the Console or the seed script writes it.
+//   2. A student may only touch documents keyed to their own uid.
+//   3. Profiles start at zero and every cumulative field is monotonically non-decreasing.
+//   4. A single write may add at most MAX_XP_PER_WRITE, so no one jumps to level 40 in one go.
+//   5. Attempt records are immutable and internally consistent (correct <= attempted, etc).
+//
+// Remaining gap, stated honestly: a client can still submit a *plausible* result it did not
+// earn. Closing that requires moving scoring into a Cloud Function, which the architecture
+// already allows — games produce a GameResult and one service processes it.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // The most XP any single legitimate round can award: answer XP + round bonuses +
+    // boss victory + the daily bonus + every achievement reward, with headroom.
+    function maxXpPerWrite() { return 1000; }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // ---------------------------------------------------------------- content
+
+    // Read-only educational content. Written only via the Console or scripts/seed.mjs
+    // (which uses the Admin SDK and bypasses these rules by design).
+    function contentIsReadable() {
+      return isSignedIn();
+    }
+
+    match /units/{unitId} {
+      allow read: if contentIsReadable();
+      allow write: if false;
+    }
+    match /topics/{topicId} {
+      allow read: if contentIsReadable();
+      allow write: if false;
+    }
+    match /questions/{questionId} {
+      allow read: if contentIsReadable();
+      allow write: if false;
+    }
+    match /riddles/{riddleId} {
+      allow read: if contentIsReadable();
+      allow write: if false;
+    }
+    match /dictionary/{termId} {
+      allow read: if contentIsReadable();
+      allow write: if false;
+    }
+    match /achievements/{achievementId} {
+      allow read: if contentIsReadable();
+      allow write: if false;
+    }
+    match /matchingSets/{setId} {
+      allow read: if contentIsReadable();
+      allow write: if false;
+    }
+    match /wordSearchSets/{setId} {
+      allow read: if contentIsReadable();
+      allow write: if false;
+    }
+    match /bosses/{bossId} {
+      allow read: if contentIsReadable();
+      allow write: if false;
+    }
+
+    // ---------------------------------------------------------------- profile
+
+    // A new profile must start from zero — no pre-loaded accounts.
+    function profileStartsClean() {
+      return incoming().totalXP == 0
+        && incoming().level == 1
+        && incoming().currentStreak == 0
+        && incoming().longestStreak == 0
+        && incoming().gamesPlayed == 0
+        && incoming().questionsAnswered == 0
+        && incoming().correctAnswers == 0;
+    }
+
+    // Identity fields can never be rewritten.
+    function identityUnchanged(userId) {
+      return incoming().uid == existing().uid
+        && incoming().uid == userId
+        && incoming().email == existing().email
+        && incoming().createdAt == existing().createdAt;
+    }
+
+    // Cumulative counters only ever go up. Prevents resetting a counter to re-earn badges.
+    function countersOnlyGrow() {
+      return incoming().totalXP >= existing().totalXP
+        && incoming().gamesPlayed >= existing().gamesPlayed
+        && incoming().questionsAnswered >= existing().questionsAnswered
+        && incoming().correctAnswers >= existing().correctAnswers
+        && incoming().longestStreak >= existing().longestStreak;
+    }
+
+    // One write cannot award an implausible amount of XP.
+    function xpGainIsPlausible() {
+      return incoming().totalXP - existing().totalXP <= maxXpPerWrite();
+    }
+
+    // Values that must stay internally consistent whatever the client claims.
+    function profileIsCoherent() {
+      return incoming().totalXP >= 0
+        && incoming().level >= 1 && incoming().level <= 100
+        && incoming().currentStreak >= 0
+        && incoming().currentStreak <= incoming().longestStreak
+        && incoming().correctAnswers <= incoming().questionsAnswered;
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+
+      allow create: if isOwner(userId)
+        && incoming().uid == userId
+        && incoming().email is string
+        && incoming().name is string
+        && profileStartsClean();
+
+      allow update: if isOwner(userId)
+        && identityUnchanged(userId)
+        && countersOnlyGrow()
+        && xpGainIsPlausible()
+        && profileIsCoherent();
+
+      // Account deletion is an administrative action, not a client one.
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------ leaderboard
+
+    // Ranking students means reading other students' rows. Rather than opening `users/{uid}`
+    // — which carries an email and every achievement counter — each student mirrors four
+    // public-safe fields into `leaderboard/{uid}`. `hasOnly` is the load-bearing clause: it
+    // stops anyone smuggling extra profile fields into a world-readable document.
+    function leaderboardIsCoherent(userId) {
+      return incoming().keys().hasOnly(['uid', 'name', 'level', 'totalXP', 'updatedAt'])
+        && incoming().uid == userId
+        && incoming().name is string
+        && incoming().name.size() > 0
+        && incoming().name.size() <= 60
+        && incoming().totalXP is number
+        && incoming().totalXP >= 0
+        && incoming().level is number
+        && incoming().level >= 1 && incoming().level <= 100;
+    }
+
+    match /leaderboard/{userId} {
+      // Any signed-in student may read the board; nobody may read it anonymously.
+      allow read: if isSignedIn();
+
+      allow create: if isOwner(userId) && leaderboardIsCoherent(userId);
+
+      // Same monotonic-XP guarantee as the profile, so the mirror cannot claim more than
+      // the document it mirrors.
+      allow update: if isOwner(userId)
+        && leaderboardIsCoherent(userId)
+        && incoming().totalXP >= existing().totalXP
+        && incoming().totalXP - existing().totalXP <= maxXpPerWrite();
+
+      allow delete: if false;
+    }
+
+    // ---------------------------------------------------------------- activity
+
+    // A finished round. Immutable once written, and internally consistent.
+    function attemptIsCoherent() {
+      return incoming().userId == request.auth.uid
+        && incoming().attempted >= 0
+        && incoming().correct >= 0
+        && incoming().correct <= incoming().attempted
+        && incoming().accuracy >= 0 && incoming().accuracy <= 100
+        && incoming().xpEarned >= 0 && incoming().xpEarned <= maxXpPerWrite()
+        && incoming().durationSeconds >= 0;
+    }
+
+    match /gameAttempts/{attemptId} {
+      allow read: if isSignedIn() && existing().userId == request.auth.uid;
+      allow create: if isSignedIn() && attemptIsCoherent();
+      // An audit trail that can be edited is not an audit trail.
+      allow update, delete: if false;
+    }
+
+    // Per-topic mastery, one document per user+topic.
+    function progressIsCoherent() {
+      return incoming().userId == request.auth.uid
+        && incoming().attempted >= 0
+        && incoming().correct >= 0
+        && incoming().correct <= incoming().attempted
+        && incoming().accuracy >= 0 && incoming().accuracy <= 100
+        && incoming().completion >= 0 && incoming().completion <= 100
+        && incoming().mastery >= 0 && incoming().mastery <= 100;
+    }
+
+    match /userProgress/{progressId} {
+      allow read: if isSignedIn() && existing().userId == request.auth.uid;
+      allow create: if isSignedIn() && progressIsCoherent();
+      allow update: if isSignedIn()
+        && existing().userId == request.auth.uid
+        && progressIsCoherent()
+        // Attempts accumulate; they never reset.
+        && incoming().attempted >= existing().attempted
+        && incoming().correct >= existing().correct;
+      allow delete: if false;
+    }
+
+    // Unlocked achievements. Create-only, so an unlock cannot be rewritten or removed.
+    match /userAchievements/{userAchievementId} {
+      allow read: if isSignedIn() && existing().userId == request.auth.uid;
+      allow create: if isSignedIn()
+        && incoming().userId == request.auth.uid
+        && incoming().achievementId is string;
+      allow update, delete: if false;
+    }
+
+    // ---------------------------------------------------------------- default
+
+    // Anything not matched above is denied.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

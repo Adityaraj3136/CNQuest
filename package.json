@@ -1,0 +1,31 @@
+{
+  "name": "cn-quest",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "CN Quest - Reinforcement AI Based Gamified Learning Platform for Computer Networks",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test:units": "node --test \"src/**/*.test.ts\"",
+    "seed": "node scripts/seed.mjs",
+    "seed:dry": "node scripts/seed.mjs --dry-run",
+    "verify": "npm run typecheck && npm run test:units && npm run build",
+    "deploy": "npm run verify && firebase deploy",
+    "deploy:hosting": "npm run verify && firebase deploy --only hosting",
+    "deploy:rules": "firebase deploy --only firestore:rules",
+    "emulators": "firebase emulators:start"
+  },
+  "dependencies": {
+    "bootstrap": "^5.3.3",
+    "bootstrap-icons": "^1.11.3",
+    "firebase": "^11.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5",
+    "vite-plugin-pwa": "^1.3.0"
+  }
+}

@@ -1,0 +1,368 @@
+/**
+ * Shared "arena" chrome for Match & Pair, Riddles, Boss Battle and Word Search,
+ * plus each mode's own board.
+ */
+
+.cn-arena {
+  padding-block: var(--cn-space-6) var(--cn-space-8);
+}
+
+.cn-arena--narrow {
+  max-width: 720px;
+  margin-inline: auto;
+}
+
+.cn-arena__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cn-space-4);
+  align-items: flex-end;
+  justify-content: space-between;
+  padding-bottom: var(--cn-space-4);
+  border-bottom: var(--cn-hairline-strong);
+  margin-bottom: var(--cn-space-5);
+}
+
+.cn-arena__title {
+  font-size: var(--cn-text-2xl);
+  text-transform: uppercase;
+  letter-spacing: var(--cn-tracking-tight);
+  margin-top: var(--cn-space-2);
+}
+
+.cn-arena__stats {
+  display: flex;
+  gap: var(--cn-space-5);
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-micro);
+  letter-spacing: var(--cn-tracking-wide);
+  text-transform: uppercase;
+  color: var(--cn-ink-faint);
+}
+
+.cn-arena__stats b {
+  color: var(--cn-ink);
+}
+
+.cn-arena__foot {
+  margin-top: var(--cn-space-5);
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ---------------- Rapid Fire flash ---------------- */
+
+.cn-flash {
+  position: fixed;
+  inset-block-start: calc(var(--cn-header-height) + var(--cn-space-4));
+  inset-inline-end: var(--cn-space-4);
+  z-index: 1050;
+  padding: 0.4rem 0.9rem;
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-sm);
+  font-weight: 700;
+  letter-spacing: var(--cn-tracking-wide);
+  color: var(--cn-paper);
+  animation: cn-flash-out 650ms var(--cn-ease-out) forwards;
+  pointer-events: none;
+}
+
+.cn-flash--correct { background: var(--cn-positive); }
+.cn-flash--wrong { background: var(--cn-negative); }
+
+@keyframes cn-flash-out {
+  0% { opacity: 0; transform: translateY(-6px); }
+  20% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translateY(-6px); }
+}
+
+/* ---------------- Match & Pair ---------------- */
+
+.cn-match {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--cn-space-4);
+  margin-top: var(--cn-space-5);
+}
+
+.cn-match__col {
+  display: grid;
+  gap: var(--cn-space-2);
+  align-content: start;
+}
+
+.cn-match__card {
+  display: flex;
+  align-items: center;
+  gap: var(--cn-space-3);
+  width: 100%;
+  text-align: start;
+  padding: var(--cn-space-3) var(--cn-space-4);
+  min-height: 56px;
+  border: var(--cn-hairline);
+  background: var(--cn-paper-raised);
+  color: var(--cn-ink);
+  font-size: var(--cn-text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color var(--cn-duration-fast) var(--cn-ease-out),
+    background-color var(--cn-duration-fast) var(--cn-ease-out),
+    transform var(--cn-duration-fast) var(--cn-ease-out);
+}
+
+.cn-match__card:hover:not(:disabled) {
+  border-color: var(--cn-ink);
+}
+
+.cn-match__card[data-state='selected'] {
+  border-color: var(--cn-accent);
+  box-shadow: inset 3px 0 0 var(--cn-accent);
+  background: var(--cn-accent-wash);
+}
+
+.cn-match__card[data-state='matched'] {
+  border-color: var(--cn-positive);
+  background: var(--cn-positive-wash);
+  color: #08543c;
+  cursor: default;
+}
+
+.cn-match__card[data-state='wrong'] {
+  border-color: var(--cn-negative);
+  background: var(--cn-negative-wash);
+  color: #8c2126;
+  animation: cn-shake 320ms var(--cn-ease-in-out);
+}
+
+.cn-match__tick {
+  margin-inline-start: auto;
+  font-family: var(--cn-font-mono);
+  color: var(--cn-positive);
+}
+
+@keyframes cn-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+/* ---------------- Riddles ---------------- */
+
+.cn-riddle__clue {
+  font-size: clamp(1.3rem, 1.05rem + 1.2vw, 1.85rem);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: var(--cn-tracking-snug);
+  padding-inline-start: var(--cn-space-4);
+  border-inline-start: 3px solid var(--cn-accent);
+  max-width: var(--cn-measure);
+}
+
+.cn-riddle__hints {
+  display: grid;
+  gap: var(--cn-space-2);
+  margin-top: var(--cn-space-5);
+}
+
+.cn-riddle__hint {
+  display: grid;
+  gap: var(--cn-space-1);
+  padding: var(--cn-space-3) var(--cn-space-4);
+  background: var(--cn-reward-wash);
+  border-inline-start: 2px solid var(--cn-reward);
+  font-size: var(--cn-text-sm);
+  color: #7a4400;
+}
+
+.cn-riddle__form {
+  display: grid;
+  gap: var(--cn-space-2);
+  margin-top: var(--cn-space-6);
+  max-width: 520px;
+}
+
+.cn-riddle__input {
+  border: 0;
+  border-bottom: 2px solid var(--cn-rule-strong);
+  border-radius: 0;
+  background: transparent;
+  padding: 0.7rem 0;
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-lg);
+}
+
+.cn-riddle__input:focus {
+  border-bottom-color: var(--cn-accent);
+  box-shadow: none;
+  background: transparent;
+}
+
+.cn-riddle__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cn-space-2);
+  margin-top: var(--cn-space-3);
+}
+
+/* ---------------- Boss Battle ---------------- */
+
+.cn-boss__head {
+  display: flex;
+  align-items: center;
+  gap: var(--cn-space-4);
+  padding-bottom: var(--cn-space-4);
+  border-bottom: var(--cn-hairline-strong);
+}
+
+.cn-boss__sigil {
+  font-size: 2.5rem;
+  color: var(--cn-negative);
+}
+
+.cn-boss__subtitle {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-micro);
+  letter-spacing: var(--cn-tracking-wide);
+  text-transform: uppercase;
+  color: var(--cn-ink-faint);
+}
+
+.cn-boss__bars {
+  display: grid;
+  gap: var(--cn-space-4);
+  margin-block: var(--cn-space-5);
+}
+
+@media (min-width: 720px) {
+  .cn-boss__bars {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--cn-space-6);
+  }
+}
+
+.cn-hp {
+  display: grid;
+  gap: var(--cn-space-2);
+}
+
+.cn-hp__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--cn-space-3);
+}
+
+.cn-hp__value {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-sm);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.cn-hp__track {
+  height: 10px;
+  background: var(--cn-paper-sunken);
+  border: var(--cn-hairline);
+  overflow: hidden;
+}
+
+.cn-hp__fill {
+  height: 100%;
+  transition: width var(--cn-duration-normal) var(--cn-ease-out);
+}
+
+.cn-hp--boss .cn-hp__fill { background: var(--cn-negative); }
+.cn-hp--player .cn-hp__fill { background: var(--cn-accent); }
+
+.cn-boss__quote {
+  font-style: italic;
+  color: var(--cn-ink-soft);
+  max-width: var(--cn-measure);
+  margin-bottom: var(--cn-space-4);
+}
+
+.cn-boss__damage {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-sm);
+  font-weight: 700;
+  letter-spacing: var(--cn-tracking-wide);
+  text-transform: uppercase;
+  margin-bottom: var(--cn-space-4);
+}
+
+/* ---------------- Word Search ---------------- */
+
+.cn-ws {
+  display: grid;
+  gap: var(--cn-space-5);
+  margin-top: var(--cn-space-4);
+}
+
+@media (min-width: 860px) {
+  .cn-ws {
+    grid-template-columns: minmax(0, 1fr) 220px;
+    gap: var(--cn-space-6);
+    align-items: start;
+  }
+}
+
+/* Wrapper so a large grid scrolls inside itself rather than widening the page. */
+.cn-ws__board {
+  overflow-x: auto;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cn-ws__grid {
+  display: grid;
+  gap: 1px;
+  background: var(--cn-rule);
+  border: var(--cn-hairline-strong);
+  max-width: min(100%, 640px);
+  touch-action: none;
+  user-select: none;
+}
+
+.cn-ws__cell {
+  aspect-ratio: 1;
+  /* A letter below ~26px is unreadable and unhittable. Past that the board scrolls
+     horizontally inside its wrapper instead of shrinking further. */
+  min-width: 26px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: var(--cn-paper-raised);
+  font-family: var(--cn-font-mono);
+  font-size: clamp(0.7rem, 0.4rem + 1.5vw, 1rem);
+  font-weight: 700;
+  color: var(--cn-ink);
+  cursor: pointer;
+  padding: 0;
+}
+
+.cn-ws__cell[data-preview='true'] {
+  background: var(--cn-accent-wash);
+  color: var(--cn-accent-deep);
+}
+
+.cn-ws__cell[data-found='true'] {
+  background: var(--cn-positive-wash);
+  color: #08543c;
+}
+
+.cn-ws__words ul {
+  list-style: none;
+  padding: 0;
+  margin: var(--cn-space-3) 0 0;
+  display: grid;
+  gap: var(--cn-space-2);
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-sm);
+  letter-spacing: var(--cn-tracking-wide);
+}
+
+.cn-ws__words li[data-found='true'] {
+  color: var(--cn-ink-faint);
+  text-decoration: line-through;
+}

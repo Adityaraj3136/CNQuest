@@ -1,0 +1,125 @@
+/** Settings — a ruled list of rows, each with one control on the right. */
+
+.cn-settings {
+  padding-block: var(--cn-space-6) var(--cn-space-8);
+}
+
+.cn-settings__group {
+  margin-top: var(--cn-space-6);
+}
+
+.cn-setting {
+  display: flex;
+  align-items: center;
+  gap: var(--cn-space-4);
+  justify-content: space-between;
+  padding-block: var(--cn-space-4);
+  border-bottom: var(--cn-hairline);
+}
+
+/* On a phone the control drops below its description rather than squeezing the text
+   into a two-word column. */
+@media (max-width: 560px) {
+  .cn-setting {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--cn-space-3);
+  }
+
+  .cn-setting .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .cn-switch {
+    align-self: flex-start;
+  }
+}
+
+.cn-settings__group > .cn-label + .cn-setting {
+  border-top: var(--cn-hairline-strong);
+  margin-top: var(--cn-space-3);
+}
+
+.cn-setting__text {
+  display: grid;
+  gap: var(--cn-space-1);
+  min-width: 0;
+}
+
+.cn-setting__label {
+  font-weight: 700;
+  letter-spacing: var(--cn-tracking-snug);
+}
+
+.cn-setting__desc {
+  font-size: var(--cn-text-sm);
+  color: var(--cn-ink-soft);
+  max-width: 52ch;
+  margin: 0;
+}
+
+.cn-setting .btn {
+  flex: 0 0 auto;
+}
+
+.cn-danger {
+  border-color: var(--cn-negative);
+  color: var(--cn-negative);
+}
+
+.cn-danger:hover,
+.cn-danger:focus {
+  background: var(--cn-negative);
+  border-color: var(--cn-negative);
+  color: #fff;
+}
+
+/* --- Switch --- */
+
+.cn-switch {
+  flex: 0 0 auto;
+  display: inline-flex;
+  cursor: pointer;
+}
+
+.cn-switch input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.cn-switch__track {
+  width: 48px;
+  height: 26px;
+  border: var(--cn-border-heavy);
+  background: var(--cn-paper);
+  position: relative;
+  transition: background-color var(--cn-duration-fast) var(--cn-ease-out);
+}
+
+.cn-switch__track::after {
+  content: '';
+  position: absolute;
+  inset-block: 2px;
+  left: 2px;
+  width: 18px;
+  background: var(--cn-ink);
+  transition: transform var(--cn-duration-fast) var(--cn-ease-out);
+}
+
+.cn-switch input:checked + .cn-switch__track {
+  background: var(--cn-accent);
+  border-color: var(--cn-accent);
+}
+
+.cn-switch input:checked + .cn-switch__track::after {
+  transform: translateX(20px);
+  background: #fff;
+}
+
+.cn-switch input:focus-visible + .cn-switch__track {
+  outline: 2px solid var(--cn-accent);
+  outline-offset: 3px;
+}
