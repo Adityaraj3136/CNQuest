@@ -547,3 +547,54 @@
     padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
   }
 }
+
+/* ==================================================================== *
+ * Small screens — the header stops competing with the content
+ * ==================================================================== */
+
+@media (max-width: 767.98px) {
+  /*
+   * The bottom tab bar carries primary navigation on a phone, and its "More" button opens
+   * this same drawer. A hamburger beside it was a second control for the same job, taking
+   * width from the header at exactly the size where width is scarcest.
+   */
+  .cn-navbar__toggle {
+    display: none;
+  }
+
+  .cn-navbar__inner {
+    gap: var(--cn-space-2);
+    padding-inline: var(--cn-space-3);
+  }
+
+  /* The wordmark wrapped to two lines and doubled the header height. */
+  .cn-brand {
+    font-size: var(--cn-text-sm);
+    white-space: nowrap;
+    min-width: 0;
+  }
+
+  .cn-brand img {
+    width: 26px;
+    height: 26px;
+  }
+
+  .cn-account {
+    margin-left: auto;
+  }
+
+  .cn-account__name {
+    max-width: 8ch;
+  }
+}
+
+@media (max-width: 380px) {
+  /* Below this the icon alone identifies the app; the name is the first thing to go. */
+  .cn-brand span {
+    display: none;
+  }
+
+  .cn-account__name {
+    max-width: 6ch;
+  }
+}

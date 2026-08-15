@@ -65,22 +65,25 @@ function bodyHtml(
   return `
     <header class="cn-profile__head cn-rise cn-rise-1">
       <div class="cn-profile__identity">
-        <i class="bi ${escapeHtml(avatarOf(profile))} cn-profile__avatar" aria-hidden="true"></i>
-        <div>
-          <span class="cn-label cn-label--marked">${isGuest ? 'Guest profile' : 'Profile'}</span>
+        <span class="cn-profile__avatar" aria-hidden="true">
+          <i class="bi ${escapeHtml(avatarOf(profile))}"></i>
+        </span>
+        <div class="cn-profile__who">
           <h1 class="cn-profile__name">${escapeHtml(profile.name)}</h1>
+          <p class="cn-profile__title">Level ${level.level} · ${escapeHtml(level.title)}</p>
           <p class="cn-profile__meta">
-            ${escapeHtml(profile.email || 'No email — progress is stored on this device')}
+            ${escapeHtml(isGuest ? 'Guest — progress is stored on this device' : profile.email)}
           </p>
         </div>
       </div>
-      <div class="cn-profile__level">
-        <span class="cn-label">Level ${level.level}</span>
-        <span class="cn-profile__title">${escapeHtml(level.title)}</span>
-        <div class="cn-progress cn-progress--reward">
-          <div class="cn-progress__bar" style="width:${level.percent}%"></div>
+
+      <div class="cn-profile__xp">
+        <div class="cn-profile__xpbar">
+          <span style="width:${level.percent}%"></span>
         </div>
-        <span class="cn-label">${level.xpIntoLevel} / ${level.xpForLevel} XP to level ${level.level + 1}</span>
+        <p class="cn-profile__xpmeta">
+          ${level.xpIntoLevel.toLocaleString()} / ${level.xpForLevel.toLocaleString()} XP to level ${level.level + 1}
+        </p>
       </div>
     </header>
 
@@ -111,8 +114,11 @@ function bodyHtml(
       }
     </section>
 
-    <section class="cn-profile__section cn-rise cn-rise-4">
-      <span class="cn-label cn-label--marked">Edit profile</span>
+    <details class="cn-profile__section cn-profile__edit cn-rise cn-rise-4">
+      <summary>
+        <i class="bi bi-pencil" aria-hidden="true"></i>
+        Edit profile
+      </summary>
 
       <form id="cn-profile-form" class="cn-profile__form" novalidate>
         <div class="cn-field">
@@ -137,7 +143,7 @@ function bodyHtml(
 
         <button class="btn btn-cn-primary" type="submit">Save changes</button>
       </form>
-    </section>
+    </details>
 
     ${
       isGuest

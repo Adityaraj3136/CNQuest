@@ -413,3 +413,24 @@
   color: var(--cn-ink-soft);
   margin-top: var(--cn-space-2);
 }
+
+/* The packet that actually travels the route. One moving element, four seconds, no loop
+   anywhere else on the page. */
+.cn-topo__packet {
+  fill: var(--cn-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cn-topo__packet {
+    display: none;
+  }
+}
+
+/* The headline was set as a poster: three stacked words filling the viewport. A landing page
+   has to say what the product is before it performs. */
+.cn-hero__title {
+  font-size: clamp(2rem, 1.4rem + 3.2vw, 3.6rem);
+  line-height: 1.08;
+  letter-spacing: var(--cn-tracking-tight);
+  max-width: 18ch;
+}

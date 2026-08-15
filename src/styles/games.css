@@ -585,3 +585,35 @@
     transform: none;
   }
 }
+
+@media (max-width: 639.98px) {
+  /*
+   * The 1fr row exists so six cards in a grid align their actions. In a single column there
+   * is nothing to align with, and it stretched every card to the height of the wordiest one.
+   */
+  .cn-mode {
+    grid-template-rows: auto;
+    padding: var(--cn-space-4);
+    gap: var(--cn-space-1);
+  }
+
+  .cn-mode__glyph {
+    width: 2.25rem;
+    height: 2.25rem;
+    font-size: 1.1rem;
+    margin-bottom: var(--cn-space-1);
+  }
+
+  .cn-mode__desc {
+    margin-top: var(--cn-space-1);
+  }
+
+  .cn-mode__action {
+    margin-top: var(--cn-space-3);
+  }
+
+  .cn-mode-grid {
+    gap: var(--cn-space-3);
+    margin-top: var(--cn-space-5);
+  }
+}

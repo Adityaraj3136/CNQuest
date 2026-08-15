@@ -33,26 +33,20 @@ function heroHtml(): string {
         </div>
 
         <h1 class="cn-hero__title cn-rise cn-rise-2" id="hero-heading">
-          <span>Revise</span>
-          <span>Computer</span>
-          <span class="cn-hero__accent">
-            Networks
-            <i class="cn-hero__trace" aria-hidden="true"></i>
-          </span>
-          <span class="cn-hero__title-tail">by playing it</span>
+          Master Computer Networks by playing
         </h1>
 
         <div class="cn-hero__body">
           <div class="cn-rise cn-rise-3">
             <p class="cn-hero__lead">
-              The full B.Tech Computer Networks syllabus as short revision notes plus six
-              question games. Read a topic, play it, and see which ones you have actually
-              learned.
+              Learn the syllabus, practise through challenges, defeat networking bosses, and
+              track what you have actually mastered.
             </p>
             <div class="cn-hero__actions">
               <a class="btn btn-cn-primary" href="#/register">
                 Start learning <i class="bi bi-arrow-right" aria-hidden="true"></i>
               </a>
+              <a class="btn btn-cn-ghost" href="#/learn">Explore the syllabus</a>
               <button class="btn btn-cn-ghost" type="button" id="${GUEST_BTN_ID}">Try as guest</button>
             </div>
           </div>
@@ -112,6 +106,11 @@ function heroVisualHtml(): string {
           class="cn-topo__route"
           points="${[nodes[0], nodes[1], nodes[3], nodes[4]].map((node) => `${node.x},${node.y}`).join(' ')}"
         />
+
+        <circle class="cn-topo__packet" r="6">
+          <animateMotion dur="4s" repeatCount="indefinite"
+            path="M${nodes[0].x},${nodes[0].y} L${nodes[1].x},${nodes[1].y} L${nodes[3].x},${nodes[3].y} L${nodes[4].x},${nodes[4].y}" />
+        </circle>
 
         ${nodes
           .map(

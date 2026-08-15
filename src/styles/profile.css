@@ -128,3 +128,106 @@
   color: var(--cn-accent);
   background: var(--cn-accent-wash);
 }
+
+/* ==================================================================== *
+ * Profile — identity first (redesign)
+ * ==================================================================== */
+
+.cn-profile__head {
+  display: grid;
+  gap: var(--cn-space-5);
+  padding: var(--cn-space-6);
+  margin-top: var(--cn-space-5);
+  border-radius: var(--cn-radius-xl);
+  background: var(--cn-paper-raised);
+  border: var(--cn-hairline);
+  box-shadow: var(--cn-shadow-card);
+}
+
+@media (min-width: 760px) {
+  .cn-profile__head {
+    grid-template-columns: 1.4fr 1fr;
+    align-items: center;
+  }
+}
+
+.cn-profile__identity {
+  display: flex;
+  align-items: center;
+  gap: var(--cn-space-4);
+  min-width: 0;
+}
+
+.cn-profile__avatar {
+  display: grid;
+  place-items: center;
+  width: 4rem;
+  height: 4rem;
+  flex: none;
+  border-radius: var(--cn-radius-pill);
+  background: var(--cn-accent-wash);
+  color: var(--cn-accent);
+  font-size: 1.75rem;
+}
+
+.cn-profile__who {
+  min-width: 0;
+}
+
+.cn-profile__name {
+  margin: 0;
+  font-size: clamp(1.4rem, 1.1rem + 1.2vw, 2rem);
+  letter-spacing: var(--cn-tracking-snug);
+  overflow-wrap: anywhere;
+}
+
+.cn-profile__title {
+  margin: 2px 0 0;
+  font-weight: 600;
+  color: var(--cn-accent);
+  font-size: var(--cn-text-sm);
+}
+
+.cn-profile__meta {
+  margin: var(--cn-space-1) 0 0;
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-faint);
+  overflow-wrap: anywhere;
+}
+
+.cn-profile__xpbar {
+  height: 8px;
+  border-radius: var(--cn-radius-pill);
+  background: var(--cn-paper-sunken);
+  overflow: hidden;
+}
+
+.cn-profile__xpbar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--cn-xp);
+}
+
+.cn-profile__xpmeta {
+  margin: var(--cn-space-2) 0 0;
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Editing is something you occasionally do, not something you always look at. */
+.cn-profile__edit > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--cn-space-2);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--cn-text-sm);
+  padding: var(--cn-space-3) 0;
+}
+
+.cn-profile__edit > summary:hover {
+  color: var(--cn-accent);
+}
