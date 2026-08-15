@@ -31,6 +31,7 @@ import { formHtml, readForm, showFieldErrors } from './admin.form';
 import type { ReferenceOptions } from './admin.form';
 import { contentSource, getTopics, getUnits } from '@/services/content.service';
 import { showToast } from '@/components/toast';
+import { getPreferences, setPreference } from '@/state/preferences';
 import { escapeHtml, qs, qsa } from '@/utils/dom';
 import { loaderHtml, stateHtml } from '@/components/loader';
 import '@/styles/admin.css';
@@ -195,6 +196,14 @@ function bodyHtml(): string {
           Students are reading <strong>${escapeHtml(source)}</strong> content
         </p>
       </div>
+
+      <label class="cn-admin__mode" for="cn-admin-mode-toggle">
+        <input type="checkbox" id="cn-admin-mode-toggle" ${getPreferences().adminMode ? 'checked' : ''} />
+        <span>
+          <strong>Edit while browsing</strong>
+          Adds an "Edit this" button to topics and dictionary entries as you read them.
+        </span>
+      </label>
     </header>
 
     <nav class="cn-admin__tabs" aria-label="Content collections">${tabsHtml()}</nav>
@@ -438,6 +447,17 @@ const adminPage: Page = {
 
     await refreshReferences();
     root.innerHTML = bodyHtml();
+
+    qs<HTMLInputElement>('#cn-admin-mode-toggle', root)?.addEventListener('change', (event) => {
+      const on = (event.target as HTMLInputElement).checked;
+      setPreference('adminMode', on);
+      showToast(
+        on
+          ? 'Open any topic or dictionary entry and you will see an "Edit this" button.'
+          : 'Edit buttons hidden. You now see the app exactly as a student does.',
+        { title: on ? 'Editing on' : 'Editing off', variant: 'info' },
+      );
+    });
 
     qsa<HTMLButtonElement>('.cn-admin__tab', root).forEach((tab) => {
       tab.addEventListener('click', () => {

@@ -55,7 +55,7 @@ function heroHtml(): string {
             </div>
           </div>
 
-          ${heroImageHtml()}
+          ${heroVisualHtml()}
         </div>
       </div>
     </section>
@@ -63,26 +63,64 @@ function heroHtml(): string {
 }
 
 /**
- * Hero visual.
+ * Hero visual: a packet crossing a small network.
  *
- * This replaced a dashboard preview built out of styled divs, with invented figures
- * (`accuracy 82%`, `answered 431`). A hand-drawn fake screenshot is not evidence the product
- * works, and inventing precision the app never claims is worse than showing nothing.
+ * Placeholder photography was tried here and thrown out. Stock images of cabling say nothing
+ * about this app, and random photography fights an ink-on-paper palette that has exactly one
+ * accent. A diagram drawn in the page's own language is on-subject, identical on every load,
+ * and needs no network of its own, which matters for an app that promises to work offline.
  *
- * Placeholder photography, swappable for a real screenshot or studio shot: the seed is
- * descriptive so the same image is served on every load rather than shuffling per visit.
+ * Kept to primitives: circles, lines and labels. `currentColor` inherits the ink, so it stays
+ * correct wherever it is placed.
  */
-function heroImageHtml(): string {
+function heroVisualHtml(): string {
+  const nodes = [
+    { x: 40, y: 150, label: 'HOST' },
+    { x: 170, y: 70, label: 'SWITCH' },
+    { x: 170, y: 230, label: 'ROUTER' },
+    { x: 320, y: 150, label: 'GATEWAY' },
+    { x: 450, y: 150, label: 'SERVER' },
+  ];
+
+  const links = [
+    [0, 1],
+    [0, 2],
+    [1, 3],
+    [2, 3],
+    [3, 4],
+  ];
+
   return `
     <figure class="cn-hero__figure cn-rise cn-rise-4">
-      <img
-        src="https://picsum.photos/seed/cn-quest-network-cabling/960/720"
-        alt="Network patch cabling in a campus switch cabinet"
-        width="960"
-        height="720"
-        fetchpriority="high"
-        decoding="async"
-      />
+      <svg viewBox="0 0 500 300" role="img" aria-labelledby="cn-hero-visual-title">
+        <title id="cn-hero-visual-title">
+          A packet travelling from a host through a switch and gateway to a server
+        </title>
+
+        ${links
+          .map(([from, to]) => {
+            const a = nodes[from];
+            const b = nodes[to];
+            return `<line class="cn-topo__link" x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" />`;
+          })
+          .join('')}
+
+        <!-- The traced route is the one thing in accent, so the eye follows the packet. -->
+        <polyline
+          class="cn-topo__route"
+          points="${[nodes[0], nodes[1], nodes[3], nodes[4]].map((node) => `${node.x},${node.y}`).join(' ')}"
+        />
+
+        ${nodes
+          .map(
+            (node) => `
+              <g class="cn-topo__node">
+                <circle cx="${node.x}" cy="${node.y}" r="13" />
+                <text x="${node.x}" y="${node.y + 34}" text-anchor="middle">${node.label}</text>
+              </g>`,
+          )
+          .join('')}
+      </svg>
     </figure>
   `;
 }
@@ -91,16 +129,6 @@ function ledgerHtml(): string {
   return `
     <section class="cn-section cn-ledger-band" aria-label="CN Quest at a glance">
       <div class="cn-container">
-        <figure class="cn-band__figure">
-          <img
-            src="https://picsum.photos/seed/cn-quest-students-studying/1600/600"
-            alt="Students revising together at a campus desk"
-            width="1600"
-            height="600"
-            loading="lazy"
-            decoding="async"
-          />
-        </figure>
         <dl class="cn-ledger">
           ${LEDGER.map(
             (cell) => `

@@ -2,6 +2,7 @@
 
 import { APP } from '@/config/app.config';
 import { escapeHtml, qs, qsa } from '@/utils/dom';
+import { signInWithGoogle, warmUpGoogleSignIn } from '@/services/auth.service';
 import '@/styles/auth.css';
 
 export interface AuthShellOptions {
@@ -110,11 +111,14 @@ export function bindGoogleButton(
   const button = qs<HTMLButtonElement>(`#${GOOGLE_BUTTON_ID}`, form);
   if (!button) return;
 
+  // Fetch the auth chunk now, not when the button is pressed: a popup opened after a network
+  // round-trip is treated as unsolicited and blocked.
+  void warmUpGoogleSignIn();
+
   button.addEventListener('click', () => {
     void (async () => {
       setSubmitting(button, true, 'Opening Google…');
       try {
-        const { signInWithGoogle } = await import('@/services/auth.service');
         const remember = qs<HTMLInputElement>('#remember', form)?.checked ?? true;
         await signInWithGoogle(remember);
         options.onSuccess();

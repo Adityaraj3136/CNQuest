@@ -135,6 +135,34 @@ export async function signIn(email: string, password: string, remember = true): 
   }
 }
 
+type AuthModule = typeof import('firebase/auth');
+
+/** Resolved copies of the pieces the popup path needs, so the click itself awaits nothing slow. */
+let warmAuthModule: AuthModule | null = null;
+let warmAuth: Awaited<ReturnType<typeof getFirebaseAuth>> | null = null;
+
+/**
+ * Loads the Firebase Auth chunk and instance ahead of the click.
+ *
+ * A browser only allows `window.open` while the user's click is still "active", and that
+ * activation does not survive a network fetch. Awaiting the lazily-imported auth chunk inside
+ * the click handler meant the popup was requested too late and was blocked before Google was
+ * ever contacted, which is why sign-in failed without an authorisation window ever appearing.
+ *
+ * Call this when the sign-in button is rendered; it is safe to call repeatedly.
+ */
+export async function warmUpGoogleSignIn(): Promise<void> {
+  if (!isFirebaseConfigured() || warmAuthModule) return;
+  try {
+    const [module, auth] = await Promise.all([import('firebase/auth'), getFirebaseAuth()]);
+    warmAuthModule = module;
+    warmAuth = auth;
+  } catch (error) {
+    // Not fatal: the click path still works, it is just slower and may hit the popup blocker.
+    console.error('[auth] could not pre-load Google sign-in', error);
+  }
+}
+
 /**
  * Signs in with Google.
  *
@@ -144,14 +172,15 @@ export async function signIn(email: string, password: string, remember = true): 
  */
 export async function signInWithGoogle(remember = true): Promise<User> {
   assertConfigured();
-  const auth = await getFirebaseAuth();
+  const authModule = warmAuthModule ?? (await import('firebase/auth'));
+  const auth = warmAuth ?? (await getFirebaseAuth());
   const {
     GoogleAuthProvider,
     signInWithPopup,
     setPersistence,
     browserLocalPersistence,
     browserSessionPersistence,
-  } = await import('firebase/auth');
+  } = authModule;
 
   const provider = new GoogleAuthProvider();
   // Always show the chooser: shared and lab machines are the normal case here.
@@ -159,8 +188,10 @@ export async function signInWithGoogle(remember = true): Promise<User> {
 
   let user: User;
   try {
-    await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
+    // The popup is opened first and persistence set afterwards. Awaiting a storage write before
+    // opening the window is another chance for the browser to decide the click has gone stale.
     user = (await signInWithPopup(auth, provider)).user;
+    await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
   } catch (error) {
     const code = typeof error === 'object' && error && 'code' in error ? String(error.code) : '';
 

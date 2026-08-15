@@ -43,6 +43,7 @@ export const APP_NAV: readonly NavItem[] = [
   { label: 'Achievements', href: '#/achievements', icon: 'bi-trophy' },
   { label: 'Leaderboard', href: '#/leaderboard', icon: 'bi-bar-chart-steps' },
   { label: 'Profile', href: '#/profile', icon: 'bi-person-circle' },
+  { label: 'Settings', href: '#/settings', icon: 'bi-gear' },
 ];
 
 /** Appended to APP_NAV for the admin account only. */

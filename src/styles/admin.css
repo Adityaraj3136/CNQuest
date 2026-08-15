@@ -266,3 +266,39 @@
   letter-spacing: 0;
   text-transform: none;
 }
+
+/* Edit-while-browsing switch, in the header because that is where the admin already is. */
+.cn-admin__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cn-space-5);
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.cn-admin__mode {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--cn-space-3);
+  max-width: 30ch;
+  padding: var(--cn-space-3) var(--cn-space-4);
+  border: var(--cn-hairline);
+  background: var(--cn-paper-raised);
+  cursor: pointer;
+  font-size: var(--cn-text-sm);
+}
+
+.cn-admin__mode input {
+  margin-top: 2px;
+  flex: none;
+}
+
+.cn-admin__mode strong {
+  display: block;
+  margin-bottom: 2px;
+}
+
+.cn-admin__mode span {
+  color: var(--cn-ink-soft);
+  line-height: 1.45;
+}

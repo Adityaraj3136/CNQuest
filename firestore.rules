@@ -46,10 +46,18 @@ service cloud.firestore {
     // signed in as this address, instead of that being possible only with a service key.
     function adminEmail() { return 'adityaraj3136@gmail.com'; }
 
+    // `email_verified` is deliberately NOT required here.
+    //
+    // The check exists to stop someone claiming the identity by registering the address with a
+    // password and never proving they control the inbox. That window is already closed: the
+    // account exists, and Firebase refuses a second account for the same address. Requiring
+    // verification only locked the real owner out of their own dashboard, because accounts
+    // created in the Firebase Console start unverified and nothing ever marks them otherwise.
+    //
+    // If this project ever grows a second admin, add them by uid instead, and reinstate the
+    // verification check for any address that does not yet have an account.
     function isAdmin() {
-      return isSignedIn()
-        && request.auth.token.email == adminEmail()
-        && request.auth.token.email_verified == true;
+      return isSignedIn() && request.auth.token.email == adminEmail();
     }
 
     function incoming() { return request.resource.data; }

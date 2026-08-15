@@ -150,39 +150,61 @@
 
 /* --- Console preview --- */
 
-/* --- Hero & band imagery --- */
+/* --- Hero topology diagram --- */
 
-/* Photography sits inside the ruled system: hairline frame, no rounded corners, no shadow. */
-.cn-hero__figure,
-.cn-band__figure {
+.cn-hero__figure {
   margin: 0;
   border: var(--cn-hairline-strong);
-  background: var(--cn-paper-sunken);
-  overflow: hidden;
+  background: var(--cn-paper-raised);
+  padding: var(--cn-space-4);
 }
 
-.cn-hero__figure img,
-.cn-band__figure img {
+.cn-hero__figure svg {
   display: block;
   width: 100%;
   height: auto;
-  /* Reserving the ratio keeps the hero from reflowing when the photo lands (CLS). */
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
-  /* The palette is ink on paper; full-colour stock would be the only saturated thing here. */
-  filter: grayscale(1) contrast(1.05);
+  /* Reserved by the viewBox, so nothing reflows once the page paints. */
+  aspect-ratio: 5 / 3;
+  color: var(--cn-ink);
 }
 
-.cn-band__figure {
-  margin-bottom: var(--cn-space-6);
+.cn-topo__link {
+  stroke: var(--cn-rule-strong);
+  stroke-width: 1;
 }
 
-.cn-band__figure img {
-  aspect-ratio: 16 / 6;
+/* The route is the only accent in the figure: one path for the eye to follow. */
+.cn-topo__route {
+  fill: none;
+  stroke: var(--cn-accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-dasharray: 6 6;
 }
 
-.cn-ledger-band {
-  padding-block: clamp(2rem, 1rem + 2vw, 3rem);
+@media (prefers-reduced-motion: no-preference) {
+  .cn-topo__route {
+    animation: cn-packet 2.4s linear infinite;
+  }
+}
+
+@keyframes cn-packet {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+.cn-topo__node circle {
+  fill: var(--cn-paper);
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+
+.cn-topo__node text {
+  fill: var(--cn-ink-faint);
+  font-family: var(--cn-font-mono);
+  font-size: 13px;
+  letter-spacing: 0.1em;
 }
 
 /* --- Feature groups --- */

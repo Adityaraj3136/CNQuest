@@ -42,19 +42,6 @@ export default defineConfig({
             urlPattern: /^https:\/\/(firestore|identitytoolkit|securetoken)\.googleapis\.com\/.*/i,
             handler: 'NetworkOnly',
           },
-          {
-            // Landing photography is hosted off-origin, so the precache (which only globs the
-            // build output) never sees it. Without this the marketing page loses its images the
-            // moment a student opens it offline, which is the one thing this app promises not to
-            // do. Cache-first: the seeds are stable, so a stored copy is always the right copy.
-            urlPattern: /^https:\/\/picsum\.photos\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'cn-landing-imagery',
-              expiration: { maxEntries: 12, maxAgeSeconds: 60 * 60 * 24 * 30 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
         ],
       },
     }),
