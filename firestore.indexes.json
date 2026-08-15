@@ -1,4 +1,14 @@
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "//": "Dashboard, progress and analytics all read a student's recent rounds: where(userId) plus orderBy(createdAt desc). Firestore composes single-field indexes only for equality OR ordering, never both, so this composite is required — without it every such read fails with FAILED_PRECONDITION and the dashboard shows its error state.",
+      "collectionGroup": "gameAttempts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    }
+  ],
   "fieldOverrides": []
 }

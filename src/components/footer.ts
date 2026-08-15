@@ -14,6 +14,26 @@ function statusHtml(): string {
   `;
 }
 
+/**
+ * Signed-in students have no use for "Login / Register", and Settings has no other entry
+ * point in the app — it is not in the primary nav, so without this the screen is reachable
+ * only by typing its URL.
+ */
+function accountLinksHtml(layout: Layout): string {
+  if (layout === 'app') {
+    return `
+      <li><a href="#/profile">Profile</a></li>
+      <li><a href="#/settings">Settings</a></li>
+      <li><a href="#/logout">Log out</a></li>
+    `;
+  }
+  return `
+    <li><a href="#/login">Login</a></li>
+    <li><a href="#/register">Register</a></li>
+    <li><a href="#/forgot-password">Forgot password</a></li>
+  `;
+}
+
 export function renderFooter(layout: Layout): void {
   const footer = requireEl('#app-footer');
 
@@ -54,11 +74,7 @@ export function renderFooter(layout: Layout): void {
           </div>
           <div>
             <h3>Account</h3>
-            <ul>
-              <li><a href="#/login">Login</a></li>
-              <li><a href="#/register">Register</a></li>
-              <li><a href="#/forgot-password">Forgot password</a></li>
-            </ul>
+            <ul>${accountLinksHtml(layout)}</ul>
           </div>
         </div>
 
