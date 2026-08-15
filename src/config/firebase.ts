@@ -22,9 +22,23 @@ const REQUIRED_KEYS = [
 
 const env = import.meta.env;
 
+/**
+ * Reads one config value, trimming surrounding whitespace.
+ *
+ * These arrive from `.env` files and CI secrets, where a value pasted with a stray leading
+ * space is invisible and survives every review. A space in `authDomain` sent every sign-in to
+ * "%20cn-quest.firebaseapp.com", which does not resolve, so auth failed with a DNS error that
+ * looked nothing like a configuration mistake.
+ */
+function readValue(key: (typeof REQUIRED_KEYS)[number] | 'VITE_FIREBASE_MEASUREMENT_ID'): string {
+  const raw = env[key];
+  return typeof raw === 'string' ? raw.trim() : '';
+}
+
 /** Env keys that are still blank. Empty array means the project is configured. */
 export function missingFirebaseKeys(): string[] {
-  return REQUIRED_KEYS.filter((key) => !env[key]);
+  // Whitespace-only counts as missing: it fails later and less helpfully than an empty value.
+  return REQUIRED_KEYS.filter((key) => !readValue(key));
 }
 
 export function isFirebaseConfigured(): boolean {
@@ -40,14 +54,14 @@ function readOptions(): FirebaseOptions {
   }
 
   return {
-    apiKey: env.VITE_FIREBASE_API_KEY,
-    authDomain: env.VITE_FIREBASE_AUTH_DOMAIN,
-    projectId: env.VITE_FIREBASE_PROJECT_ID,
-    storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-    appId: env.VITE_FIREBASE_APP_ID,
-    ...(env.VITE_FIREBASE_MEASUREMENT_ID
-      ? { measurementId: env.VITE_FIREBASE_MEASUREMENT_ID }
+    apiKey: readValue('VITE_FIREBASE_API_KEY'),
+    authDomain: readValue('VITE_FIREBASE_AUTH_DOMAIN'),
+    projectId: readValue('VITE_FIREBASE_PROJECT_ID'),
+    storageBucket: readValue('VITE_FIREBASE_STORAGE_BUCKET'),
+    messagingSenderId: readValue('VITE_FIREBASE_MESSAGING_SENDER_ID'),
+    appId: readValue('VITE_FIREBASE_APP_ID'),
+    ...(readValue('VITE_FIREBASE_MEASUREMENT_ID')
+      ? { measurementId: readValue('VITE_FIREBASE_MEASUREMENT_ID') }
       : {}),
   };
 }
