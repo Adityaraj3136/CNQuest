@@ -59,15 +59,21 @@ const NOT_CONFIGURED_MESSAGE =
 function toAuthError(error: unknown): AuthServiceError {
   const code = typeof error === 'object' && error && 'code' in error ? String(error.code) : 'unknown';
   console.error('[auth]', code, error);
-  // An unmapped code used to surface as "Something went wrong", which tells nobody anything.
-  // The raw code is appended so a student can report it and it can be looked up.
-  const friendly =
-    FRIENDLY_MESSAGES[code] ??
-    (code && code !== 'unknown'
-      ? `Sign-in failed (${code}). Please try again or report this code.`
-      : 'Something went wrong. Please try again.');
+  if (FRIENDLY_MESSAGES[code]) return new AuthServiceError(FRIENDLY_MESSAGES[code], code);
 
-  return new AuthServiceError(friendly, code);
+  // Everything below is a failure nobody anticipated. "Something went wrong" tells the student
+  // nothing and tells whoever has to fix it even less, so the detail is surfaced verbatim.
+  if (code && code !== 'unknown') {
+    return new AuthServiceError(`Sign-in failed (${code}).`, code);
+  }
+
+  // No Firebase code at all: a script that failed to load, a blocked request, a type error.
+  const detail =
+    error instanceof Error
+      ? `${error.name}: ${error.message}`
+      : `Unexpected ${typeof error}: ${String(error)}`;
+
+  return new AuthServiceError(`Sign-in failed. ${detail}`, 'unknown');
 }
 
 function assertConfigured(): void {
