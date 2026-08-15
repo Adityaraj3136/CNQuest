@@ -344,3 +344,260 @@
   font-size: var(--cn-text-micro);
   font-weight: 700;
 }
+
+/* ==================================================================== *
+ * Quest line (redesign)
+ * ==================================================================== */
+
+.cn-learn__title {
+  font-size: clamp(1.7rem, 1.2rem + 1.6vw, 2.4rem);
+  letter-spacing: var(--cn-tracking-snug);
+  margin: 0;
+}
+
+.cn-learn__sub {
+  margin: var(--cn-space-2) 0 0;
+  color: var(--cn-ink-soft);
+}
+
+.cn-unit {
+  margin-top: var(--cn-space-7);
+}
+
+.cn-unit__heading {
+  display: flex;
+  align-items: center;
+  gap: var(--cn-space-3);
+  flex-wrap: wrap;
+}
+
+.cn-unit__number {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--cn-radius-md);
+  background: var(--cn-accent-wash);
+  color: var(--cn-accent);
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-sm);
+  font-weight: 700;
+}
+
+.cn-unit__title {
+  margin: 0;
+  font-size: var(--cn-text-xl);
+  letter-spacing: var(--cn-tracking-snug);
+}
+
+.cn-unit__badge {
+  padding: 2px var(--cn-space-2);
+  border-radius: var(--cn-radius-pill);
+  background: var(--cn-mastered-wash);
+  color: var(--cn-mastered);
+  font-size: var(--cn-text-xs);
+  font-weight: 700;
+}
+
+.cn-unit__desc {
+  margin: var(--cn-space-2) 0 0;
+  color: var(--cn-ink-soft);
+  font-size: var(--cn-text-sm);
+  max-width: 68ch;
+}
+
+.cn-unit__meter {
+  display: flex;
+  align-items: center;
+  gap: var(--cn-space-3);
+  margin-top: var(--cn-space-3);
+}
+
+.cn-unit__bar {
+  flex: 1;
+  max-width: 22rem;
+  height: 6px;
+  border-radius: var(--cn-radius-pill);
+  background: var(--cn-paper-sunken);
+  overflow: hidden;
+}
+
+.cn-unit__bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--cn-accent);
+}
+
+.cn-unit__bar[data-mastered='true'] span {
+  background: var(--cn-mastered);
+}
+
+.cn-unit__stats {
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- The quest line itself --- */
+
+.cn-quest-line {
+  display: grid;
+  gap: var(--cn-space-2);
+  margin-top: var(--cn-space-4);
+}
+
+.cn-quest {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--cn-space-4);
+  padding: var(--cn-space-4);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-paper-raised);
+  border: var(--cn-hairline);
+  text-decoration: none;
+  color: inherit;
+  transition:
+    border-color var(--cn-duration-fast) var(--cn-ease-out),
+    transform var(--cn-duration-fast) var(--cn-ease-out),
+    box-shadow var(--cn-duration-fast) var(--cn-ease-out);
+}
+
+.cn-quest:hover {
+  border-color: var(--cn-rule-strong);
+  transform: translateY(-1px);
+  box-shadow: var(--cn-shadow-card);
+}
+
+.cn-quest:active {
+  transform: translateY(0);
+}
+
+.cn-quest__marker {
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: var(--cn-radius-pill);
+  border: 1px solid var(--cn-rule-strong);
+  color: var(--cn-ink-faint);
+  font-size: 0.95rem;
+}
+
+.cn-quest__body {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cn-quest__number {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-micro);
+  color: var(--cn-ink-faint);
+}
+
+.cn-quest__title {
+  font-weight: 600;
+  font-size: var(--cn-text-base);
+}
+
+.cn-quest__meta {
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-faint);
+}
+
+.cn-quest__state {
+  font-size: var(--cn-text-xs);
+  font-weight: 600;
+  color: var(--cn-ink-faint);
+  white-space: nowrap;
+}
+
+/* --- States. Each one reads differently at a glance, which is the whole point. --- */
+
+.cn-quest[data-state='completed'] .cn-quest__marker {
+  background: var(--cn-mastered);
+  border-color: var(--cn-mastered);
+  color: #fff;
+}
+
+.cn-quest[data-state='completed'] .cn-quest__state {
+  color: var(--cn-mastered);
+}
+
+.cn-quest[data-state='completed'] .cn-quest__title {
+  color: var(--cn-ink-soft);
+}
+
+/* The current quest is the one thing on this page that should catch the eye. */
+.cn-quest[data-state='current'] {
+  border-color: var(--cn-accent);
+  box-shadow: 0 0 0 1px var(--cn-accent) inset;
+}
+
+.cn-quest[data-state='current'] .cn-quest__marker {
+  background: var(--cn-accent);
+  border-color: var(--cn-accent);
+  color: #fff;
+}
+
+.cn-quest[data-state='current'] .cn-quest__state {
+  color: var(--cn-accent);
+}
+
+.cn-quest[data-state='locked'] {
+  background: var(--cn-locked-wash);
+  border-style: dashed;
+}
+
+.cn-quest[data-state='locked'] .cn-quest__title,
+.cn-quest[data-state='locked'] .cn-quest__meta,
+.cn-quest[data-state='locked'] .cn-quest__marker {
+  color: var(--cn-locked);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cn-quest {
+    transition: none;
+  }
+
+  .cn-quest:hover {
+    transform: none;
+  }
+}
+
+/* The end of a quest: one obvious next move, not a sidebar the reader has to hunt for. */
+.cn-quest-end {
+  margin-top: var(--cn-space-7);
+  padding: var(--cn-space-6);
+  border-radius: var(--cn-radius-xl);
+  background: var(--cn-accent-wash);
+  border: 1px solid rgb(11 70 255 / 0.16);
+}
+
+.cn-quest-end__label {
+  margin: 0;
+  font-size: var(--cn-text-sm);
+  font-weight: 600;
+  color: var(--cn-accent);
+}
+
+.cn-quest-end__title {
+  margin: var(--cn-space-2) 0 0;
+  font-size: var(--cn-text-xl);
+  letter-spacing: var(--cn-tracking-snug);
+}
+
+.cn-quest-end__meta {
+  margin: var(--cn-space-2) 0 0;
+  font-size: var(--cn-text-sm);
+  color: var(--cn-ink-soft);
+}
+
+.cn-quest-end__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cn-space-3);
+  margin-top: var(--cn-space-5);
+}

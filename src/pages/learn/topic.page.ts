@@ -10,6 +10,7 @@ import { masteryBand } from '@/services/mastery.logic';
 import { escapeHtml, qs } from '@/utils/dom';
 import { loaderHtml, stateHtml } from '@/components/loader';
 import { editAffordanceHtml } from '@/components/edit-affordance';
+import { questReward } from '@/services/quest.logic';
 import type { DictionaryTerm, Question, Topic, Unit } from '@/models/content';
 import type { UserProgress } from '@/models/progress';
 import '@/styles/learn.css';
@@ -120,6 +121,22 @@ function bodyHtml(
         }
 
         ${relatedTermsHtml(topic, dictionary)}
+
+        <section class="cn-quest-end">
+          <p class="cn-quest-end__label">Ready to test yourself?</p>
+          <h2 class="cn-quest-end__title">${escapeHtml(topic.title)} · ${questions.length} questions</h2>
+          <p class="cn-quest-end__meta">
+            Reward +${questReward(questions.length)} XP · answers explained as you go
+          </p>
+          <div class="cn-quest-end__actions">
+            <a class="btn btn-cn-primary" href="#/games/quiz?topic=${encodeURIComponent(topic.id)}">
+              Start quest
+            </a>
+            <a class="btn btn-cn-ghost" href="#/games?topic=${encodeURIComponent(topic.id)}">
+              Other modes
+            </a>
+          </div>
+        </section>
       </article>
 
       <aside class="cn-topic__aside cn-rise cn-rise-2">

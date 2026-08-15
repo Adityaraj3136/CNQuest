@@ -531,3 +531,128 @@
   color: var(--cn-ink-soft);
   max-width: var(--cn-measure);
 }
+
+/* ==================================================================== *
+ * Play — mode cards (redesign)
+ * ==================================================================== */
+
+.cn-games__title {
+  font-size: clamp(1.7rem, 1.2rem + 1.6vw, 2.4rem);
+  letter-spacing: var(--cn-tracking-snug);
+  margin: 0;
+}
+
+.cn-games__sub {
+  margin: var(--cn-space-2) 0 0;
+  color: var(--cn-ink-soft);
+  max-width: 60ch;
+}
+
+.cn-mode-grid {
+  display: grid;
+  gap: var(--cn-space-4);
+  margin-top: var(--cn-space-6);
+}
+
+@media (min-width: 640px) {
+  .cn-mode-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1040px) {
+  .cn-mode-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.cn-mode {
+  display: grid;
+  /* The action pins to the bottom so six cards of differing text length still line up. */
+  grid-template-rows: auto auto auto 1fr auto;
+  gap: var(--cn-space-2);
+  padding: var(--cn-space-5);
+  border-radius: var(--cn-radius-xl);
+  background: var(--cn-paper-raised);
+  border: var(--cn-hairline);
+  transition:
+    transform var(--cn-duration-fast) var(--cn-ease-out),
+    box-shadow var(--cn-duration-fast) var(--cn-ease-out);
+}
+
+.cn-mode:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--cn-shadow-card);
+}
+
+.cn-mode__glyph {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin-bottom: var(--cn-space-2);
+  border-radius: var(--cn-radius-lg);
+  font-size: 1.3rem;
+  /* Tone is set per mode below; neutral is the default so the grid never turns into a rainbow. */
+  background: var(--cn-paper-sunken);
+  color: var(--cn-ink-soft);
+}
+
+.cn-mode[data-tone='accent'] .cn-mode__glyph {
+  background: var(--cn-accent-wash);
+  color: var(--cn-accent);
+}
+
+.cn-mode[data-tone='xp'] .cn-mode__glyph {
+  background: var(--cn-xp-wash);
+  color: var(--cn-xp);
+}
+
+.cn-mode[data-tone='mastered'] .cn-mode__glyph {
+  background: var(--cn-mastered-wash);
+  color: var(--cn-mastered);
+}
+
+.cn-mode[data-tone='special'] .cn-mode__glyph {
+  background: var(--cn-special-wash);
+  color: var(--cn-special);
+}
+
+.cn-mode__name {
+  margin: 0;
+  font-size: var(--cn-text-lg);
+  letter-spacing: var(--cn-tracking-snug);
+}
+
+.cn-mode__format {
+  margin: 0;
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-faint);
+}
+
+.cn-mode__desc {
+  margin: var(--cn-space-2) 0 0;
+  font-size: var(--cn-text-sm);
+  color: var(--cn-ink-soft);
+  line-height: 1.55;
+}
+
+.cn-mode__action {
+  margin-top: var(--cn-space-4);
+}
+
+.cn-mode--locked {
+  background: var(--cn-locked-wash);
+  border-style: dashed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cn-mode {
+    transition: none;
+  }
+
+  .cn-mode:hover {
+    transform: none;
+  }
+}

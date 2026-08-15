@@ -1,48 +1,92 @@
 /**
- * Learn — unit and topic browser.
- * Mastery percentages arrive with ProgressService in Phase 9; the layout already reserves room.
+ * Learn — the quest line.
+ *
+ * Previously a table of topics with identical rows, which told a student what existed but
+ * never what to do. Each unit is now a chapter with its own progress, and each topic a
+ * numbered quest carrying one of four states, so the next move is visible without reading.
  */
 
 import type { Page } from '@/types/page';
-import { getQuestions, getSyllabus, contentSource } from '@/services/content.service';
+import { getQuestions, getSyllabus } from '@/services/content.service';
+import { activeStore } from '@/services/progress.store';
+import { rankUnitQuests, summariseUnit } from '@/services/quest.logic';
+import type { QuestState, QuestTopic, RankedQuest } from '@/services/quest.logic';
 import { escapeHtml, qs } from '@/utils/dom';
 import { loaderHtml, stateHtml } from '@/components/loader';
-import type { Topic, Unit } from '@/models/content';
+import type { Unit } from '@/models/content';
 import '@/styles/learn.css';
 
 const ROOT_ID = 'cn-learn-root';
 
-function topicRowHtml(topic: Topic, index: number, questionCount: number): string {
+const STATE_ICON: Record<QuestState, string> = {
+  completed: 'bi-check-lg',
+  current: 'bi-play-fill',
+  available: 'bi-circle',
+  locked: 'bi-lock',
+};
+
+const STATE_LABEL: Record<QuestState, string> = {
+  completed: 'Completed',
+  current: 'Continue',
+  available: 'Start',
+  locked: 'Not started',
+};
+
+function questHtml(quest: RankedQuest): string {
   return `
-    <a class="cn-topic-row" href="#/learn/${escapeHtml(topic.id)}">
-      <span class="cn-topic-row__index">${String(index + 1).padStart(2, '0')}</span>
-      <h3 class="cn-topic-row__title">${escapeHtml(topic.title)}</h3>
-      <p class="cn-topic-row__desc">${escapeHtml(topic.description)}</p>
-      <span class="cn-topic-row__meta">
-        <span class="cn-chip">${topic.estimatedMinutes} min</span>
-        <span class="cn-chip">${questionCount} Q</span>
+    <a class="cn-quest" href="#/learn/${escapeHtml(quest.id)}" data-state="${quest.state}">
+      <span class="cn-quest__marker" aria-hidden="true">
+        <i class="bi ${STATE_ICON[quest.state]}"></i>
+      </span>
+
+      <span class="cn-quest__body">
+        <span class="cn-quest__number">Quest ${String(quest.number).padStart(2, '0')}</span>
+        <span class="cn-quest__title">${escapeHtml(quest.title)}</span>
+        <span class="cn-quest__meta">
+          ${quest.estimatedMinutes} min · ${quest.questionCount} questions · +${quest.rewardXp} XP
+        </span>
+      </span>
+
+      <span class="cn-quest__state">
+        ${quest.state === 'completed' ? `${quest.mastery}%` : escapeHtml(STATE_LABEL[quest.state])}
       </span>
     </a>
   `;
 }
 
-function unitHtml(unit: Unit, topics: Topic[], countFor: (topicId: string) => number): string {
+function unitHtml(unit: Unit, quests: RankedQuest[], summary: ReturnType<typeof summariseUnit>): string {
   return `
     <section class="cn-unit" id="unit-${escapeHtml(unit.id)}" aria-labelledby="unit-${escapeHtml(unit.id)}-title">
       <header class="cn-unit__head">
-        <span class="cn-unit__number">${String(unit.number).padStart(2, '0')}</span>
-        <h2 class="cn-unit__title" id="unit-${escapeHtml(unit.id)}-title">${escapeHtml(unit.title)}</h2>
+        <div class="cn-unit__heading">
+          <span class="cn-unit__number">${String(unit.number).padStart(2, '0')}</span>
+          <h2 class="cn-unit__title" id="unit-${escapeHtml(unit.id)}-title">${escapeHtml(unit.title)}</h2>
+          ${summary.mastered ? '<span class="cn-unit__badge">Mastered</span>' : ''}
+        </div>
+
         <p class="cn-unit__desc">${escapeHtml(unit.description)}</p>
+
+        <div class="cn-unit__meter">
+          <div class="cn-unit__bar" data-mastered="${summary.mastered}">
+            <span style="width:${summary.mastery}%"></span>
+          </div>
+          <span class="cn-unit__stats">
+            ${summary.completedCount}/${summary.questCount} quests · ${summary.mastery}% mastery
+          </span>
+        </div>
       </header>
-      <div class="cn-topic-list">
-        ${topics.map((topic, index) => topicRowHtml(topic, index, countFor(topic.id))).join('')}
-      </div>
+
+      <div class="cn-quest-line">${quests.map(questHtml).join('')}</div>
     </section>
   `;
 }
 
 async function bodyHtml(): Promise<string> {
-  const [syllabus, questions] = await Promise.all([getSyllabus(), getQuestions()]);
+  const [syllabus, questions, progress] = await Promise.all([
+    getSyllabus(),
+    getQuestions(),
+    activeStore()?.loadAllProgress() ?? Promise.resolve([]),
+  ]);
 
   if (syllabus.length === 0) {
     return stateHtml({
@@ -59,26 +103,35 @@ async function bodyHtml(): Promise<string> {
     counts.set(question.topicId, (counts.get(question.topicId) ?? 0) + 1);
   }
 
-  const topicTotal = syllabus.reduce((sum, entry) => sum + entry.topics.length, 0);
+  const masteryByTopic: Record<string, number> = {};
+  for (const entry of progress) masteryByTopic[entry.topicId] = entry.mastery;
+
+  const units = syllabus.map(({ unit, topics }) => {
+    const questTopics: QuestTopic[] = topics.map((topic) => ({
+      id: topic.id,
+      title: topic.title,
+      description: topic.description,
+      estimatedMinutes: topic.estimatedMinutes,
+      questionCount: counts.get(topic.id) ?? 0,
+    }));
+
+    const summary = summariseUnit(questTopics, masteryByTopic);
+    const quests = rankUnitQuests(questTopics, masteryByTopic, { unitStarted: summary.started });
+    return { unit, quests, summary };
+  });
+
+  const totalQuests = units.reduce((sum, entry) => sum + entry.summary.questCount, 0);
+  const doneQuests = units.reduce((sum, entry) => sum + entry.summary.completedCount, 0);
 
   return `
     <header class="cn-learn__head cn-rise cn-rise-1">
-      <div>
-        <span class="cn-label cn-label--marked">Computer Networks</span>
-        <h1 class="cn-section__title mt-2">Syllabus</h1>
-        <p class="cn-label mt-2">
-          ${syllabus.length} units · ${topicTotal} topics · ${questions.length} questions
-        </p>
-      </div>
-      <span class="cn-chip">
-        <i class="bi ${contentSource() === 'firestore' ? 'bi-cloud-check' : 'bi-hdd'}" aria-hidden="true"></i>
-        ${contentSource() === 'firestore' ? 'Live content' : 'Offline content'}
-      </span>
+      <h1 class="cn-learn__title">Your quest line</h1>
+      <p class="cn-learn__sub">
+        ${doneQuests} of ${totalQuests} quests complete across ${units.length} units.
+      </p>
     </header>
 
-    ${syllabus
-      .map(({ unit, topics }) => unitHtml(unit, topics, (topicId) => counts.get(topicId) ?? 0))
-      .join('')}
+    ${units.map(({ unit, quests, summary }) => unitHtml(unit, quests, summary)).join('')}
   `;
 }
 
@@ -88,7 +141,7 @@ const learnPage: Page = {
   render() {
     return `
       <section class="cn-learn">
-        <div class="cn-container" id="${ROOT_ID}">${loaderHtml('Loading the syllabus')}</div>
+        <div class="cn-container" id="${ROOT_ID}">${loaderHtml('Loading your quests')}</div>
       </section>
     `;
   },

@@ -17,6 +17,11 @@ interface GameCard {
   /** Route to launch, or null while the mode is still to come. */
   href: string | null;
   note: string;
+  /** Accent used for this mode's card. Kept inside the palette so six cards do not become a rainbow. */
+  tone: 'accent' | 'xp' | 'mastered' | 'special' | 'neutral';
+  /** The shape of a round, said in as few words as possible. */
+  format: string;
+  cta: string;
 }
 
 const GAMES: readonly GameCard[] = [
@@ -26,6 +31,9 @@ const GAMES: readonly GameCard[] = [
     description: '10 questions, 20 seconds each, instant feedback and explanations.',
     href: '#/games/quiz',
     note: 'Ready to play',
+    tone: 'accent',
+    format: '10 questions · 20s each',
+    cta: 'Play',
   },
   {
     icon: 'bi-stopwatch',
@@ -33,6 +41,9 @@ const GAMES: readonly GameCard[] = [
     description: 'Sixty seconds. Answer as many as you can and keep the streak alive.',
     href: '#/games/rapid-fire',
     note: '60 seconds',
+    tone: 'xp',
+    format: '60 seconds · unlimited',
+    cta: 'Start clock',
   },
   {
     icon: 'bi-shield-shaded',
@@ -40,6 +51,9 @@ const GAMES: readonly GameCard[] = [
     description: 'Fight the OSI Guardian, Subnet Overlord and Firewall Guardian.',
     href: '#/games/boss',
     note: 'HP duel',
+    tone: 'special',
+    format: '3 bosses · HP duel',
+    cta: 'Choose boss',
   },
   {
     icon: 'bi-puzzle',
@@ -47,6 +61,9 @@ const GAMES: readonly GameCard[] = [
     description: 'Pair protocols with ports, devices with layers, terms with definitions.',
     href: '#/games/matching',
     note: 'Tap to pair',
+    tone: 'mastered',
+    format: 'Pair the columns',
+    cta: 'Play',
   },
   {
     icon: 'bi-question-diamond',
@@ -54,6 +71,9 @@ const GAMES: readonly GameCard[] = [
     description: 'Name the protocol or device from a clue. Hints cost you XP.',
     href: '#/games/riddles',
     note: '5 riddles',
+    tone: 'neutral',
+    format: '5 riddles · hints cost XP',
+    cta: 'Play',
   },
   {
     icon: 'bi-grid-3x3',
@@ -61,26 +81,31 @@ const GAMES: readonly GameCard[] = [
     description: 'Find networking vocabulary hidden in a generated grid.',
     href: '#/games/word-search',
     note: 'Generated grid',
+    tone: 'neutral',
+    format: 'Generated grid · 3 sizes',
+    cta: 'Play',
   },
 ];
 
-function cardHtml(game: GameCard, topicQuery: string, index: number): string {
+function cardHtml(game: GameCard, topicQuery: string): string {
   const locked = game.href === null;
   const href = locked ? '' : `${game.href}${topicQuery}`;
 
   return `
-    <article class="cn-mode ${locked ? 'cn-mode--locked' : ''}">
-      <span class="cn-mode__num">${String(index + 1).padStart(2, '0')}</span>
-      <h2 class="cn-mode__name">
-        <i class="bi ${escapeHtml(game.icon)}" aria-hidden="true"></i>
-        ${escapeHtml(game.title)}
-      </h2>
+    <article class="cn-mode ${locked ? 'cn-mode--locked' : ''}" data-tone="${game.tone}">
+      <span class="cn-mode__glyph" aria-hidden="true">
+        <i class="bi ${escapeHtml(game.icon)}"></i>
+      </span>
+
+      <h2 class="cn-mode__name">${escapeHtml(game.title)}</h2>
+      <p class="cn-mode__format">${escapeHtml(game.format)}</p>
       <p class="cn-mode__desc">${escapeHtml(game.description)}</p>
+
       <span class="cn-mode__action">
         ${
           locked
             ? `<span class="cn-chip">${escapeHtml(game.note)}</span>`
-            : `<a class="btn btn-cn-primary btn-sm" href="${escapeHtml(href)}">Play</a>`
+            : `<a class="btn btn-cn-primary btn-sm" href="${escapeHtml(href)}">${escapeHtml(game.cta)}</a>`
         }
       </span>
     </article>
@@ -95,13 +120,12 @@ const gamesPage: Page = {
       <section class="cn-games">
         <div class="cn-container" id="${ROOT_ID}">
           <header class="cn-games__head cn-rise cn-rise-1">
-            <span class="cn-label cn-label--marked">Practice</span>
-            <h1 class="cn-section__title mt-2">Game modes</h1>
-            <p class="cn-section__lead mt-2" data-role="lead">
-              Every mode draws from the same question bank and feeds the same progress engine.
+            <h1 class="cn-games__title">Pick your challenge</h1>
+            <p class="cn-games__sub" data-role="lead">
+              Six ways to practise the same syllabus. Every one earns XP and moves your mastery.
             </p>
           </header>
-          <div class="cn-rise cn-rise-2" data-role="grid"></div>
+          <div class="cn-mode-grid cn-rise cn-rise-2" data-role="grid"></div>
         </div>
       </section>
     `;
@@ -112,7 +136,7 @@ const gamesPage: Page = {
     const topicQuery = topicId ? `?topic=${encodeURIComponent(topicId)}` : '';
 
     const grid = qs('[data-role="grid"]');
-    if (grid) grid.innerHTML = GAMES.map((game, index) => cardHtml(game, topicQuery, index)).join('');
+    if (grid) grid.innerHTML = GAMES.map((game) => cardHtml(game, topicQuery)).join('');
 
     if (!topicId) return;
 
