@@ -16,23 +16,36 @@ import '@/styles/achievements.css';
 
 const ROOT_ID = 'cn-achievements-root';
 
+/**
+ * One badge.
+ *
+ * A locked badge still shows exactly what it takes and how close you are, because a
+ * collection you cannot see the shape of is not worth collecting. Only unlocked badges get
+ * colour; the rest stay grey so the earned ones are findable at a glance.
+ */
 function rowHtml(row: AchievementProgress): string {
   const { achievement, unlocked, value, target, percent } = row;
 
   return `
     <article class="cn-badge" data-unlocked="${unlocked}">
-      <i class="bi ${escapeHtml(achievement.icon)} cn-badge__icon" aria-hidden="true"></i>
-      <div class="cn-badge__body">
-        <h2 class="cn-badge__name">${escapeHtml(achievement.name)}</h2>
-        <p class="cn-badge__desc">${escapeHtml(achievement.description)}</p>
-        <div class="cn-progress ${unlocked ? 'cn-progress--reward' : ''}">
-          <div class="cn-progress__bar" style="width:${percent}%"></div>
-        </div>
-      </div>
-      <div class="cn-badge__meta">
-        <span class="cn-badge__status">${unlocked ? '✓ Unlocked' : `${value} / ${target}`}</span>
-        <span class="cn-badge__xp">+${achievement.rewardXP} XP</span>
-      </div>
+      <span class="cn-badge__medal" aria-hidden="true">
+        <i class="bi ${escapeHtml(achievement.icon)}"></i>
+      </span>
+
+      <h2 class="cn-badge__name">${escapeHtml(achievement.name)}</h2>
+      <p class="cn-badge__desc">${escapeHtml(achievement.description)}</p>
+
+      ${
+        unlocked
+          ? `<p class="cn-badge__status">Unlocked · +${achievement.rewardXP} XP</p>`
+          : `
+            <div class="cn-badge__meter">
+              <div class="cn-badge__bar"><span style="width:${percent}%"></span></div>
+              <span class="cn-badge__count">${value}/${target}</span>
+            </div>
+            <p class="cn-badge__status">+${achievement.rewardXP} XP when earned</p>
+          `
+      }
     </article>
   `;
 }
@@ -107,16 +120,27 @@ async function bodyHtml(): Promise<string> {
     return b.percent - a.percent;
   });
 
+  if (unlockedCount === 0) {
+    return `
+      <header class="cn-ach__head cn-rise cn-rise-1">
+        <h1 class="cn-ach__title">Your badge collection starts here</h1>
+        <p class="cn-ach__sub">
+          Finish one quest and the first of ${rows.length} badges is yours.
+        </p>
+        <a class="btn btn-cn-primary mt-3" href="#/games/quiz">Play a round</a>
+      </header>
+
+      <div class="cn-badges cn-rise cn-rise-2">${ordered.map(rowHtml).join('')}</div>
+    `;
+  }
+
   return `
     <header class="cn-ach__head cn-rise cn-rise-1">
-      <div>
-        <span class="cn-label cn-label--marked">Achievements</span>
-        <h1 class="cn-section__title mt-2">${unlockedCount} of ${rows.length} unlocked</h1>
-        <p class="cn-label mt-2">${earnedXp} XP earned from badges</p>
-      </div>
+      <h1 class="cn-ach__title">${unlockedCount} of ${rows.length} badges</h1>
+      <p class="cn-ach__sub">${earnedXp} XP earned from your collection so far.</p>
       <div class="cn-ach__meter">
-        <div class="cn-progress cn-progress--reward">
-          <div class="cn-progress__bar" style="width:${Math.round((unlockedCount / rows.length) * 100)}%"></div>
+        <div class="cn-badge__bar">
+          <span style="width:${Math.round((unlockedCount / rows.length) * 100)}%"></span>
         </div>
       </div>
     </header>

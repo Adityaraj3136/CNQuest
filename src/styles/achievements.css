@@ -20,90 +20,118 @@
   max-width: 320px;
 }
 
+
+/* ==================================================================== *
+ * Badge collection (redesign)
+ * ==================================================================== */
+
+.cn-ach__title {
+  font-size: clamp(1.7rem, 1.2rem + 1.6vw, 2.4rem);
+  letter-spacing: var(--cn-tracking-snug);
+  margin: 0;
+}
+
+.cn-ach__sub {
+  margin: var(--cn-space-2) 0 0;
+  color: var(--cn-ink-soft);
+}
+
+.cn-ach__meter {
+  max-width: 22rem;
+  margin-top: var(--cn-space-4);
+}
+
 .cn-badges {
   display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--cn-space-4);
+  margin-top: var(--cn-space-6);
 }
 
 .cn-badge {
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: var(--cn-space-2) var(--cn-space-4);
-  padding-block: var(--cn-space-4);
-  border-bottom: var(--cn-hairline);
-  align-items: start;
-}
-
-@media (min-width: 720px) {
-  .cn-badge {
-    grid-template-columns: auto 1fr auto;
-    align-items: center;
-    gap: var(--cn-space-5);
-  }
-}
-
-.cn-badge__icon {
-  font-size: 1.5rem;
-  color: var(--cn-ink-faint);
-}
-
-.cn-badge[data-unlocked='true'] .cn-badge__icon {
-  color: var(--cn-reward);
-}
-
-.cn-badge[data-unlocked='false'] .cn-badge__name,
-.cn-badge[data-unlocked='false'] .cn-badge__desc {
-  color: var(--cn-ink-faint);
-}
-
-.cn-badge__body {
-  display: grid;
+  grid-template-columns: 1fr;
+  align-content: start;
   gap: var(--cn-space-2);
-  min-width: 0;
+  padding: var(--cn-space-5);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-paper-raised);
+  border: var(--cn-hairline);
+}
+
+.cn-badge__medal {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: var(--cn-space-2);
+  border-radius: var(--cn-radius-pill);
+  font-size: 1.35rem;
+  /* Locked is the default state, so the earned ones are the ones that stand out. */
+  background: var(--cn-locked-wash);
+  color: var(--cn-locked);
+}
+
+.cn-badge[data-unlocked='true'] .cn-badge__medal {
+  background: var(--cn-xp-wash);
+  color: var(--cn-xp);
+  box-shadow: 0 0 0 3px rgb(255 138 0 / 0.14);
 }
 
 .cn-badge__name {
-  font-size: var(--cn-text-base);
   margin: 0;
+  font-size: var(--cn-text-base);
+  font-weight: 650;
+  letter-spacing: var(--cn-tracking-snug);
+}
+
+.cn-badge[data-unlocked='false'] .cn-badge__name {
+  color: var(--cn-ink-soft);
 }
 
 .cn-badge__desc {
+  margin: 0;
   font-size: var(--cn-text-sm);
   color: var(--cn-ink-soft);
-  margin: 0;
+  line-height: 1.5;
 }
 
-.cn-badge__meta {
-  grid-column: 2 / -1;
+.cn-badge__meter {
   display: flex;
+  align-items: center;
   gap: var(--cn-space-3);
-  align-items: baseline;
+  margin-top: var(--cn-space-3);
+}
+
+.cn-badge__bar {
+  flex: 1;
+  height: 6px;
+  border-radius: var(--cn-radius-pill);
+  background: var(--cn-paper-sunken);
+  overflow: hidden;
+}
+
+.cn-badge__bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--cn-accent);
+}
+
+.cn-badge__count {
   font-family: var(--cn-font-mono);
   font-size: var(--cn-text-xs);
-  white-space: nowrap;
-}
-
-@media (min-width: 720px) {
-  .cn-badge__meta {
-    grid-column: auto;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: var(--cn-space-1);
-  }
+  color: var(--cn-ink-faint);
+  font-variant-numeric: tabular-nums;
 }
 
 .cn-badge__status {
-  color: var(--cn-ink-soft);
-}
-
-.cn-badge[data-unlocked='true'] .cn-badge__status {
-  color: var(--cn-positive);
-  font-weight: 700;
-}
-
-.cn-badge__xp {
+  margin: var(--cn-space-2) 0 0;
+  font-size: var(--cn-text-xs);
   color: var(--cn-ink-faint);
 }
 
-.cn-badge[data-unlocked='true'] .cn-badge__xp {
-  color: var(--cn-reward);
+.cn-badge[data-unlocked='true'] .cn-badge__status {
+  color: var(--cn-xp);
+  font-weight: 650;
 }
