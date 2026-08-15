@@ -95,15 +95,22 @@ export const routes: readonly RouteDefinition[] = [
     requiresAuth: true,
     load: () => import('@/pages/settings/settings.page').then((m) => m.default),
   },
+  // --- Game session mode ---
+  //
+  // `bare` means no navbar, no footer, no tab bar: a game is a focused task, and the site
+  // chrome around it was the main thing making the modes read as pages that happen to contain
+  // a quiz. A mode may only move to `bare` once it renders the shared HUD, because the HUD
+  // carries the exit. Without it a student is sealed inside the round with no way out, so the
+  // four modes still to be converted deliberately stay on the `app` layout.
   {
     path: '/games/quiz',
-    layout: 'app',
+    layout: 'bare',
     requiresAuth: true,
     load: () => import('@/games/quiz/quiz.page').then((m) => m.default),
   },
   {
     path: '/games/rapid-fire',
-    layout: 'app',
+    layout: 'bare',
     requiresAuth: true,
     load: () => import('@/games/rapid-fire/rapid-fire.page').then((m) => m.default),
   },

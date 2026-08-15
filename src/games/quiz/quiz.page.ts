@@ -16,12 +16,25 @@ import { finishRound, resultScreenHtml, savingHtml } from '@/games/shared/game-s
 import { playCue } from '@/services/sound';
 import { suggestDifficulty } from '@/services/adaptive';
 import { escapeHtml, qs, qsa } from '@/utils/dom';
+import {
+  enterSession,
+  exitSession,
+  flyXp,
+  gameHudHtml,
+  setHudProgress,
+  setHudStreak,
+  setHudTimer,
+  setHudXp,
+} from '@/games/shared/game-hud';
 import type { AnsweredQuestion, GameSummary } from '@/models/game';
 import type { ProcessedResult } from '@/services/game-result.service';
 import type { Difficulty } from '@/models/content';
 import '@/styles/games.css';
 
 const ROOT_ID = 'cn-quiz-root';
+
+/** XP banked so far this round, shown live in the HUD. */
+let roundXp = 0;
 const OPTION_KEYS = ['A', 'B', 'C', 'D'];
 const TICK_MS = 100;
 
@@ -32,26 +45,6 @@ let keyHandler: ((event: KeyboardEvent) => void) | null = null;
 let topicLabel = 'Computer Networks';
 
 // ---------------------------------------------------------------- rendering
-
-/**
- * What the student is playing for, right now.
- *
- * A running streak only appears once it is worth protecting. Showing "Streak 0" on the first
- * question sets a target that has already been missed, which is the opposite of encouraging.
- */
-function statChipsHtml(): string {
-  const view = engine!.view();
-  const xpAvailable = view.question.difficulty === 'hard' ? 15 : view.question.difficulty === 'medium' ? 12 : 10;
-
-  return `
-    <span class="cn-quiz__xp">+${xpAvailable} XP</span>
-    ${
-      view.currentStreak >= 2
-        ? `<span class="cn-quiz__streak"><i class="bi bi-fire" aria-hidden="true"></i>${view.currentStreak}</span>`
-        : ''
-    }
-  `;
-}
 
 function questionHtml(): string {
   const view = engine!.view();
@@ -92,21 +85,15 @@ function questionHtml(): string {
     .join('');
 
   return `
-    <div class="cn-quiz__bar">
-      <span class="cn-quiz__count">
-        Question ${view.questionNumber} <span aria-hidden="true">/</span> ${view.totalQuestions}
-      </span>
-      <span class="cn-quiz__stats">${statChipsHtml()}</span>
-    </div>
+    ${gameHudHtml({
+      mode: 'Quiz Blitz',
+      progress: { current: view.questionNumber, total: view.totalQuestions },
+      streak: view.currentStreak,
+      xp: roundXp,
+      seconds: view.secondsPerQuestion,
+    })}
 
-    <div class="cn-quiz__timerbar" id="cn-timer-bar" role="progressbar"
-         aria-label="Time remaining for this question" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
-      <span style="width: 100%"></span>
-    </div>
-    <div class="cn-quiz__timer" id="cn-timer-label">
-      <span>${escapeHtml(topicLabel)}</span>
-      <span><span data-role="seconds">${view.secondsPerQuestion}</span>s remaining</span>
-    </div>
+    <p class="cn-quiz__topic">${escapeHtml(topicLabel)}</p>
 
     <h1 class="cn-quiz__question">${escapeHtml(view.question.question)}</h1>
 
@@ -225,19 +212,9 @@ function startTimer(): void {
     const secondsLeft = Math.ceil(remainingMs / 1000);
     const low = remainingMs <= 5000;
 
-    const label = qs('#cn-timer-label');
-    const bar = qs('#cn-timer-bar');
-    if (label) {
-      label.setAttribute('data-low', String(low));
-      const value = qs('[data-role="seconds"]', label);
-      if (value) value.textContent = String(secondsLeft);
-    }
-    if (bar) {
-      bar.setAttribute('data-low', String(low));
-      bar.setAttribute('aria-valuenow', String(Math.round(percent)));
-      const fill = qs('span', bar);
-      if (fill) fill.style.width = `${percent}%`;
-    }
+    setHudTimer(secondsLeft);
+    void percent;
+    void low;
 
     if (remainingMs === 0) {
       stopTimer();
@@ -263,7 +240,18 @@ function submitAnswer(selected: number | null): void {
 
   playCue(recorded.isCorrect ? 'correct' : 'wrong');
   stopTimer();
+
+  roundXp += recorded.xpEarned;
+  const view = engine.view();
+
   paintQuestion();
+
+  // Painted first, so the fields these touch exist and the XP flies from the answer that
+  // earned it rather than from wherever the old markup happened to be.
+  setHudXp(roundXp);
+  setHudStreak(view.currentStreak);
+  setHudProgress(view.questionNumber, view.totalQuestions);
+  if (recorded.isCorrect) flyXp(recorded.xpEarned, qs<HTMLElement>('.cn-option[data-state="correct"]'));
 }
 
 function goNext(): void {
@@ -433,10 +421,14 @@ const quizPage: Page = {
     topicLabel = topicId ? ((await getTopic(topicId))?.title ?? 'Computer Networks') : 'Mixed topics';
 
     bindKeys();
+    enterSession();
+    roundXp = 0;
     await startRound();
   },
 
   unmount() {
+    exitSession();
+    roundXp = 0;
     stopTimer();
     if (keyHandler) {
       window.removeEventListener('keydown', keyHandler);

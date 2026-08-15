@@ -10,6 +10,7 @@ import { playCue } from '@/services/sound';
 import { getQuestionRound, getTopic } from '@/services/content.service';
 import { loaderHtml, stateHtml } from '@/components/loader';
 import { escapeHtml, qs, qsa } from '@/utils/dom';
+import { enterSession, exitSession, gameHudHtml, setHudStreak, setHudTimer } from '@/games/shared/game-hud';
 import type { AnsweredQuestion } from '@/models/game';
 import '@/styles/games.css';
 
@@ -39,22 +40,13 @@ function questionHtml(): string {
   const view = engine!.view();
 
   return `
-    <div class="cn-quiz__bar">
-      <span class="cn-quiz__count">Rapid Fire</span>
-      <span class="cn-quiz__stats">
-        <span>Correct <b>${view.score}</b></span>
-        <span>Streak <b>${view.currentStreak}</b></span>
-      </span>
-    </div>
+    ${gameHudHtml({
+      mode: 'Rapid Fire',
+      streak: view.currentStreak,
+      seconds: view.secondsLeft,
+    })}
 
-    <div class="cn-quiz__timerbar" id="cn-rapid-bar" role="progressbar"
-         aria-label="Time remaining" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
-      <span style="width:100%"></span>
-    </div>
-    <div class="cn-quiz__timer" id="cn-rapid-clock">
-      <span>${escapeHtml(topicLabel)}</span>
-      <span><span data-role="seconds">${view.secondsLeft}</span>s left</span>
-    </div>
+    <p class="cn-quiz__topic">${escapeHtml(topicLabel)} · ${view.score} correct</p>
 
     <h1 class="cn-quiz__question">${escapeHtml(view.question.question)}</h1>
 
@@ -108,7 +100,10 @@ function submit(index: number | null): void {
     void finish();
     return;
   }
+
   paintQuestion();
+  // Repainted first: the HUD is inside the markup paintQuestion replaces.
+  setHudStreak(engine.view().currentStreak);
 }
 
 function startTimer(): void {
@@ -120,19 +115,12 @@ function startTimer(): void {
     const remaining = engine.millisLeft();
     const low = remaining <= 10_000;
 
-    const bar = qs('#cn-rapid-bar');
-    if (bar) {
-      bar.setAttribute('data-low', String(low));
-      bar.setAttribute('aria-valuenow', String(Math.round((remaining / totalMs) * 100)));
-      const fill = qs('span', bar);
-      if (fill) fill.style.width = `${(remaining / totalMs) * 100}%`;
-    }
-    const clock = qs('#cn-rapid-clock');
-    if (clock) {
-      clock.setAttribute('data-low', String(low));
-      const seconds = qs('[data-role="seconds"]', clock);
-      if (seconds) seconds.textContent = String(engine.secondsLeft());
-    }
+    // The whole round is one clock, so the HUD track shows time left rather than questions done.
+    const fill = qs<HTMLElement>('#cn-hud-fill');
+    if (fill) fill.style.width = `${(remaining / totalMs) * 100}%`;
+
+    setHudTimer(engine.secondsLeft());
+    void low;
 
     if (remaining === 0) {
       stopTimer();
@@ -266,6 +254,7 @@ const rapidFirePage: Page = {
   },
 
   async mount(ctx: PageContext) {
+    enterSession();
     topicId = ctx.query.get('topic') ?? undefined;
     topicLabel = topicId ? ((await getTopic(topicId))?.title ?? 'Mixed topics') : 'Mixed topics';
 
@@ -282,6 +271,7 @@ const rapidFirePage: Page = {
   },
 
   unmount() {
+    exitSession();
     stopTimer();
     if (keyHandler) {
       window.removeEventListener('keydown', keyHandler);
