@@ -7,6 +7,7 @@
 
 import type { Riddle } from '../models/content.ts';
 import { RIDDLES_EXTRA } from './riddles.extra.ts';
+import { RIDDLES_EXTRA2 } from './riddles.extra2.ts';
 
 const RIDDLES_CORE: readonly Riddle[] = [
   {
@@ -130,4 +131,4 @@ const RIDDLES_CORE: readonly Riddle[] = [
 ];
 
 /** Both banks as one collection. */
-export const RIDDLES: readonly Riddle[] = [...RIDDLES_CORE, ...RIDDLES_EXTRA];
+export const RIDDLES: readonly Riddle[] = [...RIDDLES_CORE, ...RIDDLES_EXTRA, ...RIDDLES_EXTRA2];

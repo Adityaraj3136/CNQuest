@@ -8,6 +8,7 @@
 
 import type { Difficulty, GameType, Question } from '../models/content.ts';
 import { QUESTIONS_EXTRA } from './questions.extra.ts';
+import { QUESTIONS_EXTRA2 } from './questions.extra2.ts';
 
 /** Default: usable by every question-driven game mode. */
 const ANY: GameType[] = ['quiz', 'rapid-fire', 'boss'];
@@ -514,4 +515,4 @@ const QUESTIONS_CORE: readonly Question[] = [
 ];
 
 /** Both banks as one collection. Split only so neither file becomes unreadable. */
-export const QUESTIONS: readonly Question[] = [...QUESTIONS_CORE, ...QUESTIONS_EXTRA];
+export const QUESTIONS: readonly Question[] = [...QUESTIONS_CORE, ...QUESTIONS_EXTRA, ...QUESTIONS_EXTRA2];

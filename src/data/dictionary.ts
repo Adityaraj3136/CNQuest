@@ -6,6 +6,7 @@
 
 import type { DictionaryTerm } from '../models/content.ts';
 import { DICTIONARY_EXTRA } from './dictionary.extra.ts';
+import { DICTIONARY_EXTRA2 } from './dictionary.extra2.ts';
 
 const DICTIONARY_CORE: readonly DictionaryTerm[] = [
   { id: 'protocol', term: 'Protocol', category: 'General',
@@ -250,4 +251,4 @@ const DICTIONARY_CORE: readonly DictionaryTerm[] = [
 ];
 
 /** Both banks as one collection. Split only so neither file becomes unreadable. */
-export const DICTIONARY: readonly DictionaryTerm[] = [...DICTIONARY_CORE, ...DICTIONARY_EXTRA];
+export const DICTIONARY: readonly DictionaryTerm[] = [...DICTIONARY_CORE, ...DICTIONARY_EXTRA, ...DICTIONARY_EXTRA2];
