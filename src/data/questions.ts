@@ -7,6 +7,7 @@
  */
 
 import type { Difficulty, GameType, Question } from '../models/content.ts';
+import { QUESTIONS_EXTRA } from './questions.extra.ts';
 
 /** Default: usable by every question-driven game mode. */
 const ANY: GameType[] = ['quiz', 'rapid-fire', 'boss'];
@@ -26,7 +27,7 @@ function q(
   return { id, unitId, topicId, question, options, correctAnswer, explanation, difficulty, gameTypes };
 }
 
-export const QUESTIONS: readonly Question[] = [
+const QUESTIONS_CORE: readonly Question[] = [
   // ---------- network-basics ----------
   q('q-nb-1', 'unit-1', 'network-basics',
     'Which network type typically covers a single building or campus?',
@@ -511,3 +512,6 @@ export const QUESTIONS: readonly Question[] = [
     'A DMZ is a perimeter subnet: if a public server is breached, the internal network is still shielded.',
     'hard'),
 ];
+
+/** Both banks as one collection. Split only so neither file becomes unreadable. */
+export const QUESTIONS: readonly Question[] = [...QUESTIONS_CORE, ...QUESTIONS_EXTRA];

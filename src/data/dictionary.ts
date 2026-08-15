@@ -5,8 +5,9 @@
  */
 
 import type { DictionaryTerm } from '../models/content.ts';
+import { DICTIONARY_EXTRA } from './dictionary.extra.ts';
 
-export const DICTIONARY: readonly DictionaryTerm[] = [
+const DICTIONARY_CORE: readonly DictionaryTerm[] = [
   { id: 'protocol', term: 'Protocol', category: 'General',
     definition: 'An agreed set of rules governing communication, covering syntax, semantics and timing.',
     examples: ['HTTP, TCP and IP are all protocols.'], relatedTerms: ['tcp-ip'] },
@@ -247,3 +248,6 @@ export const DICTIONARY: readonly DictionaryTerm[] = [
     definition: 'Distributed Denial of Service — many hosts flooding a target to exhaust its resources.',
     relatedTerms: ['firewall'] },
 ];
+
+/** Both banks as one collection. Split only so neither file becomes unreadable. */
+export const DICTIONARY: readonly DictionaryTerm[] = [...DICTIONARY_CORE, ...DICTIONARY_EXTRA];

@@ -4,8 +4,9 @@
  */
 
 import type { Boss, MatchingSet, WordSearchSet } from '../models/content.ts';
+import { MATCHING_SETS_EXTRA, WORD_SEARCH_SETS_EXTRA } from './games.extra.ts';
 
-export const MATCHING_SETS: readonly MatchingSet[] = [
+const MATCHING_SETS_CORE: readonly MatchingSet[] = [
   {
     id: 'match-protocol-port',
     unitId: 'unit-5',
@@ -92,7 +93,7 @@ export const MATCHING_SETS: readonly MatchingSet[] = [
   },
 ];
 
-export const WORD_SEARCH_SETS: readonly WordSearchSet[] = [
+const WORD_SEARCH_SETS_CORE: readonly WordSearchSet[] = [
   {
     id: 'ws-devices',
     unitId: 'unit-1',
@@ -168,3 +169,7 @@ export const BOSSES: readonly Boss[] = [
     difficulties: ['medium', 'hard'],
   },
 ];
+
+/** Both banks as one collection each. */
+export const MATCHING_SETS: readonly MatchingSet[] = [...MATCHING_SETS_CORE, ...MATCHING_SETS_EXTRA];
+export const WORD_SEARCH_SETS: readonly WordSearchSet[] = [...WORD_SEARCH_SETS_CORE, ...WORD_SEARCH_SETS_EXTRA];
