@@ -2,7 +2,15 @@ import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath, URL } from 'node:url';
 
+/**
+ * Where the app will be served from. Firebase Hosting serves it at the domain root; GitHub
+ * Pages serves a project site under `/<repo>/`, and every built asset URL has to carry that
+ * prefix or the page loads and then 404s its own JavaScript.
+ */
+const base = process.env.BASE_PATH ?? '/';
+
 export default defineConfig({
+  base,
   plugins: [
     VitePWA({
       // A new build takes effect on the next visit rather than nagging mid-quiz.
@@ -18,8 +26,8 @@ export default defineConfig({
         // The whole app shell and every bundled lesson is precached, which is what makes
         // Learn, the dictionary and all six games work with no network at all.
         globPatterns: ['**/*.{js,css,html,svg,woff,woff2}'],
-        navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/offline\.html$/],
+        navigateFallback: `${base}index.html`,
+        navigateFallbackDenylist: [/offline\.html$/],
         cleanupOutdatedCaches: true,
         // Bootstrap Icons' CSS requests its font as `bootstrap-icons.woff2?<hash>`, but the
         // precache stores the bare filename. Workbox only strips utm_/fbclid by default, so
