@@ -10,6 +10,13 @@ import { playCue } from '@/services/sound';
 import { getMatchingSets } from '@/services/content.service';
 import { loaderHtml, stateHtml } from '@/components/loader';
 import { escapeHtml, qs, qsa } from '@/utils/dom';
+import {
+  enterSession,
+  exitSession,
+  gameHudHtml,
+  setHudProgress,
+  setHudStreak,
+} from '@/games/shared/game-hud';
 import type { MatchSide, MatchingView } from '@/games/matching/matching.engine';
 import type { MatchingSet } from '@/models/content';
 import '@/styles/games.css';
@@ -33,7 +40,7 @@ function columnHtml(view: MatchingView, side: MatchSide): string {
 
   return `
     <div class="cn-match__col" role="group" aria-label="${escapeHtml(label)}">
-      <span class="cn-label cn-label--marked">${escapeHtml(label)}</span>
+      <span class="cn-match__label">${escapeHtml(label)}</span>
       ${cards
         .map(
           (card) => `
@@ -45,8 +52,9 @@ function columnHtml(view: MatchingView, side: MatchSide): string {
               data-state="${card.matched ? 'matched' : selected === card.pairIndex ? 'selected' : 'idle'}"
               ${card.matched ? 'disabled aria-disabled="true"' : ''}
             >
-              <span>${escapeHtml(card.text)}</span>
-              ${card.matched ? '<span class="cn-match__tick">✓</span>' : ''}
+              <span class="cn-match__text">${escapeHtml(card.text)}</span>
+              <span class="cn-match__port" aria-hidden="true"></span>
+              ${card.matched ? '<i class="bi bi-check-lg cn-match__tick" aria-hidden="true"></i>' : ''}
             </button>`,
         )
         .join('')}
@@ -58,30 +66,22 @@ function boardHtml(): string {
   const view = engine!.view();
 
   return `
-    <div class="cn-container cn-arena">
-      <header class="cn-arena__head">
-        <div>
-          <span class="cn-label cn-label--marked">Match &amp; Pair</span>
-          <h1 class="cn-arena__title">${escapeHtml(view.title)}</h1>
-        </div>
-        <span class="cn-arena__stats">
-          <span>Matched <b>${view.matchedCount}/${view.totalPairs}</b></span>
-          <span>Mistakes <b>${view.mistakes}</b></span>
-        </span>
-      </header>
+    ${gameHudHtml({
+      mode: 'Match & Pair',
+      progress: { current: view.matchedCount, total: view.totalPairs, unit: 'paired' },
+      streak: view.matchedCount,
+    })}
 
-      <div class="cn-progress cn-progress--accent">
-        <div class="cn-progress__bar" style="width:${(view.matchedCount / view.totalPairs) * 100}%"></div>
-      </div>
+    <div class="cn-arena cn-arena--match">
+      <h1 class="cn-arena__title">${escapeHtml(view.title)}</h1>
+      <p class="cn-arena__brief" id="cn-match-hint" aria-live="polite">
+        Pick one from each side to connect them.
+      </p>
 
       <div class="cn-match" id="cn-match-board">
         ${columnHtml(view, 'left')}
         ${columnHtml(view, 'right')}
       </div>
-
-      <p class="cn-label mt-4" id="cn-match-hint" aria-live="polite">
-        Select one card from each column to pair them.
-      </p>
     </div>
   `;
 }
@@ -105,7 +105,7 @@ function paintBoard(): void {
           if (engine?.isFinished()) void finish();
           else paintBoard();
         }, 420);
-        setHint('Not a pair — try again.');
+        setHint('Not quite. That one connects elsewhere.');
         return;
       }
 
@@ -113,8 +113,14 @@ function paintBoard(): void {
         void finish();
         return;
       }
+
       paintBoard();
-      if (outcome === 'matched') setHint('Matched.');
+      if (outcome === 'matched') {
+        const view = engine!.view();
+        setHint(`Connected. ${view.matchedCount} of ${view.totalPairs} linked.`);
+        setHudProgress(view.matchedCount, view.totalPairs);
+        setHudStreak(view.matchedCount);
+      }
     });
   });
 }
@@ -193,6 +199,7 @@ const matchingPage: Page = {
   },
 
   async mount(ctx: PageContext) {
+    enterSession();
     const topicId = ctx.query.get('topic') ?? undefined;
     const scoped = await getMatchingSets(topicId);
     // Fall back to the full catalogue rather than dead-ending on a topic with no set.
@@ -201,6 +208,7 @@ const matchingPage: Page = {
   },
 
   unmount() {
+    exitSession();
     engine?.abandon();
     engine = null;
   },

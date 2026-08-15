@@ -13,6 +13,7 @@ import { getWordSearchSets } from '@/services/content.service';
 import { lineBetween } from '@/games/word-search/word-search.generator';
 import { loaderHtml, stateHtml } from '@/components/loader';
 import { escapeHtml, qs, qsa } from '@/utils/dom';
+import { enterSession, exitSession, gameHudHtml, setHudProgress } from '@/games/shared/game-hud';
 import type { Cell } from '@/games/word-search/word-search.generator';
 import type { WordSearchSet } from '@/models/content';
 import '@/styles/games.css';
@@ -57,17 +58,16 @@ function boardHtml(): string {
     .join('');
 
   return `
-    <div class="cn-container cn-arena">
-      <header class="cn-arena__head">
-        <div>
-          <span class="cn-label cn-label--marked">Word Search · ${escapeHtml(view.grid.size + '×' + view.grid.size)}</span>
-          <h1 class="cn-arena__title">${escapeHtml(view.title)}</h1>
-        </div>
-        <span class="cn-arena__stats">
-          <span>Found <b>${view.foundCount}/${view.totalWords}</b></span>
-          <span>Misses <b>${view.misses}</b></span>
-        </span>
-      </header>
+    ${gameHudHtml({
+      mode: 'Word Search',
+      progress: { current: view.foundCount, total: view.totalWords, unit: 'found' },
+    })}
+
+    <div class="cn-arena cn-arena--ws">
+      <h1 class="cn-arena__title">${escapeHtml(view.title)}</h1>
+      <p class="cn-arena__brief" id="cn-ws-hint" aria-live="polite">
+        Drag across a term, or tap its first and last letter.
+      </p>
 
       <div class="cn-ws">
         <div class="cn-ws__board">
@@ -78,19 +78,24 @@ function boardHtml(): string {
         </div>
 
         <aside class="cn-ws__words">
-          <span class="cn-label cn-label--marked">Words</span>
+          <p class="cn-ws__mission">
+            <span>Terms recovered</span>
+            <b>${view.foundCount} / ${view.totalWords}</b>
+          </p>
+
           <ul>
             ${view.words
               .map(
-                (entry) =>
-                  `<li data-found="${entry.found}">${escapeHtml(entry.word)}</li>`,
+                (entry) => `
+                  <li data-found="${entry.found}">
+                    <i class="bi ${entry.found ? 'bi-check-circle-fill' : 'bi-circle'}" aria-hidden="true"></i>
+                    ${escapeHtml(entry.word)}
+                  </li>`,
               )
               .join('')}
           </ul>
-          <p class="cn-label mt-3" id="cn-ws-hint" aria-live="polite">
-            Drag across a word, or tap its first and last letter.
-          </p>
-          <button type="button" class="btn btn-cn-ghost btn-sm mt-2" id="cn-ws-give-up">
+
+          <button type="button" class="btn btn-cn-ghost btn-sm mt-3" id="cn-ws-give-up">
             Finish round
           </button>
         </aside>
@@ -126,15 +131,18 @@ function cellFrom(target: EventTarget | null): Cell | null {
 function judge(from: Cell, to: Cell): void {
   const outcome = engine!.select(from, to);
 
-  if (outcome.status === 'found') setHint(`Found ${outcome.word}.`);
-  else if (outcome.status === 'already-found') setHint(`${outcome.word} is already found.`);
-  else if (outcome.status === 'miss') setHint('Not a word — keep looking.');
+  if (outcome.status === 'found') setHint(`${outcome.word} recovered.`);
+  else if (outcome.status === 'already-found') setHint(`${outcome.word} is already yours.`);
+  else if (outcome.status === 'miss') setHint('Nothing there. Keep hunting.');
 
   if (engine!.isFinished()) {
     void finish();
     return;
   }
+
   paintBoard();
+  const view = engine!.view();
+  setHudProgress(view.foundCount, view.totalWords);
 }
 
 function paintBoard(): void {
@@ -265,6 +273,7 @@ const wordSearchPage: Page = {
   },
 
   async mount(ctx: PageContext) {
+    enterSession();
     const topicId = ctx.query.get('topic') ?? undefined;
     const scoped = await getWordSearchSets(topicId);
     sets = scoped.length > 0 ? scoped : await getWordSearchSets();
@@ -272,6 +281,7 @@ const wordSearchPage: Page = {
   },
 
   unmount() {
+    exitSession();
     engine?.abandon();
     engine = null;
     anchor = null;

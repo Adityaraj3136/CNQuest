@@ -116,7 +116,7 @@ export const routes: readonly RouteDefinition[] = [
   },
   {
     path: '/games/matching',
-    layout: 'app',
+    layout: 'bare',
     requiresAuth: true,
     load: () => import('@/games/matching/matching.page').then((m) => m.default),
   },
@@ -134,7 +134,7 @@ export const routes: readonly RouteDefinition[] = [
   },
   {
     path: '/games/word-search',
-    layout: 'app',
+    layout: 'bare',
     requiresAuth: true,
     load: () => import('@/games/word-search/word-search.page').then((m) => m.default),
   },

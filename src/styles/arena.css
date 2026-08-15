@@ -78,68 +78,7 @@
 
 /* ---------------- Match & Pair ---------------- */
 
-.cn-match {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--cn-space-4);
-  margin-top: var(--cn-space-5);
-}
 
-.cn-match__col {
-  display: grid;
-  gap: var(--cn-space-2);
-  align-content: start;
-}
-
-.cn-match__card {
-  display: flex;
-  align-items: center;
-  gap: var(--cn-space-3);
-  width: 100%;
-  text-align: start;
-  padding: var(--cn-space-3) var(--cn-space-4);
-  min-height: 56px;
-  border: var(--cn-hairline);
-  background: var(--cn-paper-raised);
-  color: var(--cn-ink);
-  font-size: var(--cn-text-sm);
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    border-color var(--cn-duration-fast) var(--cn-ease-out),
-    background-color var(--cn-duration-fast) var(--cn-ease-out),
-    transform var(--cn-duration-fast) var(--cn-ease-out);
-}
-
-.cn-match__card:hover:not(:disabled) {
-  border-color: var(--cn-ink);
-}
-
-.cn-match__card[data-state='selected'] {
-  border-color: var(--cn-accent);
-  box-shadow: inset 3px 0 0 var(--cn-accent);
-  background: var(--cn-accent-wash);
-}
-
-.cn-match__card[data-state='matched'] {
-  border-color: var(--cn-positive);
-  background: var(--cn-positive-wash);
-  color: #08543c;
-  cursor: default;
-}
-
-.cn-match__card[data-state='wrong'] {
-  border-color: var(--cn-negative);
-  background: var(--cn-negative-wash);
-  color: #8c2126;
-  animation: cn-shake 320ms var(--cn-ease-in-out);
-}
-
-.cn-match__tick {
-  margin-inline-start: auto;
-  font-family: var(--cn-font-mono);
-  color: var(--cn-positive);
-}
 
 @keyframes cn-shake {
   0%, 100% { transform: translateX(0); }
@@ -293,74 +232,7 @@
 
 /* ---------------- Word Search ---------------- */
 
-.cn-ws {
-  display: grid;
-  gap: var(--cn-space-5);
-  margin-top: var(--cn-space-4);
-}
 
-@media (min-width: 860px) {
-  .cn-ws {
-    grid-template-columns: minmax(0, 1fr) 220px;
-    gap: var(--cn-space-6);
-    align-items: start;
-  }
-}
-
-/* Wrapper so a large grid scrolls inside itself rather than widening the page. */
-.cn-ws__board {
-  overflow-x: auto;
-  max-width: 100%;
-  -webkit-overflow-scrolling: touch;
-}
-
-.cn-ws__grid {
-  display: grid;
-  gap: 1px;
-  background: var(--cn-rule);
-  border: var(--cn-hairline-strong);
-  max-width: min(100%, 640px);
-  touch-action: none;
-  user-select: none;
-}
-
-.cn-ws__cell {
-  aspect-ratio: 1;
-  /* A letter below ~26px is unreadable and unhittable. Past that the board scrolls
-     horizontally inside its wrapper instead of shrinking further. */
-  min-width: 26px;
-  display: grid;
-  place-items: center;
-  border: 0;
-  background: var(--cn-paper-raised);
-  font-family: var(--cn-font-mono);
-  font-size: clamp(0.7rem, 0.4rem + 1.5vw, 1rem);
-  font-weight: 700;
-  color: var(--cn-ink);
-  cursor: pointer;
-  padding: 0;
-}
-
-.cn-ws__cell[data-preview='true'] {
-  background: var(--cn-accent-wash);
-  color: var(--cn-accent-deep);
-}
-
-.cn-ws__cell[data-found='true'] {
-  background: var(--cn-positive-wash);
-  color: #08543c;
-}
-
-.cn-ws__words ul {
-  list-style: none;
-  padding: 0;
-  margin: var(--cn-space-3) 0 0;
-  display: grid;
-  gap: var(--cn-space-2);
-  font-family: var(--cn-font-mono);
-  font-size: var(--cn-text-sm);
-  letter-spacing: var(--cn-tracking-wide);
-}
 
 .cn-ws__words li[data-found='true'] {
   color: var(--cn-ink-faint);
@@ -686,5 +558,318 @@ body.cn-in-session {
   .cn-hud__field--milestone,
   .cn-xp-fly {
     animation: none;
+  }
+}
+
+/* ==================================================================== *
+ * Match & Pair — a board of tiles, not two lists of form fields
+ * ==================================================================== */
+
+.cn-arena--match {
+  max-width: 1000px;
+  margin-inline: auto;
+  padding: var(--cn-space-6) var(--cn-space-4) var(--cn-space-8);
+}
+
+.cn-arena__title {
+  margin: 0;
+  font-size: clamp(1.4rem, 1.1rem + 1.2vw, 2rem);
+  letter-spacing: var(--cn-tracking-snug);
+  text-align: center;
+}
+
+.cn-arena__brief {
+  margin: var(--cn-space-2) 0 0;
+  text-align: center;
+  color: var(--cn-ink-soft);
+  font-size: var(--cn-text-sm);
+  min-height: 1.4em;
+}
+
+.cn-match {
+  display: grid;
+  /* A wide centre gap is where a connection would be drawn, and it keeps the two sides from
+     reading as one table. */
+  grid-template-columns: 1fr;
+  gap: var(--cn-space-4);
+  margin-top: var(--cn-space-6);
+}
+
+@media (min-width: 720px) {
+  .cn-match {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--cn-space-8);
+  }
+}
+
+.cn-match__col {
+  display: grid;
+  gap: var(--cn-space-3);
+  align-content: start;
+}
+
+.cn-match__label {
+  font-size: var(--cn-text-xs);
+  font-weight: 700;
+  color: var(--cn-ink-faint);
+  text-align: center;
+}
+
+.cn-match__card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--cn-space-2);
+  min-height: 68px;
+  padding: var(--cn-space-3) var(--cn-space-4);
+  border-radius: var(--cn-radius-lg);
+  border: 1.5px solid var(--cn-rule);
+  background: var(--cn-paper-raised);
+  color: var(--cn-ink);
+  font-size: var(--cn-text-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color var(--cn-duration-fast) var(--cn-ease-out),
+    background-color var(--cn-duration-fast) var(--cn-ease-out),
+    transform var(--cn-duration-fast) var(--cn-ease-out);
+}
+
+.cn-match__card:hover:not(:disabled) {
+  border-color: var(--cn-accent);
+  background: var(--cn-accent-wash);
+}
+
+.cn-match__card:not(:disabled):active {
+  transform: scale(0.98);
+}
+
+/* The port is the networking tell: every tile has a socket waiting for a connection. */
+.cn-match__port {
+  position: absolute;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--cn-radius-pill);
+  background: var(--cn-rule-strong);
+  transform: translateY(-50%);
+}
+
+.cn-match__col:first-child .cn-match__port { right: -4px; }
+.cn-match__col:last-child .cn-match__port { left: -4px; }
+
+.cn-match__card[data-state='selected'] {
+  border-color: var(--cn-accent);
+  background: var(--cn-accent-wash);
+  box-shadow: 0 0 0 3px rgb(11 70 255 / 0.12);
+}
+
+.cn-match__card[data-state='selected'] .cn-match__port {
+  background: var(--cn-accent);
+}
+
+.cn-match__card[data-state='matched'] {
+  border-color: var(--cn-mastered);
+  background: var(--cn-mastered-wash);
+  color: var(--cn-mastered);
+  cursor: default;
+  animation: cn-link 260ms var(--cn-ease-out);
+}
+
+.cn-match__card[data-state='matched'] .cn-match__port {
+  background: var(--cn-mastered);
+}
+
+@keyframes cn-link {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+
+.cn-match__card[data-state='wrong'] {
+  border-color: var(--cn-negative);
+  background: var(--cn-negative-wash);
+  animation: cn-shake 260ms var(--cn-ease-out);
+}
+
+@keyframes cn-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.cn-match__tick {
+  color: var(--cn-mastered);
+  font-size: 1.1rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cn-match__card,
+  .cn-match__card[data-state='matched'],
+  .cn-match__card[data-state='wrong'] {
+    transition: none;
+    animation: none;
+  }
+}
+
+/* ==================================================================== *
+ * Word Search — a board of tiles, not a spreadsheet
+ * ==================================================================== */
+
+.cn-arena--ws {
+  max-width: 1080px;
+  margin-inline: auto;
+  padding: var(--cn-space-6) var(--cn-space-4) var(--cn-space-8);
+}
+
+.cn-ws {
+  display: grid;
+  gap: var(--cn-space-5);
+  margin-top: var(--cn-space-6);
+}
+
+@media (min-width: 900px) {
+  .cn-ws {
+    grid-template-columns: minmax(0, 1fr) 240px;
+    gap: var(--cn-space-6);
+    align-items: start;
+  }
+}
+
+.cn-ws__board {
+  overflow-x: auto;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+/*
+ * The spreadsheet look came from a 1px gap over a shared background: that is exactly how a
+ * table is drawn. Separate tiles with real space between them and no backing colour, and the
+ * same grid reads as a board.
+ */
+.cn-ws__grid {
+  display: grid;
+  gap: 4px;
+  background: none;
+  border: 0;
+  max-width: min(100%, 660px);
+  margin-inline: auto;
+  touch-action: none;
+  user-select: none;
+}
+
+.cn-ws__cell {
+  aspect-ratio: 1;
+  min-width: 30px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: var(--cn-paper-sunken);
+  font-family: var(--cn-font-mono);
+  font-size: clamp(0.75rem, 0.45rem + 1.5vw, 1.05rem);
+  font-weight: 700;
+  color: var(--cn-ink-soft);
+  cursor: pointer;
+  padding: 0;
+  transition:
+    background-color 90ms var(--cn-ease-out),
+    color 90ms var(--cn-ease-out),
+    transform 90ms var(--cn-ease-out);
+}
+
+.cn-ws__cell:hover {
+  background: var(--cn-accent-wash);
+  color: var(--cn-accent);
+}
+
+/* The path being dragged. Solid blue so the shape of the selection is unmistakable. */
+.cn-ws__cell[data-preview='true'] {
+  background: var(--cn-accent);
+  color: #fff;
+  transform: scale(1.04);
+}
+
+.cn-ws__cell[data-found='true'] {
+  background: var(--cn-mastered);
+  color: #fff;
+  cursor: default;
+  animation: cn-ws-found 250ms var(--cn-ease-out);
+}
+
+@keyframes cn-ws-found {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+/* --- Mission panel --- */
+
+.cn-ws__words {
+  padding: var(--cn-space-4);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-paper-raised);
+  border: var(--cn-hairline);
+}
+
+.cn-ws__mission {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--cn-space-3);
+  margin: 0 0 var(--cn-space-3);
+  padding-bottom: var(--cn-space-3);
+  border-bottom: var(--cn-hairline);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-faint);
+}
+
+.cn-ws__mission b {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-base);
+  color: var(--cn-ink);
+}
+
+.cn-ws__words ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--cn-space-2);
+}
+
+.cn-ws__words li {
+  display: flex;
+  align-items: center;
+  gap: var(--cn-space-2);
+  font-size: var(--cn-text-sm);
+  font-weight: 600;
+  color: var(--cn-ink);
+}
+
+.cn-ws__words li i {
+  color: var(--cn-rule-strong);
+  font-size: 0.9rem;
+}
+
+.cn-ws__words li[data-found='true'] {
+  color: var(--cn-ink-faint);
+  text-decoration: line-through;
+}
+
+.cn-ws__words li[data-found='true'] i {
+  color: var(--cn-mastered);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cn-ws__cell,
+  .cn-ws__cell[data-found='true'] {
+    transition: none;
+    animation: none;
+  }
+
+  .cn-ws__cell[data-preview='true'] {
+    transform: none;
   }
 }
