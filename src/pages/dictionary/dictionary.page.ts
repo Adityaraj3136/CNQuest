@@ -6,7 +6,7 @@
  */
 
 import type { Page, PageContext } from '@/types/page';
-import { getDictionary } from '@/services/content.service';
+import { getDictionary, getTopics } from '@/services/content.service';
 import { searchDictionary } from '@/services/content.filters';
 import { loadViewedTerms, recordTermView } from '@/services/dictionary.service';
 import { DICTIONARY_CATEGORIES } from '@/models/content';
@@ -14,7 +14,7 @@ import { showToast } from '@/components/toast';
 import { loaderHtml, stateHtml } from '@/components/loader';
 import { editAffordanceHtml } from '@/components/edit-affordance';
 import { escapeHtml, qs, qsa } from '@/utils/dom';
-import type { DictionaryCategory, DictionaryTerm } from '@/models/content';
+import type { DictionaryCategory, DictionaryTerm, Topic } from '@/models/content';
 import '@/styles/dictionary.css';
 
 const ROOT_ID = 'cn-dict-root';
@@ -25,6 +25,18 @@ let viewed = new Set<string>();
 let query = '';
 let category: DictionaryCategory | typeof ALL = ALL;
 let selectedId: string | null = null;
+
+/** Topics, held so the detail panel can say where a term appears in the syllabus. */
+let allTopics: Topic[] = [];
+
+/**
+ * What to offer before a term is chosen.
+ *
+ * The most recently reviewed terms if there are any, otherwise the first few in the list, so
+ * the panel always has something to open rather than sitting blank beside a full page.
+ */
+let suggestions: DictionaryTerm[] = [];
+let slashHandler: ((event: KeyboardEvent) => void) | null = null;
 
 function root(): HTMLElement | null {
   return qs(`#${ROOT_ID}`);
@@ -97,9 +109,16 @@ function listHtml(): string {
               data-active="${selectedId === term.id}"
             >
               <span class="cn-dict__term">${escapeHtml(term.term)}</span>
-              <span class="cn-chip">${escapeHtml(term.category)}</span>
-              <span class="cn-dict__gloss">${escapeHtml(term.definition)}</span>
-              ${viewed.has(term.id) ? '<span class="cn-dict__seen" title="Already read">read</span>' : ''}
+              <span class="cn-dict__rowtop">
+                <span class="cn-dict__rowterm">${escapeHtml(term.term)}</span>
+                <span class="cn-dict__rowcat">${escapeHtml(term.category)}</span>
+              </span>
+              <span class="cn-dict__gloss">${escapeHtml(firstSentence(term.definition))}</span>
+              ${
+                viewed.has(term.id)
+                  ? '<span class="cn-dict__seen"><i class="bi bi-check2" aria-hidden="true"></i>Reviewed</span>'
+                  : ''
+              }
             </button>`,
         )
         .join('')}
@@ -107,14 +126,45 @@ function listHtml(): string {
   `;
 }
 
+/**
+ * Where a term appears in the syllabus, worked out from the topics that reference it.
+ *
+ * This is a real relationship already in the data: a topic lists the dictionary ids it relates
+ * to. Reading it backwards turns the library from a separate glossary into part of the course,
+ * and nothing has to be invented to do it.
+ */
+function topicsForTerm(termId: string): Topic[] {
+  return allTopics.filter((topic) => (topic.relatedTerms ?? []).includes(termId));
+}
+
+/** The first sentence, for the list preview. Cutting mid-word is what produced "band...". */
+function firstSentence(text: string): string {
+  const stop = text.indexOf('. ');
+  return stop === -1 ? text : text.slice(0, stop + 1);
+}
+
 function detailHtml(): string {
   const term = terms.find((entry) => entry.id === selectedId);
 
   if (!term) {
     return `
-      <aside class="cn-dict__detail" aria-live="polite">
-        <span class="cn-label cn-label--marked">Definition</span>
-        <p class="cn-ink-soft mt-3">Select a term to read its full entry.</p>
+      <aside class="cn-dict__detail cn-dict__detail--empty" aria-live="polite">
+        <h2 class="cn-dict__emptytitle">Choose a networking term</h2>
+        <p class="cn-dict__emptylead">Every entry gives you the definition, an example where one helps, and where the term appears in the syllabus.</p>
+
+        ${
+          suggestions.length > 0
+            ? `<p class="cn-dict__emptylabel">Start with</p>
+               <div class="cn-dict__suggestions">
+                 ${suggestions
+                   .map(
+                     (entry) =>
+                       `<button type="button" class="cn-dict__suggestion" data-term="${escapeHtml(entry.id)}">${escapeHtml(entry.term)}</button>`,
+                   )
+                   .join('')}
+               </div>`
+            : ''
+        }
       </aside>
     `;
   }
@@ -123,26 +173,51 @@ function detailHtml(): string {
     .map((id) => terms.find((entry) => entry.id === id))
     .filter((entry): entry is DictionaryTerm => Boolean(entry));
 
+  const appearsIn = topicsForTerm(term.id);
+
   return `
     ${editAffordanceHtml({ collection: 'dictionary', id: term.id, label: 'term' })}
     <aside class="cn-dict__detail" aria-live="polite">
-      <span class="cn-label cn-label--marked">${escapeHtml(term.category)}</span>
+      <p class="cn-dict__cat">${escapeHtml(term.category)}</p>
       <h2 class="cn-dict__title">${escapeHtml(term.term)}</h2>
       <p class="cn-dict__definition">${escapeHtml(term.definition)}</p>
 
       ${
         term.examples && term.examples.length > 0
           ? `<div class="cn-dict__block">
-               <span class="cn-label">Example${term.examples.length > 1 ? 's' : ''}</span>
+               <p class="cn-dict__blocklabel">Example${term.examples.length > 1 ? 's' : ''}</p>
                ${term.examples.map((example) => `<p class="cn-example">${escapeHtml(example)}</p>`).join('')}
              </div>`
           : ''
       }
 
       ${
+        appearsIn.length > 0
+          ? `<div class="cn-dict__block">
+               <p class="cn-dict__blocklabel">Appears in</p>
+               <div class="cn-dict__lessons">
+                 ${appearsIn
+                   .map(
+                     (topic) => `
+                       <a class="cn-dict__lesson" href="#/learn/${escapeHtml(topic.id)}">
+                         <span>${escapeHtml(topic.title)}</span>
+                         <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                       </a>`,
+                   )
+                   .join('')}
+               </div>
+             </div>
+             <a class="btn btn-cn-primary btn-sm cn-dict__practice"
+                href="#/games/quiz?topic=${encodeURIComponent(appearsIn[0].id)}">
+               Practise this topic
+             </a>`
+          : ''
+      }
+
+      ${
         related.length > 0
           ? `<div class="cn-dict__block">
-               <span class="cn-label">Related</span>
+               <p class="cn-dict__blocklabel">Related terms</p>
                <div class="cn-termlist">
                  ${related
                    .map(
@@ -164,12 +239,20 @@ function bodyHtml(): string {
   return `
     <header class="cn-dict__head">
       <div>
-        <span class="cn-label cn-label--marked">Reference</span>
-        <h1 class="cn-section__title mt-2">Networking Dictionary</h1>
+        <h1 class="cn-dict__pagetitle">Networking Library</h1>
+        <p class="cn-dict__pagesub">
+          ${
+            query.trim() || category !== ALL
+              ? `${results.length} ${results.length === 1 ? 'result' : 'results'}`
+              : `${terms.length} terms for quick revision`
+          }
+        </p>
       </div>
-      <span class="cn-label">
-        ${results.length} of ${terms.length} terms · ${viewed.size} read
-      </span>
+      ${
+        viewed.size > 0
+          ? `<p class="cn-dict__reviewed">${viewed.size} reviewed</p>`
+          : ''
+      }
     </header>
 
     ${controlsHtml()}
@@ -221,13 +304,23 @@ async function selectTerm(termId: string): Promise<void> {
 }
 
 function bindResultHandlers(): void {
-  qsa<HTMLButtonElement>('.cn-dict__row, .cn-dict__related').forEach((button) => {
+  qsa<HTMLButtonElement>('.cn-dict__row, .cn-dict__related, .cn-dict__suggestion').forEach((button) => {
     button.addEventListener('click', () => void selectTerm(button.dataset.term!));
   });
 }
 
 function bindControls(): void {
   const search = qs<HTMLInputElement>('#cn-dict-search');
+
+  // Slash focuses search, the convention in reference tools. Ignored while already typing.
+  slashHandler = (event: KeyboardEvent): void => {
+    if (event.key !== '/' || event.metaKey || event.ctrlKey) return;
+    const active = document.activeElement;
+    if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) return;
+    event.preventDefault();
+    qs<HTMLInputElement>('#cn-dict-search')?.focus();
+  };
+  window.addEventListener('keydown', slashHandler);
   search?.addEventListener('input', () => {
     query = search.value;
     repaintResults();
@@ -264,9 +357,18 @@ const dictionaryPage: Page = {
     category = ALL;
 
     try {
-      const [entries, alreadyViewed] = await Promise.all([getDictionary(), loadViewedTerms()]);
+      const [entries, alreadyViewed, topics] = await Promise.all([
+        getDictionary(),
+        loadViewedTerms(),
+        getTopics(),
+      ]);
       terms = entries;
       viewed = new Set(alreadyViewed);
+      allTopics = topics;
+
+      // Reviewed terms first, so returning to the library offers what you were last reading.
+      const reviewed = entries.filter((entry) => viewed.has(entry.id)).slice(-3).reverse();
+      suggestions = reviewed.length > 0 ? reviewed : entries.slice(0, 3);
 
       const requested = ctx.query.get('term');
       selectedId = requested && terms.some((term) => term.id === requested) ? requested : null;
@@ -290,6 +392,10 @@ const dictionaryPage: Page = {
   },
 
   unmount() {
+    if (slashHandler) {
+      window.removeEventListener('keydown', slashHandler);
+      slashHandler = null;
+    }
     selectedId = null;
     query = '';
   },

@@ -69,8 +69,8 @@ Shipped in Phase 3:
 
 - Full content model — units, topics, questions, riddles, dictionary terms, achievements, matching
   sets, word-search banks and bosses
-- **554 seed documents**: 6 units, 17 topics with revision notes, 227 questions across three
-  difficulties, 60 riddles, 196 dictionary terms, 10 achievements, 19 matching sets, 13 word banks,
+- **569 seed documents**: 6 units, 17 topics with revision notes, 227 questions across three
+  difficulties, 60 riddles, 196 dictionary terms, 10 achievements, 29 matching sets, 18 word banks,
   6 bosses, one per unit
 - `ContentService` — reads Firestore when configured and populated, otherwise the copy bundled with
   the app, so Learn and the games work offline and in guest mode

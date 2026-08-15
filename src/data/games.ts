@@ -6,6 +6,7 @@
 import type { Boss, MatchingSet, WordSearchSet } from '../models/content.ts';
 import { MATCHING_SETS_EXTRA, WORD_SEARCH_SETS_EXTRA } from './games.extra.ts';
 import { BOSSES_EXTRA, MATCHING_SETS_EXTRA2, WORD_SEARCH_SETS_EXTRA2 } from './games.extra2.ts';
+import { MATCHING_SETS_EXTRA3, WORD_SEARCH_SETS_EXTRA3 } from './games.extra3.ts';
 
 const MATCHING_SETS_CORE: readonly MatchingSet[] = [
   {
@@ -172,8 +173,8 @@ const BOSSES_CORE: readonly Boss[] = [
 ];
 
 /** Both banks as one collection each. */
-export const MATCHING_SETS: readonly MatchingSet[] = [...MATCHING_SETS_CORE, ...MATCHING_SETS_EXTRA, ...MATCHING_SETS_EXTRA2];
-export const WORD_SEARCH_SETS: readonly WordSearchSet[] = [...WORD_SEARCH_SETS_CORE, ...WORD_SEARCH_SETS_EXTRA, ...WORD_SEARCH_SETS_EXTRA2];
+export const MATCHING_SETS: readonly MatchingSet[] = [...MATCHING_SETS_CORE, ...MATCHING_SETS_EXTRA, ...MATCHING_SETS_EXTRA2, ...MATCHING_SETS_EXTRA3];
+export const WORD_SEARCH_SETS: readonly WordSearchSet[] = [...WORD_SEARCH_SETS_CORE, ...WORD_SEARCH_SETS_EXTRA, ...WORD_SEARCH_SETS_EXTRA2, ...WORD_SEARCH_SETS_EXTRA3];
 
 /** Every unit now has a boss. */
 export const BOSSES: readonly Boss[] = [...BOSSES_CORE, ...BOSSES_EXTRA];

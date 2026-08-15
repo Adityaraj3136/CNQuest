@@ -288,3 +288,264 @@
   border-color: var(--cn-ink);
   color: var(--cn-paper);
 }
+
+/* ==================================================================== *
+ * Library (redesign)
+ *
+ * Calmer than the games on purpose. This is a reference tool used during revision, so it
+ * optimises for finding a term and understanding it, not for energy.
+ * ==================================================================== */
+
+.cn-dict__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cn-space-3);
+  align-items: baseline;
+  justify-content: space-between;
+  padding-top: var(--cn-space-5);
+}
+
+.cn-dict__pagetitle {
+  margin: 0;
+  font-size: clamp(1.7rem, 1.3rem + 1.6vw, 2.3rem);
+  letter-spacing: var(--cn-tracking-snug);
+}
+
+.cn-dict__pagesub {
+  margin: var(--cn-space-2) 0 0;
+  color: var(--cn-ink-soft);
+  font-size: var(--cn-text-sm);
+}
+
+/* Reviewing the whole dictionary is not an objective, so the count stays quiet. */
+.cn-dict__reviewed {
+  margin: 0;
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-faint);
+}
+
+/* --- Rows --- */
+
+.cn-dict__row {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  text-align: left;
+  padding: var(--cn-space-4);
+  border: 0;
+  border-radius: var(--cn-radius-lg);
+  border-left: 3px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background-color 120ms var(--cn-ease-out),
+    border-color 120ms var(--cn-ease-out);
+}
+
+.cn-dict__row:hover {
+  background: var(--cn-paper-raised);
+}
+
+/* The selected term has to be unmistakable: tint plus a border, not a colour change alone. */
+.cn-dict__row[data-active='true'] {
+  background: var(--cn-accent-wash);
+  border-left-color: var(--cn-accent);
+}
+
+.cn-dict__row[data-active='true'] .cn-dict__rowterm {
+  color: var(--cn-accent);
+}
+
+.cn-dict__rowtop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--cn-space-3);
+}
+
+.cn-dict__rowterm {
+  font-weight: 650;
+  font-size: var(--cn-text-base);
+  color: var(--cn-ink);
+}
+
+.cn-dict__rowcat {
+  flex: none;
+  font-size: var(--cn-text-micro);
+  color: var(--cn-ink-faint);
+}
+
+/*
+ * Two lines, clamped by the browser at a word boundary. The previous version cut a fixed
+ * number of characters, which is what produced "available band...".
+ */
+.cn-dict__gloss {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: var(--cn-text-sm);
+  line-height: 1.5;
+  color: var(--cn-ink-soft);
+}
+
+.cn-dict__seen {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--cn-text-micro);
+  color: var(--cn-mastered);
+}
+
+/* --- Detail panel --- */
+
+.cn-dict__detail {
+  padding: var(--cn-space-5);
+  border-radius: var(--cn-radius-xl);
+  background: var(--cn-paper-raised);
+  border: var(--cn-hairline);
+}
+
+@media (min-width: 1020px) {
+  .cn-dict__detail {
+    position: sticky;
+    top: calc(var(--cn-header-height) + var(--cn-space-4));
+    max-height: calc(100vh - var(--cn-header-height) - var(--cn-space-6));
+    overflow-y: auto;
+  }
+}
+
+.cn-dict__cat {
+  margin: 0;
+  font-size: var(--cn-text-xs);
+  font-weight: 650;
+  color: var(--cn-accent);
+}
+
+.cn-dict__title {
+  margin: var(--cn-space-1) 0 var(--cn-space-3);
+  font-size: var(--cn-text-2xl);
+  letter-spacing: var(--cn-tracking-snug);
+}
+
+.cn-dict__definition {
+  margin: 0;
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  color: var(--cn-ink-soft);
+}
+
+.cn-dict__block {
+  margin-top: var(--cn-space-5);
+}
+
+.cn-dict__blocklabel {
+  margin: 0 0 var(--cn-space-2);
+  font-size: var(--cn-text-xs);
+  font-weight: 700;
+  color: var(--cn-ink-faint);
+}
+
+/* Where the term appears in the syllabus, from the topics that reference it. */
+.cn-dict__lessons {
+  display: grid;
+  gap: var(--cn-space-2);
+}
+
+.cn-dict__lesson {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cn-space-3);
+  padding: var(--cn-space-3);
+  border-radius: var(--cn-radius-md);
+  background: var(--cn-paper-sunken);
+  color: var(--cn-ink);
+  text-decoration: none;
+  font-size: var(--cn-text-sm);
+  font-weight: 600;
+}
+
+.cn-dict__lesson:hover {
+  color: var(--cn-accent);
+}
+
+.cn-dict__practice {
+  width: 100%;
+  margin-top: var(--cn-space-4);
+  justify-content: center;
+}
+
+/* --- Empty state --- */
+
+.cn-dict__detail--empty {
+  background: var(--cn-paper-sunken);
+  border-style: dashed;
+}
+
+.cn-dict__emptytitle {
+  margin: 0;
+  font-size: var(--cn-text-lg);
+  letter-spacing: var(--cn-tracking-snug);
+}
+
+.cn-dict__emptylead {
+  margin: var(--cn-space-2) 0 var(--cn-space-4);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-ink-soft);
+}
+
+.cn-dict__emptylabel {
+  margin: 0 0 var(--cn-space-2);
+  font-size: var(--cn-text-xs);
+  font-weight: 700;
+  color: var(--cn-ink-faint);
+}
+
+.cn-dict__suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cn-space-2);
+}
+
+.cn-dict__suggestion {
+  padding: var(--cn-space-2) var(--cn-space-3);
+  border-radius: var(--cn-radius-pill);
+  border: var(--cn-hairline);
+  background: var(--cn-paper-raised);
+  font-size: var(--cn-text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cn-dict__suggestion:hover {
+  border-color: var(--cn-accent);
+  color: var(--cn-accent);
+}
+
+/* --- Filters --- */
+
+@media (max-width: 767.98px) {
+  /* Nine pills wrapped into three ragged rows on a phone. One scrolling row instead. */
+  .cn-dict__chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: var(--cn-space-2);
+  }
+
+  .cn-dict__chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cn-dict__chip {
+    white-space: nowrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cn-dict__row {
+    transition: none;
+  }
+}
