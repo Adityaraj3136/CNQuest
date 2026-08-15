@@ -1,7 +1,8 @@
 /** Top navigation. Collapses into a toggle menu below the md breakpoint. */
 
-import { APP, APP_NAV, PUBLIC_NAV } from '@/config/app.config';
+import { ADMIN_NAV_ITEM, APP, APP_NAV, PUBLIC_NAV } from '@/config/app.config';
 import type { NavItem } from '@/config/app.config';
+import { isAdmin } from '@/services/admin.service';
 import type { Layout } from '@/types/page';
 import { escapeHtml, qs, requireEl } from '@/utils/dom';
 import { getSession } from '@/state/session';
@@ -55,7 +56,10 @@ export function renderNavbar(layout: Layout, currentPath: string): void {
     return;
   }
 
-  const items = layout === 'app' ? APP_NAV : PUBLIC_NAV;
+  // The admin link is offered only to the course owner. Hiding it is courtesy, not security —
+  // the route and the Firestore rules both check the identity independently.
+  const items =
+    layout === 'app' ? (isAdmin() ? [...APP_NAV, ADMIN_NAV_ITEM] : APP_NAV) : PUBLIC_NAV;
 
   header.innerHTML = `
     <nav class="cn-navbar" aria-label="Main navigation">

@@ -12,6 +12,14 @@ export const APP = {
   phase: 'Phase 11 — Adaptive Learning',
 } as const;
 
+/**
+ * The course owner's account. Mirrors `adminEmail()` in firestore.rules — change both together.
+ *
+ * This only decides what the *interface* offers. Firestore rules are what actually enforce it,
+ * so editing this value in devtools reveals a dashboard whose every write is then refused.
+ */
+export const ADMIN_EMAIL = 'adityaraj3136@gmail.com';
+
 export interface NavItem {
   label: string;
   href: string;
@@ -36,6 +44,13 @@ export const APP_NAV: readonly NavItem[] = [
   { label: 'Leaderboard', href: '#/leaderboard', icon: 'bi-bar-chart-steps' },
   { label: 'Profile', href: '#/profile', icon: 'bi-person-circle' },
 ];
+
+/** Appended to APP_NAV for the admin account only. */
+export const ADMIN_NAV_ITEM: NavItem = {
+  label: 'Admin',
+  href: '#/admin',
+  icon: 'bi-sliders',
+};
 
 export interface FeatureItem {
   icon: string;

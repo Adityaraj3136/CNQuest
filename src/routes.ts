@@ -137,4 +137,13 @@ export const routes: readonly RouteDefinition[] = [
     requiresAuth: true,
     load: () => import('@/pages/leaderboard/leaderboard.page').then((m) => m.default),
   },
+
+  // Content management. `requiresAuth` only gets a student to the screen; the page itself
+  // checks the admin identity, and the Firestore rules are what actually enforce it.
+  {
+    path: '/admin',
+    layout: 'app',
+    requiresAuth: true,
+    load: () => import('@/pages/admin/admin.page').then((m) => m.default),
+  },
 ];

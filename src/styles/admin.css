@@ -1,0 +1,171 @@
+/** Admin — a working surface, not a showcase. Dense, ruled, monospace for anything that is data. */
+
+.cn-admin {
+  padding-block: var(--cn-space-6) var(--cn-space-8);
+}
+
+.cn-admin__head {
+  padding-bottom: var(--cn-space-4);
+  border-bottom: var(--cn-hairline-strong);
+}
+
+.cn-admin__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cn-space-2);
+  padding-block: var(--cn-space-4);
+  border-bottom: var(--cn-hairline);
+  margin-bottom: var(--cn-space-5);
+}
+
+.cn-admin__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cn-space-2);
+  padding: var(--cn-space-2) var(--cn-space-3);
+  border: var(--cn-hairline);
+  background: transparent;
+  color: var(--cn-ink-soft);
+  font-size: var(--cn-text-sm);
+  cursor: pointer;
+  transition: background var(--cn-duration-fast, 150ms) ease, color 150ms ease;
+}
+
+.cn-admin__tab:hover {
+  background: var(--cn-paper-sunken);
+  color: var(--cn-ink);
+}
+
+.cn-admin__tab[aria-pressed='true'] {
+  background: var(--cn-ink);
+  border-color: var(--cn-ink);
+  color: var(--cn-paper);
+}
+
+.cn-admin__tab-count {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-micro);
+  opacity: 0.7;
+}
+
+.cn-admin__panel {
+  display: grid;
+  gap: var(--cn-space-6);
+}
+
+@media (min-width: 900px) {
+  .cn-admin__panel {
+    /* The list is an index; the editor is the work. */
+    grid-template-columns: minmax(240px, 1fr) 1.6fr;
+    align-items: start;
+  }
+}
+
+.cn-admin__list-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cn-space-3);
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--cn-space-3);
+  border-bottom: var(--cn-hairline);
+}
+
+.cn-admin__subtitle {
+  font-size: var(--cn-text-lg);
+  margin: 0;
+  letter-spacing: var(--cn-tracking-snug);
+}
+
+.cn-admin__count {
+  display: block;
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-micro);
+  color: var(--cn-ink-faint);
+  text-transform: uppercase;
+  letter-spacing: var(--cn-tracking-label);
+}
+
+.cn-admin__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.cn-admin__row {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  text-align: left;
+  padding: var(--cn-space-3) var(--cn-space-2);
+  border: 0;
+  border-bottom: var(--cn-hairline);
+  background: transparent;
+  cursor: pointer;
+}
+
+.cn-admin__row:hover {
+  background: var(--cn-paper-sunken);
+}
+
+.cn-admin__row[aria-pressed='true'] {
+  background: var(--cn-accent-wash);
+  box-shadow: inset 3px 0 0 var(--cn-accent);
+}
+
+.cn-admin__row-id {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-accent);
+}
+
+.cn-admin__row-summary {
+  font-size: var(--cn-text-sm);
+  color: var(--cn-ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cn-admin__empty {
+  padding: var(--cn-space-4) 0;
+  color: var(--cn-ink-soft);
+  font-size: var(--cn-text-sm);
+}
+
+.cn-admin__editor {
+  display: grid;
+  gap: var(--cn-space-3);
+}
+
+.cn-admin__editor-head {
+  display: grid;
+  gap: var(--cn-space-2);
+}
+
+.cn-admin__json {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  line-height: 1.6;
+  /* A document is structured text — wrapping it hides the structure. */
+  white-space: pre;
+  overflow-x: auto;
+  tab-size: 2;
+}
+
+.cn-admin__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cn-space-3);
+}
+
+.cn-admin__danger:not(:disabled) {
+  color: var(--cn-negative);
+  border-color: var(--cn-negative);
+}
+
+.cn-admin__danger:not(:disabled):hover {
+  background: var(--cn-negative-wash);
+}
