@@ -654,14 +654,13 @@ body.cn-in-session {
 .cn-match {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: var(--cn-space-4);
   margin-top: var(--cn-space-6);
 }
 
-@media (min-width: 720px) {
+@media (min-width: 800px) {
   .cn-match {
-    grid-template-columns: 1fr 1fr;
     gap: var(--cn-space-8);
   }
 }
@@ -859,12 +858,23 @@ body.cn-in-session {
   font-size: var(--cn-text-base);
   font-weight: 600;
   cursor: pointer;
+  box-sizing: border-box;
+  width: 100%;
   transition:
     border-color var(--cn-duration-fast) var(--cn-ease-out),
     background-color var(--cn-duration-fast) var(--cn-ease-out),
     box-shadow var(--cn-duration-fast) var(--cn-ease-out),
     transform var(--cn-duration-fast) var(--cn-ease-out);
   will-change: transform, border-color, box-shadow;
+}
+
+.cn-match__text {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  line-height: 1.35;
+  text-align: center;
+  max-width: 100%;
 }
 
 .cn-match__card:hover:not(:disabled) {
@@ -1853,36 +1863,62 @@ body.cn-in-session {
   .cn-arena--boss,
   .cn-result {
     padding-inline: var(--cn-space-3);
-    padding-top: var(--cn-space-5);
+    padding-top: var(--cn-space-4);
   }
 
   /* 44px is the floor for anything a thumb has to hit accurately mid-round. */
-  .cn-option,
-  .cn-match__card {
-    min-height: 56px;
+  .cn-option {
+    min-height: 52px;
+    padding: var(--cn-space-2) var(--cn-space-3);
+    font-size: var(--cn-text-sm);
   }
 
-  .cn-match {
-    gap: var(--cn-space-3);
-  }
-
-  /* Two columns stay side by side on a phone: the pairing is the game, and stacking the
-     columns would turn it into two unrelated lists. */
   .cn-match {
     grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: var(--cn-space-4);
   }
 
   .cn-match__card {
-    padding: var(--cn-space-2);
-    font-size: var(--cn-text-sm);
+    min-height: 52px;
+    padding: 8px 10px;
+    font-size: clamp(0.72rem, 0.65rem + 0.4vw, 0.85rem);
+  }
+
+  .cn-match__port {
+    width: 7px;
+    height: 7px;
+  }
+  .cn-match__col--left .cn-match__port,
+  .cn-match__col:first-child .cn-match__port {
+    right: -3.5px;
+  }
+  .cn-match__col--right .cn-match__port,
+  .cn-match__col:last-child .cn-match__port {
+    left: -3.5px;
+  }
+
+  .cn-match__chip {
+    font-size: var(--cn-text-xs);
+    padding: 3px 10px;
+  }
+
+  .cn-ws__board {
+    overflow-x: auto;
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
   }
 
   .cn-ws__grid {
     gap: 3px;
+    width: 100%;
+    max-width: 100%;
   }
 
   .cn-ws__cell {
-    border-radius: 6px;
+    border-radius: 5px;
+    min-width: 0;
+    font-size: clamp(0.6rem, 0.35rem + 1.2vw, 0.88rem);
   }
 
   .cn-ws__words {
@@ -1890,23 +1926,101 @@ body.cn-in-session {
   }
 
   .cn-ws__words ul {
-    /* The list is reference material on a phone, so it reads across rather than down. */
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 6px;
   }
 
   .cn-riddle__clue {
-    padding-left: var(--cn-space-4);
+    font-size: clamp(1.15rem, 0.95rem + 1vw, 1.45rem);
+    padding-left: var(--cn-space-3);
     border-left-width: 2px;
+  }
+
+  .cn-riddle__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--cn-space-2);
+    width: 100%;
+  }
+
+  .cn-riddle__actions .btn {
+    width: 100%;
   }
 
   .cn-boss__head {
     gap: var(--cn-space-3);
+    overflow: visible;
   }
 
   .cn-boss__sigil {
     width: 2.75rem;
     height: 2.75rem;
     font-size: 1.25rem;
+  }
+
+  .cn-boss__bars {
+    overflow: visible;
+  }
+
+  .cn-dmg-float--boss {
+    font-size: 1.15rem;
+    top: -8px;
+    right: 0;
+  }
+
+  .cn-dmg-float--player {
+    font-size: 1.15rem;
+    right: 8px;
+    top: -10px;
+  }
+
+  .cn-result__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--cn-space-2);
+  }
+
+  .cn-result__actions .btn,
+  .cn-result__actions a {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+}
+
+/* Extra small screens (iPhone SE, small Androids <= 380px) */
+@media (max-width: 380px) {
+  .cn-arena--match,
+  .cn-arena--ws,
+  .cn-arena--riddle,
+  .cn-arena--boss,
+  .cn-result {
+    padding-inline: var(--cn-space-2);
+  }
+
+  .cn-match {
+    gap: 8px;
+  }
+
+  .cn-match__card {
+    min-height: 48px;
+    padding: 6px 6px;
+    font-size: 0.72rem;
+  }
+
+  .cn-ws__grid {
+    gap: 2px;
+  }
+
+  .cn-ws__cell {
+    border-radius: 4px;
+    font-size: 0.65rem;
+  }
+
+  .cn-hud__field {
+    padding-inline: 4px;
+    font-size: 0.68rem;
+    gap: 3px;
   }
 }
 

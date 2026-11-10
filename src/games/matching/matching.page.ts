@@ -30,6 +30,7 @@ let sets: MatchingSet[] = [];
 let activeSet: MatchingSet | null = null;
 let isBusy = false;
 let resizeHandler: (() => void) | null = null;
+let resizeObserver: ResizeObserver | null = null;
 
 function root(): HTMLElement | null {
   return qs(`#${ROOT_ID}`);
@@ -344,6 +345,17 @@ function paintBoard(): void {
   container.innerHTML = boardHtml();
   bindCardEvents();
 
+  if (typeof ResizeObserver !== 'undefined') {
+    const board = qs<HTMLElement>('#cn-match-board', container);
+    if (board) {
+      resizeObserver?.disconnect();
+      resizeObserver = new ResizeObserver(() => {
+        window.requestAnimationFrame(() => renderCables());
+      });
+      resizeObserver.observe(board);
+    }
+  }
+
   // Initial render of any pre-matched cables (after DOM layout pass)
   window.requestAnimationFrame(() => {
     renderCables();
@@ -430,14 +442,20 @@ const matchingPage: Page = {
       window.requestAnimationFrame(() => renderCables());
     };
     window.addEventListener('resize', resizeHandler);
+    window.addEventListener('orientationchange', resizeHandler);
 
     await start();
   },
 
   unmount() {
     exitSession();
+    if (resizeObserver) {
+      resizeObserver.disconnect();
+      resizeObserver = null;
+    }
     if (resizeHandler) {
       window.removeEventListener('resize', resizeHandler);
+      window.removeEventListener('orientationchange', resizeHandler);
       resizeHandler = null;
     }
     engine?.abandon();
