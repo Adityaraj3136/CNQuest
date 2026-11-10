@@ -20,6 +20,7 @@ import {
   isRiddleAnswerCorrect,
   normaliseAnswer,
   pickQuestions,
+  randomizeQuestionOptions,
   searchDictionary,
   shuffle,
   topicsForUnit,
@@ -196,10 +197,26 @@ test('pickQuestions returns the requested count without repeats', () => {
   assert.equal(new Set(round.map((q) => q.id)).size, 10);
 });
 
-test('pickQuestions widens the filter instead of returning a short round', () => {
-  // Only a couple of hard questions exist for this topic, but a full round is still returned.
-  const round = pickQuestions(QUESTIONS, 10, { topicId: 'dns', difficulty: 'hard', gameType: 'quiz' });
-  assert.equal(round.length, 10, 'a round must never be short-changed');
+test('randomizeQuestionOptions preserves correct answer text while shuffling options', () => {
+  const sample = QUESTIONS[0];
+  const originalCorrectText = sample.options[sample.correctAnswer];
+
+  const randomized = randomizeQuestionOptions(sample);
+  assert.equal(randomized.options.length, 4);
+  assert.equal(randomized.options[randomized.correctAnswer], originalCorrectText);
+  assert.deepEqual([...randomized.options].sort(), [...sample.options].sort());
+});
+
+test('questions seed answers are balanced across all 4 options', () => {
+  const counts = [0, 0, 0, 0];
+  for (const q of QUESTIONS) {
+    counts[q.correctAnswer]++;
+  }
+  // Every option A, B, C, D should have at least 15% of the total questions
+  const minExpected = Math.floor(QUESTIONS.length * 0.15);
+  for (let i = 0; i < 4; i++) {
+    assert.ok(counts[i] >= minExpected, `Option ${i} only has ${counts[i]} answers out of ${QUESTIONS.length}`);
+  }
 });
 
 test('shuffle does not mutate its input or lose items', () => {

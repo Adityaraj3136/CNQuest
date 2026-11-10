@@ -10,6 +10,7 @@ import {
   UNIT_MASTERED_THRESHOLD,
 } from '../config/progress.config.ts';
 import type { MasteryBand } from '../config/progress.config.ts';
+import type { Topic, Unit } from '../models/content.ts';
 import type { UserProgress } from '../models/progress.ts';
 
 export interface MasteryInput {
@@ -87,6 +88,48 @@ export function unitMastery(topicMasteries: readonly number[], topicCount: numbe
 
 export function isUnitMastered(mastery: number): boolean {
   return mastery >= UNIT_MASTERED_THRESHOLD;
+}
+
+export interface JourneyUnit {
+  unit: Unit;
+  mastery: number;
+  /** Topics at or above the mastered threshold. */
+  completed: number;
+  total: number;
+  state: 'mastered' | 'current' | 'available';
+}
+
+/**
+ * The dashboard world map: one entry per unit, in syllabus order.
+ * "Mastered" uses the same rule as the unit-mastery achievement, so the two never disagree.
+ * "Current" is the first unit with topics that is not yet mastered.
+ */
+export function unitJourney(
+  units: readonly Unit[],
+  topics: readonly Topic[],
+  progress: readonly UserProgress[],
+): JourneyUnit[] {
+  const masteryByTopic = new Map(progress.map((entry) => [entry.topicId, entry.mastery]));
+  const base = [...units]
+    .sort((a, b) => a.order - b.order)
+    .map((unit) => {
+      const values = topics
+        .filter((topic) => topic.unitId === unit.id)
+        .map((topic) => masteryByTopic.get(topic.id) ?? 0);
+      const mastery = unitMastery(values, values.length);
+      return {
+        unit,
+        mastery,
+        completed: values.filter((value) => value >= UNIT_MASTERED_THRESHOLD).length,
+        total: values.length,
+        isMastered: values.length > 0 && isUnitMastered(mastery),
+      };
+    });
+  const currentIndex = base.findIndex((entry) => entry.total > 0 && !entry.isMastered);
+  return base.map(({ isMastered, ...entry }, index) => ({
+    ...entry,
+    state: isMastered ? 'mastered' : index === currentIndex ? 'current' : 'available',
+  }));
 }
 
 /** Weakest topics first — what the dashboard and the adaptive engine both need. */

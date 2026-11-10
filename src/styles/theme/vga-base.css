@@ -1,0 +1,448 @@
+/*
+ * CN Quest — VGA network expedition
+ *
+ * Original 8/16-bit visual language built from networking objects: packet routes, relay towers,
+ * terminals, ports and gateways. It intentionally does not reproduce any third-party game art.
+ * Art direction informed by tasteskill and Unslop by Damir Sokolovsky (@heydamir), CC BY 4.0.
+ */
+
+:root {
+  --vga-black: #05060d;
+  --vga-night: #0b1020;
+  --vga-panel: #121a2c;
+  --vga-raised: #1a2640;
+  --vga-sky: #55a8ff;
+  --vga-blue: #2368dc;
+  --vga-cyan: #55e6c1;
+  --vga-green: #65d46e;
+  --vga-gold: #ffd447;
+  --vga-orange: #ff9f43;
+  --vga-red: #ff5d73;
+  --vga-purple: #a85fd8;
+  --vga-paper: #f4f2df;
+  --vga-ink: #121522;
+  --vga-white: #fffef1;
+  --vga-muted: #b9c6da;
+  --vga-border: #283858;
+
+  --cn-paper: var(--vga-black);
+  --cn-paper-raised: var(--vga-panel);
+  --cn-paper-sunken: #020309;
+  --cn-ink: var(--vga-white);
+  --cn-ink-soft: var(--vga-muted);
+  --cn-ink-faint: #8a9ab4;
+  --cn-rule: var(--vga-border);
+  --cn-rule-strong: #405375;
+  --cn-accent: var(--vga-sky);
+  --cn-accent-deep: var(--vga-blue);
+  --cn-xp: var(--vga-gold);
+  --cn-mastered: var(--vga-green);
+  --cn-special: var(--vga-purple);
+  --cn-negative: var(--vga-red);
+  --cn-radius-sm: 0;
+  --cn-radius-md: 2px;
+  --cn-radius-lg: 4px;
+  --cn-radius-xl: 4px;
+}
+
+html { background: var(--vga-black); }
+
+body {
+  background: var(--vga-black);
+  color: var(--vga-white);
+  font-size: 16px;
+  font-family: "Segoe UI", Arial, system-ui, sans-serif;
+}
+
+body ::selection { background: var(--vga-gold); color: var(--vga-ink); }
+
+body :focus-visible {
+  outline: 3px solid var(--vga-gold);
+  outline-offset: 3px;
+}
+
+/* Console chrome --------------------------------------------------- */
+
+body .cn-navbar {
+  min-height: 64px;
+  border: 0;
+  border-bottom: 4px solid #1f3152;
+  background: #070a13;
+}
+
+body .cn-navbar__inner { min-height: 60px; }
+
+body .cn-brand {
+  color: var(--vga-white);
+  font-family: var(--cn-font-display);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+body .cn-brand img {
+  border: 2px solid var(--vga-white);
+  border-radius: 2px;
+  image-rendering: pixelated;
+}
+
+body .cn-navlink {
+  min-height: 36px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  color: #aebcd1;
+  background: transparent;
+}
+
+body .cn-navlink:hover { color: var(--vga-white); background: #12192a; }
+body .cn-navlink[aria-current='page'] {
+  border-bottom-color: var(--vga-gold);
+  color: var(--vga-white);
+  background: #12192a;
+}
+
+body .cn-account__trigger,
+body .cn-navbar__toggle {
+  border: 2px solid #32425f;
+  border-radius: 2px;
+  background: #101727;
+  color: var(--vga-white);
+}
+
+body .cn-account__avatar {
+  border-radius: 0;
+  background: var(--vga-sky);
+  color: #07101f;
+  font-weight: 800;
+}
+
+body .cn-account__menu {
+  border: 3px solid #32425f;
+  border-radius: 2px;
+  background: #090d17;
+}
+
+body .btn {
+  min-height: 40px;
+  border-radius: 2px;
+  transition: transform 90ms ease, background-color 120ms ease;
+}
+
+body .btn-cn-primary {
+  border: 3px solid #111522;
+  background: var(--vga-gold);
+  color: #10131e;
+}
+
+body .btn-cn-primary:hover {
+  border-color: #111522;
+  background: #ffe478;
+  color: #10131e;
+}
+
+body .btn-cn-ghost {
+  border: 2px solid #657797;
+  background: #101727;
+  color: var(--vga-white);
+}
+
+body .btn-cn-ghost:hover { border-color: var(--vga-white); background: #1a2640; color: var(--vga-white); }
+
+body .cn-chip {
+  border: 2px solid #506487;
+  border-radius: 2px;
+  background: #0d1424;
+  color: var(--vga-white);
+}
+
+body .cn-footer {
+  border-top: 8px solid #203457;
+  background: #070a12;
+}
+
+body .cn-footer__grid h3 { color: var(--vga-gold); }
+body .cn-footer a { color: #c9d5e8; }
+body .cn-footer a:hover { color: var(--vga-white); }
+body .cn-net-status[data-online='true'] { color: var(--vga-cyan); }
+body .cn-footer__bottom { border: 0; }
+body .cn-footer__grid h3,
+body .cn-footer__grid li,
+body .cn-footer__bottom { font-family: "Segoe UI", Arial, system-ui, sans-serif; }
+
+/* Landing: a playable world, not a product brochure --------------- */
+
+body .cn-hero {
+  min-height: calc(100svh - 64px);
+  padding: clamp(48px, 7vw, 104px) 0 64px;
+  overflow: hidden;
+  background: #101d46;
+  border-bottom: 8px solid #05060d;
+}
+
+body .cn-hero::before,
+body .cn-hero::after { content: none; }
+
+body .cn-hero__grid {
+  grid-template-columns: minmax(430px, 0.9fr) minmax(0, 1.1fr);
+  gap: clamp(32px, 3.5vw, 56px);
+  align-items: center;
+}
+
+body .cn-hero__copy { max-width: 600px; }
+
+body .cn-hero__title {
+  width: 100%;
+  max-width: none;
+  color: var(--vga-white);
+  font-size: clamp(2.6rem, 3.75vw, 3.5rem);
+  line-height: 0.91;
+  overflow-wrap: normal;
+  word-break: normal;
+  text-wrap: balance;
+}
+
+body .cn-hero__title span { display: block; color: var(--vga-gold); }
+
+body .cn-hero__lead {
+  max-width: 48ch;
+  margin-top: 28px;
+  color: #dfe9f8;
+  font-size: clamp(1rem, 1.3vw, 1.2rem);
+}
+
+body .cn-hero__actions { margin-top: 32px; }
+
+body .cn-preview {
+  overflow: hidden;
+  border: 4px solid #05060d;
+  border-radius: 2px;
+  background: #0d1424;
+}
+
+body .cn-preview__bar {
+  min-height: 64px;
+  padding: 12px 16px;
+  border: 0;
+  border-bottom: 4px solid #05060d;
+  background: #101727;
+}
+
+body .cn-preview__mode {
+  color: var(--vga-gold);
+}
+
+body .cn-preview__signal { color: var(--vga-cyan); }
+
+body .cn-preview__map {
+  min-height: 420px;
+  border: 0;
+  background: var(--vga-sky);
+}
+
+body .cn-vga-world__scene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  shape-rendering: crispEdges;
+}
+
+body .cn-preview__route {
+  fill: none;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+  stroke-width: 8;
+}
+
+body .cn-preview__route--muted { stroke: #1e4860; stroke-dasharray: 14 12; }
+body .cn-preview__route--active { stroke: var(--vga-gold); }
+body .cn-preview__packet { fill: var(--vga-white); stroke: #111522; stroke-width: 4; }
+
+body .cn-preview__node,
+body .cn-preview__gateway {
+  z-index: 2;
+  gap: 3px;
+  color: #07101f;
+  font-weight: 800;
+}
+
+body .cn-preview__node i,
+body .cn-preview__gateway i {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 3px solid #07101f;
+  border-radius: 2px;
+  background: var(--vga-paper);
+  color: #07101f;
+}
+
+body .cn-preview__node[data-state='current'] i { background: var(--vga-gold); }
+body .cn-preview__gateway i { background: var(--vga-purple); color: #fff; }
+body .cn-preview__gateway small { color: #24112a; }
+
+body .cn-preview__mission {
+  min-height: 72px;
+  border: 0;
+  border-top: 4px solid #05060d;
+  background: #101727;
+}
+
+body .cn-preview__mission > div > span,
+body .cn-preview__mission dt { color: #8fa4c3; }
+body .cn-preview__mission dd:last-child { color: var(--vga-gold); }
+
+body .cn-proof {
+  padding: 0;
+  border: 0;
+  background: var(--vga-black);
+}
+
+body .cn-proof__row {
+  width: 100%;
+  max-width: none;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  padding: 4px;
+  background: #253656;
+}
+
+body .cn-proof__item {
+  min-height: 92px;
+  display: grid;
+  place-content: center;
+  background: #0b1020;
+  text-align: center;
+}
+
+body .cn-proof__value { color: var(--vga-gold); font-size: 1.5rem; }
+body .cn-proof__label { color: #c3d0e3; font-weight: 700; }
+body a.skip-link,
+body .cn-proof__value,
+body .cn-proof__label,
+body .cn-syllabus__num,
+body .cn-mini,
+body .cn-mini * { font-family: "Segoe UI", Arial, system-ui, sans-serif; }
+body .cn-mini__pair span,
+body .cn-mini__letters span,
+body .cn-mini__clock,
+body .cn-mini__hp,
+body .cn-bosscard__hplabel,
+body .cn-mastery__xp,
+body .cn-mastery__pct { font-family: "Segoe UI", Arial, system-ui, sans-serif; }
+
+body .cn-loop {
+  min-height: 78svh;
+  padding-block: clamp(72px, 9vw, 132px);
+  border: 0;
+  background: var(--vga-orange);
+  color: #17100a;
+}
+
+body .cn-loop h2,
+body .cn-loop h3,
+body .cn-loop p { color: #17100a; }
+
+body .cn-loop .cn-section__title { max-width: 10ch; font-size: clamp(3rem, 7vw, 7rem); }
+
+body .cn-loop__steps {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 72px;
+}
+
+body .cn-loop__step {
+  min-height: 220px;
+  padding: 56px 24px 24px;
+  border: 4px solid #17100a;
+  background: #ffd36d;
+}
+
+body .cn-loop__step:nth-child(even) { transform: translateY(28px); background: #fff0b5; }
+body .cn-loop__node {
+  top: 14px;
+  left: 20px;
+  width: 24px;
+  height: 24px;
+  border: 4px solid #17100a;
+  border-radius: 0;
+  background: var(--vga-white);
+}
+body .cn-loop__step:not(:last-child)::after { content: none; }
+
+body section.cn-section.cn-modes {
+  min-height: 90svh;
+  padding-block: clamp(72px, 9vw, 132px);
+  background: #431e62;
+  color: var(--vga-white);
+}
+
+body section.cn-section.cn-modes .cn-section__title {
+  max-width: 12ch;
+  color: var(--vga-white);
+  font-size: clamp(3rem, 7vw, 7rem);
+}
+
+body section.cn-section.cn-modes .cn-section__lead { color: #f0dffc; }
+
+body .cn-modes__grid {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 64px;
+}
+
+body .cn-modes__card {
+  grid-column: span 4;
+  min-height: 230px;
+  padding: 24px;
+  border: 4px solid #1d0d2c;
+  border-radius: 2px;
+  background: #15111f;
+  color: var(--vga-white);
+}
+
+body .cn-modes__card--wide { grid-column: span 8; }
+body .cn-modes__card[data-tone='mastered'] { background: #0e4a3d; }
+body .cn-modes__card[data-tone='special'] { background: #6d3188; }
+body .cn-modes__card[data-tone='xp'] { background: #7b4510; }
+body .cn-modes__card[data-tone='accent'] { background: #173a78; }
+body .cn-modes__card h3 { color: var(--vga-white); }
+body .cn-modes__card p { color: #d7e0ef; }
+
+body .cn-syllabus { min-height: 70svh; background: #092a3a; }
+body .cn-syllabus,
+body .cn-boss-band,
+body .cn-mastery,
+body .cn-why { border: 0; }
+body section.cn-section.cn-syllabus,
+body section.cn-section.cn-boss-band,
+body section.cn-section.cn-mastery,
+body section.cn-section.cn-why {
+  border: 0;
+  border-block: 0;
+}
+body:has(.cn-hero) .cn-section p,
+body:has(.cn-hero) .cn-section li { font-size: 16px; }
+body:has(.cn-hero) .cn-section__lead { width: auto; max-width: 100%; }
+body .cn-syllabus > .cn-container {
+  display: grid;
+  grid-template-columns: minmax(0, .7fr) minmax(0, 1.3fr);
+  column-gap: clamp(56px, 9vw, 144px);
+  align-items: center;
+}
+body .cn-syllabus__list { margin-top: 0; }
+body .cn-boss-band { background: #1a1025; }
+body .cn-mastery { background: #0b1020; }
+body .cn-why { background: #173a78; }
+body section.cn-close { background: var(--vga-gold); color: #14100a; }
+body section.cn-close h2,
+body section.cn-close p { color: #14100a; }
+body section.cn-section.cn-close { border: 0; border-block: 0; }
+body .cn-close__inner .btn-cn-primary {
+  border-color: #111522;
+  background: #111522;
+  color: var(--vga-white);
+}
+

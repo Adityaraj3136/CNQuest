@@ -43,6 +43,25 @@ export function shuffle<T>(items: readonly T[], random: () => number = Math.rand
 }
 
 /**
+ * Randomises the order of options for a question, updating correctAnswer to match.
+ * Prevents answer position bias (e.g. mostly B) and ensures every round is truly random.
+ */
+export function randomizeQuestionOptions(
+  question: Question,
+  random: () => number = Math.random,
+): Question {
+  const correctOptionText = question.options[question.correctAnswer];
+  const shuffledOptions = shuffle(question.options, random);
+  const newCorrectAnswer = shuffledOptions.indexOf(correctOptionText);
+
+  return {
+    ...question,
+    options: shuffledOptions,
+    correctAnswer: newCorrectAnswer,
+  };
+}
+
+/**
  * Picks up to `count` questions matching the filter.
  *
  * Falls back progressively rather than returning an empty round: if the exact filter has too
@@ -64,11 +83,17 @@ export function pickQuestions(
 
   for (const attempt of attempts) {
     const matches = filterQuestions(questions, attempt);
-    if (matches.length >= count) return shuffle(matches, random).slice(0, count);
+    if (matches.length >= count) {
+      return shuffle(matches, random)
+        .slice(0, count)
+        .map((q) => randomizeQuestionOptions(q, random));
+    }
   }
 
   // Nothing satisfied the count — return the widest match we found, however small.
-  return shuffle(filterQuestions(questions, { gameType: filter.gameType }), random).slice(0, count);
+  return shuffle(filterQuestions(questions, { gameType: filter.gameType }), random)
+    .slice(0, count)
+    .map((q) => randomizeQuestionOptions(q, random));
 }
 
 export function filterRiddles(

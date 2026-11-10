@@ -9,6 +9,7 @@
 import type { Page, PageContext } from '@/types/page';
 import { WordSearchEngine } from '@/games/word-search/word-search.engine';
 import { finishRound, resultScreenHtml, savingHtml } from '@/games/shared/game-shell';
+import { playCue } from '@/services/sound';
 import { getWordSearchSets } from '@/services/content.service';
 import { lineBetween } from '@/games/word-search/word-search.generator';
 import { loaderHtml, stateHtml } from '@/components/loader';
@@ -17,7 +18,6 @@ import { enterSession, exitSession, gameHudHtml, setHudProgress } from '@/games/
 import type { Cell } from '@/games/word-search/word-search.generator';
 import type { WordSearchSet } from '@/models/content';
 import '@/styles/games.css';
-import '@/styles/arena.css';
 
 const ROOT_ID = 'cn-ws-root';
 const AGAIN_ID = 'cn-ws-again';
@@ -131,11 +131,18 @@ function cellFrom(target: EventTarget | null): Cell | null {
 function judge(from: Cell, to: Cell): void {
   const outcome = engine!.select(from, to);
 
-  if (outcome.status === 'found') setHint(`${outcome.word} recovered.`);
-  else if (outcome.status === 'already-found') setHint(`${outcome.word} is already yours.`);
-  else if (outcome.status === 'miss') setHint('Nothing there. Keep hunting.');
+  if (outcome.status === 'found') {
+    playCue('correct');
+    setHint(`${outcome.word} recovered.`);
+  } else if (outcome.status === 'already-found') {
+    setHint(`${outcome.word} is already yours.`);
+  } else if (outcome.status === 'miss') {
+    playCue('wrong');
+    setHint('Nothing there. Keep hunting.');
+  }
 
   if (engine!.isFinished()) {
+    playCue('victory');
     void finish();
     return;
   }

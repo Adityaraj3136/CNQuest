@@ -24,3 +24,8 @@ serviceAccountKey.json
 .DS_Store
 Thumbs.db
 *.log
+
+# Local design screenshots and design-tool output
+/retro-*.png
+/codedex-reference.png
+.taste-skill/

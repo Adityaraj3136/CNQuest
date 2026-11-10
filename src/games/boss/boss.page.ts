@@ -1,5 +1,5 @@
 /**
- * Boss Battle screen — HP bars, damage numbers and a verdict.
+ * Boss Battle screen — HP bars, damage numbers, combat animations and a verdict.
  *
  * Route: `#/games/boss` picks a boss, `#/games/boss?boss=<id>` fights a specific one.
  */
@@ -30,8 +30,9 @@ function root(): HTMLElement | null {
 }
 
 function hpBarHtml(label: string, current: number, max: number, percent: number, variant: string): string {
+  const isCritical = percent <= 25;
   return `
-    <div class="cn-hp cn-hp--${variant}">
+    <div class="cn-hp cn-hp--${variant} ${isCritical ? 'is-critical' : ''}">
       <div class="cn-hp__row">
         <span class="cn-label">${escapeHtml(label)}</span>
         <span class="cn-hp__value">${current} / ${max}</span>
@@ -74,26 +75,41 @@ function battleHtml(): string {
     })
     .join('');
 
+  const hitBoss = answered && last?.isCorrect;
+  const hitPlayer = answered && last && !last.isCorrect;
+
   return `
     ${gameHudHtml({
       mode: 'Boss Battle',
       lives: { remaining: view.playerHp, total: view.playerMaxHp },
     })}
 
-    <div class="cn-arena cn-arena--boss">
+    <div class="cn-arena cn-arena--boss ${hitPlayer ? 'is-player-hit' : ''}">
       <header class="cn-boss__head">
-        <span class="cn-boss__sigil" aria-hidden="true">
-          <i class="bi ${escapeHtml(view.boss.icon)}"></i>
-        </span>
+        <div style="position: relative;">
+          <span class="cn-boss__sigil ${hitBoss ? 'is-hit' : ''}" aria-hidden="true">
+            <i class="bi ${escapeHtml(view.boss.icon)}"></i>
+          </span>
+          ${
+            hitBoss
+              ? `<div class="cn-dmg-float cn-dmg-float--boss" aria-hidden="true">💥 -${view.lastDamage} HP</div>`
+              : ''
+          }
+        </div>
         <div>
           <h1 class="cn-boss__name">${escapeHtml(view.boss.name)}</h1>
           <p class="cn-boss__subtitle">${escapeHtml(view.boss.title)}</p>
         </div>
       </header>
 
-      <div class="cn-boss__bars">
+      <div class="cn-boss__bars" style="position: relative;">
         ${hpBarHtml(view.boss.name, view.bossHp, view.bossMaxHp, view.bossHpPercent, 'boss')}
         ${hpBarHtml('You', view.playerHp, view.playerMaxHp, view.playerHpPercent, 'player')}
+        ${
+          hitPlayer
+            ? `<div class="cn-dmg-float cn-dmg-float--player" aria-hidden="true">💔 -${view.lastDamage} HP</div>`
+            : ''
+        }
       </div>
 
       ${
@@ -108,8 +124,10 @@ function battleHtml(): string {
           : `<p class="cn-boss__quote">“${escapeHtml(view.boss.intro)}”</p>`
       }
 
-      <h2 class="cn-quiz__question">${escapeHtml(view.question.question)}</h2>
-      <div class="cn-options" role="group" aria-label="Answer options">${options}</div>
+      <div class="cn-boss__stage ${!answered ? 'cn-boss__stage--enter' : ''}">
+        <h2 class="cn-quiz__question">${escapeHtml(view.question.question)}</h2>
+        <div class="cn-options" role="group" aria-label="Answer options">${options}</div>
+      </div>
 
       ${
         answered && last

@@ -25,6 +25,7 @@ import {
   filterQuestions,
   filterRiddles,
   pickQuestions,
+  randomizeQuestionOptions,
   topicsForUnit,
 } from '@/services/content.filters';
 import type { QuestionFilter } from '@/services/content.filters';
@@ -120,7 +121,7 @@ export async function getSyllabus(): Promise<Array<{ unit: Unit; topics: Topic[]
 
 export async function getQuestions(filter: QuestionFilter = {}): Promise<Question[]> {
   const questions = await load<Question>('questions', QUESTIONS);
-  return filterQuestions(questions, filter);
+  return filterQuestions(questions, filter).map((q) => randomizeQuestionOptions(q));
 }
 
 /** Picks a randomised round of questions, widening the filter rather than returning too few. */

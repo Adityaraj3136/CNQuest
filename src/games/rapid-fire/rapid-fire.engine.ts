@@ -13,13 +13,31 @@ export const RAPID_FIRE_DEFAULTS = {
   durationSeconds: 60,
   /** Questions loaded per round — generous, since a fast player gets through many. */
   questionPool: 40,
+  /** Positive time in seconds awarded for a correct answer */
+  correctBonusSeconds: 2,
+  /** Negative time in seconds deducted for a wrong answer */
+  wrongPenaltySeconds: 3,
+  /** Consecutive correct answers threshold to earn extra streak bonus */
+  streakBonusThreshold: 3,
+  /** Extra bonus time awarded when on a streak */
+  extraStreakBonusSeconds: 1,
+  /** Maximum time cap so user cannot accumulate infinite time */
+  maxDurationSeconds: 90,
 } as const;
 
 export interface RapidFireOptions {
   durationSeconds?: number;
+  correctBonusSeconds?: number;
+  wrongPenaltySeconds?: number;
+  maxDurationSeconds?: number;
   now?: () => number;
   topicId?: string;
   unitId?: string;
+}
+
+export interface RapidFireAnswerResult extends AnsweredQuestion {
+  timeDeltaSeconds: number;
+  exhausted: boolean;
 }
 
 export interface RapidFireView {
@@ -30,15 +48,20 @@ export interface RapidFireView {
   bestStreak: number;
   secondsLeft: number;
   finished: boolean;
+  exhausted: boolean;
+  topicId: string;
 }
 
 export class RapidFireEngine {
   private readonly questions: Question[];
   private readonly now: () => number;
   private readonly startedAt: number;
-  private readonly endsAt: number;
+  private endsAt: number;
   private readonly topicId: string;
   private readonly unitId: string | undefined;
+  private readonly correctBonusSeconds: number;
+  private readonly wrongPenaltySeconds: number;
+  private readonly maxDurationSeconds: number;
 
   private index = 0;
   private readonly answers: AnsweredQuestion[] = [];
@@ -46,6 +69,7 @@ export class RapidFireEngine {
   private bestStreak = 0;
   private questionStartedAt: number;
   private stoppedAt: number | null = null;
+  private isExhaustedFlag = false;
 
   constructor(questions: readonly Question[], options: RapidFireOptions = {}) {
     if (questions.length === 0) throw new Error('RapidFireEngine needs at least one question.');
@@ -53,9 +77,13 @@ export class RapidFireEngine {
     this.questions = [...questions];
     this.now = options.now ?? (() => Date.now());
     this.startedAt = this.now();
-    this.endsAt =
-      this.startedAt + (options.durationSeconds ?? RAPID_FIRE_DEFAULTS.durationSeconds) * 1000;
+    const duration = options.durationSeconds ?? RAPID_FIRE_DEFAULTS.durationSeconds;
+    this.endsAt = this.startedAt + duration * 1000;
     this.questionStartedAt = this.startedAt;
+
+    this.correctBonusSeconds = options.correctBonusSeconds ?? RAPID_FIRE_DEFAULTS.correctBonusSeconds;
+    this.wrongPenaltySeconds = options.wrongPenaltySeconds ?? RAPID_FIRE_DEFAULTS.wrongPenaltySeconds;
+    this.maxDurationSeconds = options.maxDurationSeconds ?? RAPID_FIRE_DEFAULTS.maxDurationSeconds;
 
     const topicIds = new Set(this.questions.map((question) => question.topicId));
     const unitIds = new Set(this.questions.map((question) => question.unitId));
@@ -64,18 +92,27 @@ export class RapidFireEngine {
   }
 
   secondsLeft(): number {
-    if (this.stoppedAt !== null) return 0;
+    if (this.isExhaustedFlag || (this.stoppedAt !== null && this.endsAt <= this.stoppedAt)) return 0;
+    if (this.stoppedAt !== null) {
+      return Math.max(0, Math.ceil((this.endsAt - this.stoppedAt) / 1000));
+    }
     return Math.max(0, Math.ceil((this.endsAt - this.now()) / 1000));
   }
 
   millisLeft(): number {
-    if (this.stoppedAt !== null) return 0;
+    if (this.isExhaustedFlag || (this.stoppedAt !== null && this.endsAt <= this.stoppedAt)) return 0;
+    if (this.stoppedAt !== null) {
+      return Math.max(0, this.endsAt - this.stoppedAt);
+    }
     return Math.max(0, this.endsAt - this.now());
   }
 
   isFinished(): boolean {
-    // Running out of questions ends the round too — better than looping the same ones.
-    return this.stoppedAt !== null || this.millisLeft() === 0 || this.index >= this.questions.length;
+    return this.isExhaustedFlag || this.stoppedAt !== null || this.millisLeft() <= 0 || this.index >= this.questions.length;
+  }
+
+  isExhausted(): boolean {
+    return this.isExhaustedFlag || this.millisLeft() <= 0;
   }
 
   view(): RapidFireView {
@@ -87,27 +124,43 @@ export class RapidFireEngine {
       bestStreak: this.bestStreak,
       secondsLeft: this.secondsLeft(),
       finished: this.isFinished(),
+      exhausted: this.isExhausted(),
+      topicId: this.topicId,
     };
   }
 
   /**
-   * Records an answer and immediately advances — there is no feedback pause.
-   * Answers arriving after the buzzer are rejected, so a late click cannot score.
+   * Records an answer and immediately applies positive time for correct answer
+   * or negative time penalty for wrong answer. If time drops to 0, timer exhausts immediately.
    */
-  answer(selectedAnswer: number | null): AnsweredQuestion | null {
+  answer(selectedAnswer: number | null): RapidFireAnswerResult | null {
     if (this.isFinished()) return null;
 
     const question = this.questions[this.index];
     const isCorrect = selectedAnswer !== null && selectedAnswer === question.correctAnswer;
 
+    let timeDeltaSeconds = 0;
     if (isCorrect) {
       this.currentStreak += 1;
       this.bestStreak = Math.max(this.bestStreak, this.currentStreak);
+      const bonus = this.currentStreak >= RAPID_FIRE_DEFAULTS.streakBonusThreshold
+        ? this.correctBonusSeconds + RAPID_FIRE_DEFAULTS.extraStreakBonusSeconds
+        : this.correctBonusSeconds;
+      timeDeltaSeconds = bonus;
+      const cap = this.now() + this.maxDurationSeconds * 1000;
+      this.endsAt = Math.min(cap, this.endsAt + bonus * 1000);
     } else {
       this.currentStreak = 0;
+      timeDeltaSeconds = -this.wrongPenaltySeconds;
+      this.endsAt = this.endsAt - this.wrongPenaltySeconds * 1000;
+      if (this.endsAt <= this.now()) {
+        this.endsAt = this.now();
+        this.stoppedAt = this.now();
+        this.isExhaustedFlag = true;
+      }
     }
 
-    const recorded: AnsweredQuestion = {
+    const recorded: RapidFireAnswerResult = {
       questionId: question.id,
       question: question.question,
       options: question.options,
@@ -118,6 +171,8 @@ export class RapidFireEngine {
       difficulty: question.difficulty,
       timeTakenMs: Math.max(0, this.now() - this.questionStartedAt),
       xpEarned: isCorrect ? xpForCorrectAnswer(BASE_XP.rapidFireCorrect, question.difficulty) : 0,
+      timeDeltaSeconds,
+      exhausted: this.isExhausted(),
     };
 
     this.answers.push(recorded);

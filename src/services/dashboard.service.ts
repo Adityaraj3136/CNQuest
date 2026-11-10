@@ -6,28 +6,21 @@
 
 import { getAchievements, getTopic, getTopics, getUnits } from '@/services/content.service';
 import { activeStore, countersOf } from '@/services/progress.store';
-import { weakestTopics } from '@/services/mastery.logic';
+import { unitJourney, weakestTopics } from '@/services/mastery.logic';
+import type { JourneyUnit } from '@/services/mastery.logic';
 import { achievementProgress } from '@/services/achievement.logic';
 import { isStreakExpired } from '@/services/streak.logic';
 import { dailyQuest, lastActiveTopicId, overallProgress, recentPerformance } from '@/services/insights.logic';
 import { activeEngine, buildStudentState } from '@/services/adaptive';
 import type { DailyQuest, RecentPerformance } from '@/services/insights.logic';
 import type { Recommendation } from '@/services/adaptive/adaptive.types';
-import type { Achievement, Topic, Unit } from '@/models/content';
+import type { Achievement, Topic } from '@/models/content';
 import type { UserProgress } from '@/models/progress';
 import type { UserProfile } from '@/models/user';
 
 export interface WeakTopic {
   topic: Topic | undefined;
   progress: UserProgress;
-}
-
-export interface JourneyUnit {
-  unit: Unit;
-  mastery: number;
-  completed: number;
-  total: number;
-  state: 'mastered' | 'current' | 'available';
 }
 
 export interface DashboardData {
@@ -115,28 +108,6 @@ export async function loadDashboard(): Promise<DashboardData | null> {
     .slice(0, RECENT_ACHIEVEMENT_LIMIT)
     .map((row) => row.achievement);
 
-  const progressByTopic = new Map(progress.map((entry) => [entry.topicId, entry]));
-  const journeyBase = [...units]
-    .sort((a, b) => a.order - b.order)
-    .map((unit) => {
-      const unitTopics = topics.filter((topic) => topic.unitId === unit.id);
-      const values = unitTopics.map((topic) => progressByTopic.get(topic.id)?.mastery ?? 0);
-      const completed = values.filter((value) => value >= 80).length;
-      const mastery = values.length > 0
-        ? Math.round(values.reduce((sum, value) => sum + value, 0) / values.length)
-        : 0;
-      return { unit, mastery, completed, total: unitTopics.length };
-    });
-  const currentIndex = Math.max(0, journeyBase.findIndex((entry) => entry.completed < entry.total));
-  const journey: JourneyUnit[] = journeyBase.map((entry, index) => ({
-    ...entry,
-    state: entry.total > 0 && entry.completed === entry.total
-      ? 'mastered'
-      : index === currentIndex
-        ? 'current'
-        : 'available',
-  }));
-
   return {
     profile,
     streakAtRisk: isStreakExpired(streakState),
@@ -144,7 +115,7 @@ export async function loadDashboard(): Promise<DashboardData | null> {
     overallCompletion: overallProgress(progress, topics.length),
     topicsStarted: progress.filter((entry) => entry.attempted > 0).length,
     topicsTotal: topics.length,
-    journey,
+    journey: unitJourney(units, topics, progress),
     continueTopic,
     weakTopics: weakestTopics(progress, WEAK_TOPIC_LIMIT).map((entry) => ({
       topic: topics.find((topic) => topic.id === entry.topicId),

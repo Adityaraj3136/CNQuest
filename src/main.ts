@@ -5,11 +5,9 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import '@/styles/variables.css';
 import '@/styles/global.css';
 import '@/styles/components.css';
-import '@/styles/network-adventure.css';
-import '@/styles/retro-quest.css';
 import '@fontsource/russo-one/latin-400.css';
 import '@fontsource/share-tech-mono/latin-400.css';
-import '@/styles/retro-arcade.css';
+import '@/styles/theme/index.css';
 
 import { Router } from '@/router';
 import { routes } from '@/routes';

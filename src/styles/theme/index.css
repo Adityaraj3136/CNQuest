@@ -1,0 +1,18 @@
+/*
+ * CN Quest theme: the one global stylesheet on top of the base styles.
+ *
+ * Five layers, loaded in this exact order. Later layers deliberately override earlier ones,
+ * so never reorder these imports. Identical selectors are not repeated across layers:
+ * a rule that a later layer replaced entirely has been deleted, not left to lose.
+ *
+ *   1-2  network adventure: layout, controls, landing, dashboard, games
+ *   3-4  VGA: palette, console chrome and per-screen colour chapters
+ *   5    arcade: game typography, pixel shadows, press-down buttons, CRT wash
+ *
+ * Page-specific stylesheets (dashboard.css, games.css, ...) are lazy-loaded by each page.
+ */
+@import './adventure-base.css';
+@import './adventure-screens.css';
+@import './vga-base.css';
+@import './vga-screens.css';
+@import './arcade.css';

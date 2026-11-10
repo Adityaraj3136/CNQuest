@@ -59,11 +59,37 @@ test('rapid fire rejects answers after the buzzer', () => {
   const engine = new RapidFireEngine(TEN, { now: time.now, durationSeconds: 60 });
 
   engine.answer(0);
-  time.advance(60_000);
+  time.advance(65_000);
 
   assert.equal(engine.isFinished(), true);
   assert.equal(engine.answer(0), null, 'a late click must not score');
   assert.equal(engine.summary().result.attempted, 1);
+});
+
+test('rapid fire awards positive time for correct answer and negative time for wrong answer', () => {
+  const time = clock();
+  const engine = new RapidFireEngine(TEN, { now: time.now, durationSeconds: 60 });
+
+  const correctAns = engine.answer(0); // correct (correctAnswer is 0)
+  assert.equal(correctAns?.isCorrect, true);
+  assert.equal(correctAns?.timeDeltaSeconds, 2);
+  assert.equal(engine.secondsLeft(), 62);
+
+  const wrongAns = engine.answer(3); // wrong
+  assert.equal(wrongAns?.isCorrect, false);
+  assert.equal(wrongAns?.timeDeltaSeconds, -3);
+  assert.equal(engine.secondsLeft(), 59);
+});
+
+test('rapid fire exhausts and finishes when negative time drains timer to 0', () => {
+  const time = clock();
+  const engine = new RapidFireEngine(TEN, { now: time.now, durationSeconds: 2 });
+
+  const wrongAns = engine.answer(3); // -3s penalty on 2s left -> exhausts!
+  assert.equal(wrongAns?.exhausted, true);
+  assert.equal(engine.isExhausted(), true);
+  assert.equal(engine.isFinished(), true);
+  assert.equal(engine.secondsLeft(), 0);
 });
 
 test('rapid fire reports the seconds remaining', () => {

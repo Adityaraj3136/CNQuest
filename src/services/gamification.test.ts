@@ -15,11 +15,13 @@ import {
   isUnitMastered,
   masteryBand,
   mergeProgress,
+  unitJourney,
   unitMastery,
   weakestTopics,
 } from './mastery.logic.ts';
 import { MEASURES, achievementProgress, evaluateAchievements } from './achievement.logic.ts';
 import { ACHIEVEMENTS } from '../data/achievements.ts';
+import type { Topic, Unit } from '../models/content.ts';
 import type { GameResult } from '../models/game.ts';
 import type { UserProgress } from '../models/progress.ts';
 import type { AchievementContext } from './achievement.logic.ts';
@@ -173,6 +175,32 @@ test('unit mastery counts untouched topics as zero', () => {
   assert.equal(unitMastery([], 0), 0);
   assert.equal(isUnitMastered(80), true);
   assert.equal(isUnitMastered(79), false);
+});
+
+test('unit journey uses the same mastered rule as the achievement', () => {
+  const unit = (id: string, order: number) =>
+    ({ id, number: order, title: id, description: '', icon: '', order }) as Unit;
+  const topic = (id: string, unitId: string) => ({ id, unitId }) as Topic;
+  const progress = (topicId: string, unitId: string, mastery: number): UserProgress => ({
+    userId: 'u', topicId, unitId, attempted: 10, correct: 0, accuracy: 0, completion: 0, mastery, lastAttemptAt: null,
+  });
+
+  const journey = unitJourney(
+    // Deliberately out of order: the map follows syllabus order.
+    [unit('u3', 3), unit('u1', 1), unit('u2', 2), unit('empty', 4)],
+    [topic('a', 'u1'), topic('b', 'u1'), topic('c', 'u1'), topic('d', 'u2'), topic('e', 'u3')],
+    // u1 averages 87 with one topic below 80: mastered, as the achievement counts it.
+    [progress('a', 'u1', 100), progress('b', 'u1', 100), progress('c', 'u1', 60), progress('d', 'u2', 40)],
+  );
+
+  assert.deepEqual(journey.map((j) => j.unit.id), ['u1', 'u2', 'u3', 'empty']);
+  assert.deepEqual(journey.map((j) => j.state), ['mastered', 'current', 'available', 'available']);
+  assert.deepEqual(
+    { mastery: journey[0].mastery, completed: journey[0].completed, total: journey[0].total },
+    { mastery: 87, completed: 2, total: 3 },
+  );
+  assert.equal(journey[0].state === 'mastered', isUnitMastered(unitMastery([100, 100, 60], 3)));
+  assert.equal(journey[3].mastery, 0, 'a unit with no topics is never mastered or current');
 });
 
 test('weakest topics ignores topics never attempted', () => {

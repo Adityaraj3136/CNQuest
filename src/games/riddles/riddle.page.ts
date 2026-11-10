@@ -13,7 +13,6 @@ import { escapeHtml, qs } from '@/utils/dom';
 import { enterSession, exitSession, gameHudHtml } from '@/games/shared/game-hud';
 import type { Riddle } from '@/models/content';
 import '@/styles/games.css';
-import '@/styles/arena.css';
 
 const ROOT_ID = 'cn-riddle-root';
 const AGAIN_ID = 'cn-riddle-again';
@@ -114,7 +113,7 @@ function feedbackHtml(): string {
   `;
 }
 
-function paint(): void {
+function paint(savedValue?: string): void {
   const container = root();
   if (!container || !engine) return;
 
@@ -133,6 +132,9 @@ function paint(): void {
 
   container.innerHTML = askHtml();
   const input = qs<HTMLInputElement>('#cn-riddle-answer', container);
+  if (input && savedValue) {
+    input.value = savedValue;
+  }
   input?.focus();
 
   qs<HTMLFormElement>('#cn-riddle-form', container)?.addEventListener('submit', (event) => {
@@ -148,8 +150,9 @@ function paint(): void {
   });
 
   qs<HTMLButtonElement>('#cn-riddle-hint', container)?.addEventListener('click', () => {
+    const currentVal = input?.value ?? '';
     engine!.useHint();
-    paint();
+    paint(currentVal);
   });
 
   qs<HTMLButtonElement>('#cn-riddle-skip', container)?.addEventListener('click', () => {

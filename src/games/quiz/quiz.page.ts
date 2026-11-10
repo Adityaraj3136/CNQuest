@@ -93,11 +93,20 @@ function questionHtml(): string {
       seconds: view.secondsPerQuestion,
     })}
 
-    <p class="cn-quiz__topic">${escapeHtml(topicLabel)}</p>
+    <div class="cn-quiz__stage ${!answered ? 'cn-quiz__stage--enter' : ''}">
+      <div class="cn-quiz__head-row">
+        <p class="cn-quiz__topic">${escapeHtml(topicLabel)}</p>
+        ${
+          view.currentStreak >= 2
+            ? `<span class="cn-quiz-streak-pill" aria-label="Streak multiplier">🔥 ${view.currentStreak}x STREAK</span>`
+            : ''
+        }
+      </div>
 
-    <h1 class="cn-quiz__question">${escapeHtml(view.question.question)}</h1>
+      <h1 class="cn-quiz__question">${escapeHtml(view.question.question)}</h1>
 
-    <div class="cn-options" role="group" aria-label="Answer options">${options}</div>
+      <div class="cn-options" role="group" aria-label="Answer options">${options}</div>
+    </div>
 
     <div id="cn-feedback" aria-live="polite">${answered && last ? feedbackHtml(last) : ''}</div>
   `;

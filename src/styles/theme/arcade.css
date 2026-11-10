@@ -32,7 +32,6 @@ body h3,
 body .cn-hero__title,
 body .cn-games__title,
 body .cn-daily__goal,
-body .cn-course__value,
 body .cn-mode__name,
 body .cn-mode__timer,
 body .cn-rapid__clock,
@@ -100,11 +99,6 @@ body .cn-status,
 body .cn-journey,
 body .cn-next,
 body .cn-unit,
-body .cn-question-card,
-body .cn-quiz__card,
-body .cn-riddle__card,
-body .cn-match__board,
-body .cn-word__board,
 body .cn-result__hero,
 body .cn-mode-grid > .cn-mode {
   box-shadow: var(--px-shadow);
@@ -362,7 +356,6 @@ body .cn-auth__perks li::before {
 /* The daily quest fills the hero's height instead of stopping halfway down it. */
 body .cn-quest-hero { align-items: stretch; }
 body .cn-daily { display: flex; flex-direction: column; }
-body .cn-daily__meter { margin-top: auto; }
 
 /* Stats read as four HUD counters, each with its own coloured icon block. */
 body .cn-status {
