@@ -71,7 +71,7 @@ export class RuleBasedAdaptiveEngine implements AdaptiveLearningEngine {
         difficulty: 'easy',
         source: 'rules',
         reason: first
-          ? `Start with ${titleOf(state, first)} — it opens the syllabus.`
+          ? `Start with ${titleOf(state, first)}. It opens the syllabus.`
           : 'Pick any topic to start tracking your mastery.',
       };
     }
@@ -132,7 +132,7 @@ export class RuleBasedAdaptiveEngine implements AdaptiveLearningEngine {
         gameType: 'quiz',
         difficulty: 'easy',
         source: 'rules',
-        reason: `Revise ${titleOf(state, weakest)} — accuracy there is ${weakestAccuracy}%. Easy questions first.`,
+        reason: `Revise ${titleOf(state, weakest)}: accuracy there is ${weakestAccuracy}%. Easy questions first.`,
       };
     }
 
@@ -169,7 +169,7 @@ export class RuleBasedAdaptiveEngine implements AdaptiveLearningEngine {
       gameType: 'quiz',
       difficulty: difficultyForAccuracy(weakestAccuracy),
       source: 'rules',
-      reason: `Keep working on ${titleOf(state, weakest)} — ${weakestAccuracy}% accuracy, ${weakestMastery}% mastery.`,
+      reason: `Keep working on ${titleOf(state, weakest)}: ${weakestAccuracy}% accuracy, ${weakestMastery}% mastery.`,
     };
   }
 }

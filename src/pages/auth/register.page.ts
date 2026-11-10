@@ -86,7 +86,7 @@ const registerPage: Page = {
 
     return authShellHtml({
       title: 'Create your account',
-      subtitle: 'Start at Level 1 with 0 XP — and climb from there.',
+      subtitle: 'Start at Level 1 with 0 XP and climb from there.',
       formHtml: form,
       footerHtml: 'Already registered? <a href="#/login">Log in</a>',
       asideTitle: 'Turn revision into a quest',
@@ -148,7 +148,7 @@ const registerPage: Page = {
       setSubmitting(submit, true, 'Creating account…');
       try {
         await register({ name, email, password });
-        showToast('Account created. You start at Level 1 with 0 XP — good luck!', {
+        showToast('Account created. You start at Level 1 with 0 XP. Good luck!', {
           title: 'Welcome to CN Quest',
           variant: 'success',
         });

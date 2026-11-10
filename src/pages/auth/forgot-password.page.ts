@@ -54,7 +54,7 @@ const forgotPasswordPage: Page = {
       footerHtml: 'Remembered it? <a href="#/login">Back to login</a>',
       asideTitle: 'Your progress is safe',
       asideText:
-        'XP, streaks, achievements and topic mastery live in your account — resetting your password never touches them.',
+        'XP, streaks, achievements and topic mastery live in your account. Resetting your password never touches them.',
       perks: ['Secure Firebase Authentication', 'Nothing is lost on reset', 'Back to studying in a minute'],
     });
   },

@@ -3,6 +3,7 @@
 import { APP } from '@/config/app.config';
 import { escapeHtml, qs, qsa } from '@/utils/dom';
 import { signInWithGoogle, warmUpGoogleSignIn } from '@/services/auth.service';
+import { vgaSceneSvg } from '@/components/vga-scene';
 import '@/styles/auth.css';
 
 export interface AuthShellOptions {
@@ -20,26 +21,28 @@ export function authShellHtml(options: AuthShellOptions): string {
     <section class="cn-auth">
       <div class="cn-auth__form-side">
         <div class="cn-auth__card cn-rise cn-rise-1">
-          <span class="cn-label cn-label--marked">${escapeHtml(APP.name)}</span>
-          <h1 class="cn-auth__title">${escapeHtml(options.title)}</h1>
-          <p class="cn-auth__subtitle">${escapeHtml(options.subtitle)}</p>
-          ${options.formHtml}
-          <div class="cn-auth__alt mt-4">${options.footerHtml}</div>
+          <div class="cn-auth__titlebar">
+            <img src="/icons/icon.svg" alt="" width="20" height="20" />
+            <span>${escapeHtml(APP.name)}</span>
+          </div>
+          <div class="cn-auth__body">
+            <h1 class="cn-auth__title">${escapeHtml(options.title)}</h1>
+            <p class="cn-auth__subtitle">${escapeHtml(options.subtitle)}</p>
+            ${options.formHtml}
+            <div class="cn-auth__alt mt-4">${options.footerHtml}</div>
+          </div>
         </div>
       </div>
 
-      <aside class="cn-auth__aside cn-on-field" aria-hidden="true">
-        <span class="cn-label cn-label--marked">${escapeHtml(APP.subject)}</span>
-        <h2>${escapeHtml(options.asideTitle)}</h2>
-        <p>${escapeHtml(options.asideText)}</p>
-        <ul class="cn-auth__perks">
-          ${options.perks
-            .map(
-              (perk, index) =>
-                `<li><span class="cn-index__num">${String(index + 1).padStart(2, '0')}</span><span>${escapeHtml(perk)}</span></li>`,
-            )
-            .join('')}
-        </ul>
+      <aside class="cn-auth__aside" aria-hidden="true">
+        <div class="cn-auth__aside-inner">
+          <h2>${escapeHtml(options.asideTitle)}</h2>
+          <p>${escapeHtml(options.asideText)}</p>
+          <div class="cn-auth__scene">${vgaSceneSvg()}</div>
+          <ul class="cn-auth__perks">
+            ${options.perks.map((perk) => `<li>${escapeHtml(perk)}</li>`).join('')}
+          </ul>
+        </div>
       </aside>
     </section>
   `;

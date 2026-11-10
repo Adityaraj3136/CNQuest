@@ -1,5 +1,5 @@
 /**
- * CN Quest design tokens — "Quiet Arcade".
+ * CN Quest design tokens — "Network Adventure".
  *
  * A learning game a university would still take seriously. Warm paper, soft edges, generous
  * space, and one electric blue meaning "this is the way forward". Colour is reserved for game
@@ -14,45 +14,45 @@
  */
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 
   /* ---- Ink & paper ---------------------------------------------------- */
-  --cn-paper: #fbfaf8;
-  --cn-paper-raised: #ffffff;
-  --cn-paper-sunken: #f2f1ed;
-  --cn-ink: #16181d;
-  --cn-ink-soft: #545a63;
-  --cn-ink-faint: #8b919b;
-  --cn-rule: #e6e4de;
-  --cn-rule-strong: #cdcbc4;
+  --cn-paper: #090b10;
+  --cn-paper-raised: #12161f;
+  --cn-paper-sunken: #07090d;
+  --cn-ink: #f2f0e9;
+  --cn-ink-soft: #a7acb7;
+  --cn-ink-faint: #747b89;
+  --cn-rule: #252a34;
+  --cn-rule-strong: #363d49;
 
   /* ---- Signal --------------------------------------------------------- */
-  --cn-accent: #0b46ff;
-  --cn-accent-deep: #0733bd;
-  --cn-accent-wash: #ecf0ff;
-  --cn-reward: #ff8a00;
-  --cn-reward-wash: #fff4e5;
-  --cn-positive: #0f7a52;
-  --cn-positive-wash: #e6f5ef;
-  --cn-negative: #c62b2b;
-  --cn-negative-wash: #fbe9e9;
+  --cn-accent: #4f8cff;
+  --cn-accent-deep: #85b0ff;
+  --cn-accent-wash: #17233a;
+  --cn-reward: #f0a431;
+  --cn-reward-wash: #2b2113;
+  --cn-positive: #3fbf8a;
+  --cn-positive-wash: #132820;
+  --cn-negative: #e96b75;
+  --cn-negative-wash: #2d171c;
 
   /* Game state. Each means one thing and is used nowhere else. */
   --cn-xp: var(--cn-reward);
   --cn-xp-wash: var(--cn-reward-wash);
   --cn-mastered: var(--cn-positive);
   --cn-mastered-wash: var(--cn-positive-wash);
-  --cn-special: #6d4aff;
-  --cn-special-wash: #efeaff;
-  --cn-locked: #a9aeb7;
-  --cn-locked-wash: #f1f1ef;
+  --cn-special: #a58ae8;
+  --cn-special-wash: #241e35;
+  --cn-locked: #64748b;
+  --cn-locked-wash: #182237;
 
   /* Ink field — used for inverted bands, the hero and result screens. */
-  --cn-field: #12151a;
-  --cn-field-soft: #1d2229;
-  --cn-field-ink: #f0efeb;
-  --cn-field-ink-soft: #9aa1ab;
-  --cn-field-rule: #2c323b;
+  --cn-field: #06080c;
+  --cn-field-soft: #10141c;
+  --cn-field-ink: #f2f0e9;
+  --cn-field-ink-soft: #a7acb7;
+  --cn-field-rule: #252a34;
 
   /* ---- Type ----------------------------------------------------------- */
   /* No web fonts: the app must install and run offline, and a CDN link would be
@@ -107,10 +107,10 @@
   --cn-border-heavy: 2px solid var(--cn-ink);
 
   /* Depth is soft and short-range. A card should look lifted, never floating. */
-  --cn-shadow-sm: 0 1px 2px rgba(22, 24, 29, 0.05);
-  --cn-shadow-card: 0 1px 2px rgba(22, 24, 29, 0.04), 0 8px 20px -14px rgba(22, 24, 29, 0.28);
-  --cn-shadow-lift: 0 2px 4px rgba(22, 24, 29, 0.05), 0 16px 32px -18px rgba(22, 24, 29, 0.32);
-  --cn-shadow-focus: 0 0 0 3px var(--cn-accent-wash), 0 0 0 4px var(--cn-accent);
+  --cn-shadow-sm: none;
+  --cn-shadow-card: none;
+  --cn-shadow-lift: 0 20px 50px rgba(0, 0, 0, 0.32);
+  --cn-shadow-focus: 0 0 0 3px #0b1020, 0 0 0 5px var(--cn-accent);
 
   /* ---- Motion --------------------------------------------------------- */
   --cn-duration-fast: 120ms;
@@ -127,14 +127,14 @@
 
   /* Blueprint grid used as page atmosphere. */
   --cn-grid-size: 32px;
-  --cn-grid-line: rgba(22, 24, 29, 0.015);
-  --cn-grid-line-field: rgba(240, 239, 235, 0.06);
+  --cn-grid-line: rgba(255, 255, 255, 0.025);
+  --cn-grid-line-field: rgba(255, 255, 255, 0.055);
 }
 
 /* Bootstrap bridge — Bootstrap ships the reset, grid and form base; the palette is ours. */
 :root {
   --bs-primary: var(--cn-accent);
-  --bs-primary-rgb: 11, 70, 255;
+  --bs-primary-rgb: 79, 140, 255;
   --bs-body-bg: var(--cn-paper);
   --bs-body-color: var(--cn-ink);
   --bs-border-color: var(--cn-rule);

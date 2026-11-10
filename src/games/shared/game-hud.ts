@@ -11,6 +11,7 @@
  */
 
 import { escapeHtml, qs } from '@/utils/dom';
+import '@/styles/arena.css';
 
 export interface GameHudOptions {
   /** Mode name, e.g. "Quiz Blitz". */

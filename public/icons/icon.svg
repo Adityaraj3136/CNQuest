@@ -1,11 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="CN Quest logo">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#3d5afe"/>
-      <stop offset="1" stop-color="#00bcd4"/>
-    </linearGradient>
-  </defs>
-  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="112" fill="#3B82F6"/>
   <g stroke="#ffffff" stroke-width="14" stroke-linecap="round" opacity="0.85" fill="none">
     <path d="M256 140 L140 256 M256 140 L372 256 M140 256 L256 372 M372 256 L256 372 M140 256 L372 256 M256 140 L256 372"/>
   </g>
@@ -16,5 +10,5 @@
     <circle cx="256" cy="372" r="30"/>
   </g>
   <circle cx="256" cy="256" r="46" fill="#ffffff"/>
-  <circle cx="256" cy="256" r="24" fill="#3d5afe"/>
+  <circle cx="256" cy="256" r="24" fill="#0B1020"/>
 </svg>

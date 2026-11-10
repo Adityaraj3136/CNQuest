@@ -7,6 +7,7 @@ import type { Page, PageContext } from '@/types/page';
 import { getTopic } from '@/services/content.service';
 import { escapeHtml, qs } from '@/utils/dom';
 import '@/styles/games.css';
+import '@/styles/game-attract.css';
 
 const ROOT_ID = 'cn-games-root';
 
@@ -93,9 +94,7 @@ function cardHtml(game: GameCard, topicQuery: string): string {
 
   return `
     <article class="cn-mode ${locked ? 'cn-mode--locked' : ''}" data-tone="${game.tone}">
-      <span class="cn-mode__glyph" aria-hidden="true">
-        <i class="bi ${escapeHtml(game.icon)}"></i>
-      </span>
+      ${modeVisualHtml(game.title, game.icon)}
 
       <h2 class="cn-mode__name">${escapeHtml(game.title)}</h2>
       <p class="cn-mode__format">${escapeHtml(game.format)}</p>
@@ -112,6 +111,38 @@ function cardHtml(game: GameCard, topicQuery: string): string {
   `;
 }
 
+function modeVisualHtml(title: string, icon: string): string {
+  if (title === 'Quiz Blitz') {
+    return `<div class="cn-mode__visual cn-mode__visual--quiz" aria-hidden="true">
+      <span class="cn-mode__visual-icon"><i class="bi ${escapeHtml(icon)}"></i></span>
+      <div class="cn-mode__quiz-question"><b>Which layer routes packets?</b><span>A</span><span>B</span><span class="is-answer">C</span><span>D</span></div>
+    </div>`;
+  }
+  if (title === 'Rapid Fire') {
+    return `<div class="cn-mode__visual cn-mode__visual--rapid" aria-hidden="true">
+      <span class="cn-mode__timer">00:42</span><span class="cn-mode__pulse">Next packet incoming</span>
+    </div>`;
+  }
+  if (title === 'Boss Battle') {
+    return `<div class="cn-mode__visual cn-mode__visual--boss" aria-hidden="true">
+      <i class="bi bi-shield-shaded"></i><span>OSI Guardian</span><div><b></b></div><small>Boss HP</small>
+    </div>`;
+  }
+  if (title === 'Match & Pair') {
+    return `<div class="cn-mode__visual cn-mode__visual--match" aria-hidden="true">
+      <span>HTTPS</span><i></i><i></i><span>443</span><span>DNS</span><i></i><i></i><span>53</span>
+    </div>`;
+  }
+  if (title === 'Network Riddles') {
+    return `<div class="cn-mode__visual cn-mode__visual--riddle" aria-hidden="true">
+      <span>&gt; identify protocol</span><b>I translate names into addresses</b>
+    </div>`;
+  }
+  return `<div class="cn-mode__visual cn-mode__visual--words" aria-hidden="true">
+    ${'TCPIPROUTERDNS'.split('').slice(0, 12).map((letter, index) => `<span style="--i:${index}"${[0, 5, 10].includes(index) ? ' class="is-found"' : ''}>${letter}</span>`).join('')}
+  </div>`;
+}
+
 const gamesPage: Page = {
   title: 'Games',
 
@@ -120,7 +151,7 @@ const gamesPage: Page = {
       <section class="cn-games">
         <div class="cn-container" id="${ROOT_ID}">
           <header class="cn-games__head cn-rise cn-rise-1">
-            <h1 class="cn-games__title">Pick your challenge</h1>
+            <h1 class="cn-games__title">Choose a game mode</h1>
             <p class="cn-games__sub" data-role="lead">
               Six ways to practise the same syllabus. Every one earns XP and moves your mastery.
             </p>

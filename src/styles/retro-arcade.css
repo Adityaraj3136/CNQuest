@@ -1,0 +1,500 @@
+/*
+ * CN Quest - arcade layer
+ *
+ * Loaded last, on top of retro-quest.css. That file sets the VGA palette and flat colour
+ * chapters; this one adds the parts that make it read as a game rather than a bold website:
+ * game typography (Russo One, Share Tech Mono), hard pixel drop shadows, press-down buttons, segmented HP-style bars and a
+ * static CRT scanline wash. The app is deliberately dark-only: it is a game console screen.
+ */
+
+:root {
+  --px-ink: #02030a;
+  --px-shadow: 4px 4px 0 var(--px-ink);
+  --px-shadow-lift: 6px 6px 0 var(--px-ink);
+  --px-text-shadow: 3px 3px 0 var(--px-ink);
+  --px-locked: #8d9cb6;
+
+  --cn-font-display: "Russo One", "Arial Black", system-ui, sans-serif;
+  --cn-font-pixel: "Share Tech Mono", "Cascadia Mono", ui-monospace, monospace;
+  --cn-font-code: "Cascadia Mono", "JetBrains Mono", ui-monospace, Consolas, monospace;
+  --cn-font-mono: var(--cn-font-pixel);
+  --bs-font-monospace: var(--cn-font-pixel);
+}
+
+body { font-synthesis-weight: none; }
+
+/* Type ------------------------------------------------------------- */
+
+/* Russo One ships one weight (400); asking for bold would make the browser fake it. */
+body h1,
+body h2,
+body h3,
+body .cn-hero__title,
+body .cn-games__title,
+body .cn-daily__goal,
+body .cn-course__value,
+body .cn-mode__name,
+body .cn-mode__timer,
+body .cn-rapid__clock,
+body .cn-result__score,
+body .cn-hud__mode,
+body .cn-proof__value {
+  font-family: var(--cn-font-display);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+body .cn-hero__title,
+body .cn-section__title,
+body .cn-games__title,
+body .cn-quest-hero__title,
+body .cn-learn__title,
+body .cn-journey__title,
+body .cn-mode__timer,
+body .cn-rapid__clock,
+body .cn-result__score {
+  text-shadow: var(--px-text-shadow);
+}
+
+/* Code in lessons stays a real monospace; the pixel face is for HUD labels only. */
+body code,
+body pre,
+body kbd,
+body samp {
+  font-family: var(--cn-font-code);
+}
+
+body .btn {
+  font-family: var(--cn-font-display);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+body .cn-chip,
+body .cn-navlink,
+body .cn-footer__grid h3,
+body .cn-journey__world,
+body .cn-mode__format,
+body .cn-hud__field,
+body .cn-status__value,
+body .cn-preview__mode,
+body .cn-quest-hero__eyebrow,
+body .cn-daily__label {
+  font-family: var(--cn-font-pixel);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+body .cn-navlink { font-size: 0.8rem; }
+
+/* Pixel material ---------------------------------------------------- */
+
+body .cn-preview,
+body .cn-loop__step,
+body .cn-modes__card,
+body .cn-bosscard,
+body .cn-mastery__panel,
+body .cn-quest-hero__body,
+body .cn-daily,
+body .cn-status,
+body .cn-journey,
+body .cn-next,
+body .cn-unit,
+body .cn-question-card,
+body .cn-quiz__card,
+body .cn-riddle__card,
+body .cn-match__board,
+body .cn-word__board,
+body .cn-result__hero,
+body .cn-mode-grid > .cn-mode {
+  box-shadow: var(--px-shadow);
+}
+
+body .btn-cn-primary,
+body .btn-cn-ghost,
+body .cn-option {
+  box-shadow: var(--px-shadow);
+  transition: transform 80ms steps(2), box-shadow 80ms steps(2), background-color 120ms ease;
+}
+
+body .btn-cn-primary:hover,
+body .btn-cn-ghost:hover,
+body .cn-option:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--px-shadow-lift);
+}
+
+/* The press: the button drops into its own shadow, like a cabinet key. */
+body .btn-cn-primary:active,
+body .btn-cn-ghost:active,
+body .cn-option:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0 0 0 var(--px-ink);
+}
+
+body .cn-mode-grid > .cn-mode:hover,
+body .cn-modes__card:hover,
+body .cn-mode-tile:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--px-shadow-lift);
+}
+
+body .cn-modes__card,
+body .cn-mode-tile { transition: transform 80ms steps(2), box-shadow 80ms steps(2), background-color 120ms ease; }
+
+body .cn-preview__map,
+body .cn-vga-world__scene { image-rendering: pixelated; }
+
+/* Segmented bars: every progress fill reads as HP blocks, not a smooth slider. */
+body .cn-quest-hero__bar span,
+body .cn-daily__bar span,
+body .cn-progress__bar,
+body .cn-hud__track span {
+  background-image: repeating-linear-gradient(90deg, transparent 0 10px, rgb(2 3 10 / 0.45) 10px 12px);
+}
+
+/* CRT wash: static, fixed and click-through, so it costs one composited layer. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  pointer-events: none;
+  background: repeating-linear-gradient(180deg, rgb(0 0 0 / 0.14) 0 1px, transparent 1px 3px);
+}
+
+@media (prefers-contrast: more) {
+  body::after { content: none; }
+}
+
+/* Learn: locked quests must stay readable, only quieter ----------- */
+
+body .cn-quest[data-state='locked'] .cn-quest__title,
+body .cn-quest[data-state='locked'] .cn-quest__meta,
+body .cn-quest[data-state='locked'] .cn-quest__marker {
+  color: var(--px-locked);
+}
+
+/* Landing modes: wide + 4, then 4/4/4, left the sixth card alone on its row. It now runs
+   the full width as a strip, which suits its single-row letter visual. */
+@media (min-width: 1101px) {
+  body .cn-modes__card:last-child { grid-column: 1 / -1; min-height: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body .btn-cn-primary,
+  body .btn-cn-ghost,
+  body .cn-option,
+  body .cn-modes__card,
+  body .cn-mode-tile { transition: none; }
+
+  body .btn-cn-primary:hover,
+  body .btn-cn-ghost:hover,
+  body .cn-option:hover,
+  body .cn-mode-grid > .cn-mode:hover,
+  body .cn-modes__card:hover,
+  body .cn-mode-tile:hover { transform: none; }
+}
+
+/* Auth: a console window on the left, the overworld on the right ------------------------ */
+
+body .cn-auth { background: #070a13; }
+
+@media (min-width: 992px) {
+  body .cn-auth { grid-template-columns: 1fr 1fr; }
+}
+
+body .cn-auth__form-side { justify-items: center; }
+
+body .cn-auth__card {
+  width: min(460px, 100%);
+  border: 4px solid #263858;
+  border-radius: 0;
+  background: #101727;
+  box-shadow: var(--px-shadow);
+}
+
+body .cn-auth__titlebar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 4px solid #0a1f43;
+  background: var(--vga-blue);
+  color: var(--vga-white);
+  font-family: var(--cn-font-pixel);
+  font-size: 0.8rem;
+}
+
+body .cn-auth__titlebar img { image-rendering: pixelated; }
+
+body .cn-auth__body { padding: 28px 28px 24px; }
+
+body .cn-auth__title {
+  margin-block: 0 8px;
+  font-size: clamp(2rem, 1.6rem + 1.4vw, 2.6rem);
+  line-height: 1.1;
+  text-transform: none;
+  text-shadow: var(--px-text-shadow);
+}
+
+body .cn-auth__subtitle { margin-bottom: 28px; color: #c4d1e5; }
+
+body .cn-field label {
+  color: #b9c6da;
+  font-family: var(--cn-font-pixel);
+  font-size: 0.72rem;
+  font-weight: 400;
+}
+
+body .cn-field .form-control {
+  padding: 0.7rem 0.85rem;
+  border: 3px solid #3a4d72;
+  border-radius: 0;
+  background: #070b16;
+  color: var(--vga-white);
+}
+
+body .cn-field .form-control::placeholder { color: #8495b3; }
+
+body .cn-field .form-control:focus {
+  border-width: 3px;
+  border-color: var(--vga-gold);
+  background: #070b16;
+  box-shadow: var(--px-shadow);
+}
+
+body .cn-field .form-control[aria-invalid='true'] { border-width: 3px; border-color: var(--vga-red); }
+body .cn-field__error { color: #ff8a9b; }
+body .cn-field__hint { color: #9aabc6; }
+
+body .cn-auth .form-check-input {
+  width: 1.15em;
+  height: 1.15em;
+  border: 3px solid #657797;
+  border-radius: 0;
+  background-color: #070b16;
+}
+
+body .cn-auth .form-check-input:checked {
+  border-color: var(--vga-gold);
+  background-color: var(--vga-gold);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23111522' stroke-linecap='square' stroke-width='3.5' d='m5 10 3.5 3.5L15 7'/%3e%3c/svg%3e");
+}
+
+body .cn-auth .form-check-label { color: #c4d1e5; }
+
+/* Every action button centres its label, so Log in and Google line up. */
+body .cn-auth form .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+}
+
+body .cn-auth__divider { color: #8495b3; font-family: var(--cn-font-pixel); }
+body .cn-auth__divider::before,
+body .cn-auth__divider::after { height: 3px; background: #263858; }
+
+body .cn-auth__alt { border-top: 3px solid #263858; color: #c4d1e5; }
+
+body .cn-auth a:not(.btn) { color: var(--vga-sky); font-weight: 700; }
+body .cn-auth a:not(.btn):hover { color: var(--vga-gold); }
+
+body .cn-auth__aside {
+  align-content: center;
+  justify-items: center;
+  background: #13204a;
+  background-image: none;
+  color: var(--vga-white);
+}
+
+body .cn-auth__aside-inner { display: grid; gap: 24px; width: min(560px, 100%); }
+
+body .cn-auth__aside h2 {
+  margin: 0;
+  font-size: clamp(2.2rem, 1.4rem + 2vw, 3.2rem);
+  line-height: 1.1;
+  text-transform: none;
+  text-shadow: var(--px-text-shadow);
+}
+
+body .cn-auth__aside p { margin: 0; color: #dbe6ff; }
+
+body .cn-auth__scene {
+  aspect-ratio: 800 / 460;
+  overflow: hidden;
+  border: 4px solid #07101f;
+  box-shadow: var(--px-shadow);
+}
+
+body .cn-auth__scene svg { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+
+body .cn-auth__perks { display: grid; gap: 12px; border: 0; }
+
+body .cn-auth__perks li {
+  position: relative;
+  padding: 0 0 0 28px;
+  border: 0;
+  color: var(--vga-white);
+  font-size: 1rem;
+}
+
+/* A gold pixel block, not a numbered index. */
+body .cn-auth__perks li::before {
+  content: "";
+  position: absolute;
+  top: 0.4em;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  background: var(--vga-gold);
+  box-shadow: 2px 2px 0 var(--px-ink);
+}
+
+@media (max-width: 575.98px) {
+  body .cn-auth__body { padding: 22px 18px 20px; }
+}
+
+/* Dashboard ---------------------------------------------------------------------------- */
+
+/* The daily quest fills the hero's height instead of stopping halfway down it. */
+body .cn-quest-hero { align-items: stretch; }
+body .cn-daily { display: flex; flex-direction: column; }
+body .cn-daily__meter { margin-top: auto; }
+
+/* Stats read as four HUD counters, each with its own coloured icon block. */
+body .cn-status {
+  gap: 12px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+body .cn-status__cell {
+  column-gap: 14px;
+  border: 3px solid #263858;
+  background: #0d1424;
+  box-shadow: var(--px-shadow);
+}
+
+body .cn-status__cell i {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 3px solid var(--px-ink);
+  background: var(--vga-sky);
+  color: var(--vga-ink) !important;
+  font-size: 1.2rem;
+}
+
+body .cn-status__cell[data-tone='xp'] i { background: var(--vga-gold); }
+body .cn-status__cell[data-tone='mastered'] i { background: var(--vga-green); }
+
+body .cn-status__value {
+  font-family: var(--cn-font-display);
+  font-size: 1.4rem;
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+body .cn-status__meta { color: #a9b8d0; font-family: var(--cn-font-pixel); font-size: 0.7rem; }
+
+/* Mode tiles become cartridges: separate blocks, each with its mode's colour. */
+body .cn-dash .cn-modes { gap: 12px; border: 0; background: transparent; }
+
+body .cn-mode-tile {
+  border: 3px solid #263858;
+  box-shadow: var(--px-shadow);
+}
+
+body .cn-mode-tile i {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 3px solid var(--px-ink);
+  background: var(--vga-gold);
+  color: var(--vga-ink);
+}
+
+body .cn-mode-tile[data-tone='quiz'] i { background: var(--vga-sky); }
+body .cn-mode-tile[data-tone='rapid'] i { background: var(--vga-orange); }
+body .cn-mode-tile[data-tone='boss'] i { background: var(--vga-purple); color: var(--vga-white); }
+body .cn-mode-tile[data-tone='match'] i { background: var(--vga-green); }
+body .cn-mode-tile[data-tone='riddle'] i { background: var(--vga-cyan); }
+body .cn-mode-tile__name { font-family: var(--cn-font-display); font-size: 1.05rem; }
+body .cn-mode-tile__note { color: #a9b8d0; }
+
+/* Empty states: a dashed slot waiting to be filled, with a hint of what goes in it. */
+body .cn-empty {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 16px 18px;
+  border: 3px dashed #34476b;
+  color: #c4d1e5;
+}
+
+body .cn-empty i {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 3px solid #34476b;
+  color: var(--vga-gold);
+  font-size: 1.1rem;
+}
+
+body .cn-empty p { margin: 0; font-size: 0.95rem; }
+
+/* The shared scene is absolutely positioned for the landing map; here it sits in flow. */
+body .cn-auth__scene { position: relative; }
+body .cn-auth__scene .cn-vga-world__scene { position: static; }
+
+/* retro-quest tints these icons with !important; match it so the glyph stays dark on its block. */
+body .cn-status__cell[data-tone] i,
+body .cn-status__cell[data-tone='xp'] i,
+body .cn-status__cell[data-tone='mastered'] i { color: var(--vga-ink) !important; }
+
+body .cn-daily__goal { font-size: clamp(1.9rem, 1.3rem + 1.2vw, 2.5rem); line-height: 1.15; }
+
+/* Topic titles run long; a smaller scale keeps the hero to two or three short lines and pulls
+   the stat counters above the fold. */
+body .cn-quest-hero__title { font-size: clamp(2.2rem, 1.4rem + 2.2vw, 3.4rem); line-height: 1.1; }
+body .cn-quest-hero__body,
+body .cn-daily { min-height: 0; }
+
+/* The reward is the prize, so it gets the card's spare height: goal on top, prize in the
+   middle, meter on the floor. */
+body .cn-daily__reward {
+  order: 2;
+  margin: auto 0;
+  padding-block: 16px;
+  font-family: var(--cn-font-display);
+  font-size: clamp(1.6rem, 1.2rem + 1vw, 2.2rem);
+  font-weight: 400;
+  color: #15100a;
+}
+body .cn-daily__meter { order: 3; margin-top: 0; }
+
+@media (max-width: 575.98px) {
+  body .cn-status__cell { column-gap: 10px; padding: 12px; }
+  body .cn-status__cell i { width: 34px; height: 34px; font-size: 1rem; }
+  body .cn-status__value { font-size: 1.1rem; white-space: nowrap; }
+  body .cn-status__meta { font-size: 0.62rem; }
+}
+
+/* Buttons never wrap; on phones the world-map header stacks so its button keeps one line. */
+body .cn-dash .btn { white-space: nowrap; }
+
+@media (max-width: 575.98px) {
+  body .cn-journey .cn-panel__head { flex-direction: column; align-items: flex-start; gap: 14px; }
+}
+
+body .cn-journey__icon { display: grid; place-items: center; }
+body .cn-journey__icon i { font-size: 1.35rem; line-height: 1; }

@@ -1,9 +1,8 @@
 /**
  * Landing page.
  *
- * The job is to show the product, not describe it. The first viewport carries a real question
- * card built in the game's own visual language, with XP and a streak on it, so a visitor sees
- * what playing looks like before reading a word of prose.
+ * The job is to show the product, not describe it. The first viewport carries the quest route:
+ * a real syllabus mission moving across a network topology towards its unit gateway.
  *
  * Section rhythm alternates surface so the page has shape without every block sitting on the
  * same grid.
@@ -15,6 +14,7 @@ import { UNITS } from '@/data/index';
 import { escapeHtml, qs } from '@/utils/dom';
 import { beginGuestSession } from '@/state/session';
 import { showToast } from '@/components/toast';
+import { vgaSceneSvg } from '@/components/vga-scene';
 import { navigate } from '@/router';
 import '@/styles/landing.css';
 
@@ -32,78 +32,59 @@ const PROOF = [
 // ---------------------------------------------------------------- hero
 
 /**
- * A real question card, in the same visual language the quiz renders.
- *
- * Showing the product beats describing it, and keeping the preview inside the product's own
- * design language means it cannot drift far from what a round actually looks like.
+ * The route board is the product's signature object. It uses real syllabus topics and real
+ * challenge metadata, but no invented player score or progress.
  */
 function previewHtml(): string {
-  const options = [
-    { key: 'A', text: 'Switch', state: '' },
-    { key: 'B', text: 'Router', state: 'correct' },
-    { key: 'C', text: 'Hub', state: '' },
-    { key: 'D', text: 'Repeater', state: '' },
-  ];
-
   return `
-    <div class="cn-preview cn-rise cn-rise-3" role="img"
-         aria-label="A Quiz Blitz question asking which device forwards packets between networks, with Router marked correct, a three answer streak and thirty XP earned">
+    <div class="cn-preview cn-rise cn-rise-3" data-ui role="img"
+         aria-label="The Foundations and Reference Models quest route, from Network Basics through the OSI gateway">
       <div class="cn-preview__bar">
-        <span class="cn-preview__mode">Quiz Blitz</span>
-        <span class="cn-preview__fields">
-          <span class="cn-preview__streak"><i class="bi bi-lightning-charge-fill" aria-hidden="true"></i>3</span>
-          <span class="cn-preview__xp">+30 XP</span>
-        </span>
+        <div>
+          <span class="cn-preview__mode">World 1</span>
+          <strong>Foundations &amp; Reference Models</strong>
+        </div>
+        <span class="cn-preview__signal"><i class="bi bi-broadcast-pin" aria-hidden="true"></i> Route online</span>
       </div>
 
-      <div class="cn-preview__body">
-        <p class="cn-preview__count">Question 3 of 10</p>
-        <p class="cn-preview__q">Which device forwards packets between networks?</p>
+      <div class="cn-preview__map cn-vga-world">
+        ${vgaSceneSvg()}
 
-        <div class="cn-preview__options">
-          ${options
-            .map(
-              (option) => `
-                <div class="cn-preview__option"${option.state ? ` data-state="${option.state}"` : ''}>
-                  <span class="cn-preview__key">${option.key}</span>
-                  <span>${escapeHtml(option.text)}</span>
-                  ${option.state === 'correct' ? '<i class="bi bi-check-lg" aria-hidden="true"></i>' : ''}
-                </div>`,
-            )
-            .join('')}
+        <div class="cn-preview__node" style="--x:8%;--y:68%" data-state="start">
+          <i class="bi bi-pc-display-horizontal" aria-hidden="true"></i>
+          <span>Network Basics</span>
+        </div>
+        <div class="cn-preview__node" style="--x:31%;--y:57%" data-state="available">
+          <i class="bi bi-diagram-3" aria-hidden="true"></i>
+          <span>Topologies</span>
+        </div>
+        <div class="cn-preview__node" style="--x:51%;--y:48%" data-state="current">
+          <i class="bi bi-layers" aria-hidden="true"></i>
+          <span>OSI Model</span>
+        </div>
+        <div class="cn-preview__node" style="--x:67%;--y:40%" data-state="available">
+          <i class="bi bi-arrow-left-right" aria-hidden="true"></i>
+          <span>TCP/IP Model</span>
+        </div>
+        <div class="cn-preview__gateway" style="--x:84%;--y:28%">
+          <i class="bi bi-shield-shaded" aria-hidden="true"></i>
+          <span>OSI Guardian</span>
+          <small>Unit gateway</small>
         </div>
       </div>
+
+      <div class="cn-preview__mission">
+        <div>
+          <span>Current mission</span>
+          <strong>OSI Model</strong>
+        </div>
+        <dl>
+          <div><dt>Lesson</dt><dd>12 min</dd></div>
+          <div><dt>Challenge</dt><dd>12 questions</dd></div>
+          <div><dt>Reward</dt><dd>+100 XP</dd></div>
+        </dl>
+      </div>
     </div>
-  `;
-}
-
-/** The packet route, small, sitting under the preview card. */
-function routeHtml(): string {
-  const nodes = [
-    { x: 30, label: 'Host' },
-    { x: 150, label: 'Switch' },
-    { x: 270, label: 'Router' },
-    { x: 390, label: 'Server' },
-  ];
-
-  return `
-    <svg class="cn-route" viewBox="0 0 420 70" aria-hidden="true">
-      <line class="cn-route__line" x1="30" y1="40" x2="390" y2="40" />
-
-      ${nodes
-        .map(
-          (node) => `
-            <g>
-              <circle class="cn-route__node" cx="${node.x}" cy="40" r="7" />
-              <text class="cn-route__label" x="${node.x}" y="62" text-anchor="middle">${node.label}</text>
-            </g>`,
-        )
-        .join('')}
-
-      <circle class="cn-route__packet" r="5">
-        <animateMotion dur="5s" repeatCount="indefinite" path="M30,40 L390,40" />
-      </circle>
-    </svg>
   `;
 }
 
@@ -113,23 +94,22 @@ function heroHtml(): string {
       <div class="cn-container cn-hero__grid">
         <div class="cn-hero__copy">
           <h1 class="cn-hero__title cn-rise cn-rise-1" id="hero-heading">
-            Learn Computer Networks.
-            <span>Play your way through them.</span>
+            Network Quest
+            <span>Starts here</span>
           </h1>
 
           <p class="cn-hero__lead cn-rise cn-rise-2">
-            Short lessons, six challenge modes, and mastery tracked topic by topic.
+            Explore concepts, complete challenges, defeat network bosses, and level up your knowledge.
           </p>
 
           <div class="cn-hero__actions cn-rise cn-rise-2">
-            <a class="btn btn-cn-primary btn-lg" href="#/register">Start your first quest</a>
-            <button class="btn btn-cn-ghost" type="button" id="${GUEST_BTN_ID}">Try without an account</button>
+            <a class="btn btn-cn-primary btn-lg" href="#/register">Start your quest</a>
+            <button class="btn btn-cn-ghost" type="button" id="${GUEST_BTN_ID}">Play as guest</button>
           </div>
         </div>
 
         <div class="cn-hero__stage">
           ${previewHtml()}
-          ${routeHtml()}
         </div>
       </div>
     </section>
@@ -198,11 +178,11 @@ function modesHtml(): string {
   return `
     <section class="cn-section cn-modes" id="games" aria-labelledby="modes-heading">
       <div class="cn-container">
-        <h2 class="cn-section__title" id="modes-heading">Revision that is not another lecture</h2>
+        <h2 class="cn-section__title" id="modes-heading">Play the syllabus</h2>
         <p class="cn-section__lead">Six ways to practise the same syllabus. Pick whichever suits the hour you have.</p>
 
         <div class="cn-modes__grid">
-          <article class="cn-modes__card cn-modes__card--wide" data-tone="mastered">
+          <article class="cn-modes__card cn-modes__card--wide" data-ui data-tone="mastered">
             <h3>Match &amp; Pair</h3>
             <p>Connect protocols, ports, devices and layers before the board clears.</p>
 
@@ -220,29 +200,29 @@ function modesHtml(): string {
             </div>
           </article>
 
-          <article class="cn-modes__card" data-tone="special">
+          <article class="cn-modes__card" data-ui data-tone="special">
             <h3>Boss Battle</h3>
             <p>The Firewall Guardian and the Subnet Overlord lose HP for every right answer.</p>
             <div class="cn-mini__hp"><span style="width:62%"></span></div>
           </article>
 
-          <article class="cn-modes__card" data-tone="xp">
+          <article class="cn-modes__card" data-ui data-tone="xp">
             <h3>Rapid Fire</h3>
             <p>Sixty seconds. Answer as many as you can.</p>
             <p class="cn-mini__clock">0:42</p>
           </article>
 
-          <article class="cn-modes__card" data-tone="accent">
+          <article class="cn-modes__card" data-ui data-tone="accent">
             <h3>Quiz Blitz</h3>
             <p>Ten questions, twenty seconds each, explained as you go.</p>
           </article>
 
-          <article class="cn-modes__card">
+          <article class="cn-modes__card" data-ui>
             <h3>Network Riddles</h3>
             <p>Name the protocol from a clue. Hints cost XP.</p>
           </article>
 
-          <article class="cn-modes__card">
+          <article class="cn-modes__card" data-ui>
             <h3>Word Hunt</h3>
             <p>Find networking terms hidden in a generated grid.</p>
             <div class="cn-mini__letters">
@@ -264,7 +244,7 @@ function journeyHtml(): string {
   return `
     <section class="cn-section cn-syllabus" id="syllabus" aria-labelledby="syllabus-heading">
       <div class="cn-container">
-        <h2 class="cn-section__title" id="syllabus-heading">A syllabus that reads as progression</h2>
+        <h2 class="cn-section__title" id="syllabus-heading">Six network worlds</h2>
         <p class="cn-section__lead">
           The whole ${escapeHtml(APP.subject)} paper, split into quests you finish one at a time.
         </p>
@@ -274,7 +254,7 @@ function journeyHtml(): string {
             (unit, index) => `
               <li class="cn-syllabus__unit" data-state="${index === 0 ? 'current' : 'ahead'}">
                 <span class="cn-syllabus__node" aria-hidden="true"></span>
-                <span class="cn-syllabus__num">${String(unit.number).padStart(2, '0')}</span>
+                <span class="cn-syllabus__num">${unit.number}</span>
                 <span class="cn-syllabus__name">${escapeHtml(unit.title)}</span>
               </li>`,
           ).join('')}
@@ -297,7 +277,7 @@ function bossHtml(): string {
     <section class="cn-section cn-boss-band" aria-labelledby="boss-heading">
       <div class="cn-container cn-boss-band__grid">
         <div>
-          <h2 class="cn-section__title" id="boss-heading">Think you know the topic? Fight the boss.</h2>
+          <h2 class="cn-section__title" id="boss-heading">Face the network bosses</h2>
           <p class="cn-section__lead">
             Three bosses guard the harder units. Right answers take their HP down, wrong ones
             take yours. Running out of questions counts as a defeat, so there is no farming it.
@@ -306,7 +286,7 @@ function bossHtml(): string {
           <a class="btn btn-cn-primary mt-4" href="#/register">Challenge the boss</a>
         </div>
 
-        <article class="cn-bosscard">
+        <article class="cn-bosscard" data-ui>
           <div class="cn-bosscard__sigil" aria-hidden="true">
             <svg viewBox="0 0 120 120">
               <path class="cn-bosscard__shield" d="M60 10 L104 28 V62 C104 88 84 104 60 112 C36 104 16 88 16 62 V28 Z" />
@@ -370,7 +350,7 @@ function progressionHtml(): string {
     <section class="cn-section cn-mastery" aria-labelledby="mastery-heading">
       <div class="cn-container cn-mastery__grid">
         <div class="cn-mastery__copy">
-          <h2 class="cn-section__title" id="mastery-heading">Know what you have actually mastered</h2>
+          <h2 class="cn-section__title" id="mastery-heading">See what you mastered</h2>
           <p class="cn-section__lead">
             Every answer moves one topic. Mastery is tracked per topic, so revision goes where
             it is needed instead of wherever you left off.
@@ -392,7 +372,7 @@ function progressionHtml(): string {
           </ul>
         </div>
 
-        <div class="cn-mastery__panel">
+        <div class="cn-mastery__panel" data-ui>
           <div class="cn-mastery__level">
             <span class="cn-mastery__lvl">Level 4</span>
             <span class="cn-mastery__title">Packet Explorer</span>
@@ -446,7 +426,7 @@ function whyHtml(): string {
   return `
     <section class="cn-section cn-why" aria-labelledby="why-heading">
       <div class="cn-container">
-        <h2 class="cn-section__title" id="why-heading">Built for the week before the exam</h2>
+        <h2 class="cn-section__title" id="why-heading">Ready for exam week</h2>
 
         <div class="cn-why__grid">
           ${reasons

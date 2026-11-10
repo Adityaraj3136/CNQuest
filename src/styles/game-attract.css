@@ -1,0 +1,168 @@
+/*
+ * Game-mode cards: attract mode.
+ *
+ * Each card's preview loops a few seconds of its own game, the way an arcade cabinet demos
+ * itself, so the card shows how the mode plays instead of sitting there like a screenshot.
+ * Motion sticks to transform, opacity, clip-path and small colour swaps, and all of it stops
+ * under prefers-reduced-motion.
+ */
+
+/* Quiz Blitz: the cursor scans A, then B, locks C, and C turns green. ------------------ */
+
+body .cn-mode__quiz-question span { background: #12306a; color: #c9d5e8; }
+
+body .cn-mode__quiz-question span:nth-of-type(1),
+body .cn-mode__quiz-question span:nth-of-type(2) { animation: cn-quiz-scan 4s steps(1, end) infinite; }
+body .cn-mode__quiz-question span:nth-of-type(2) { animation-delay: 0.4s; }
+body .cn-mode__quiz-question span.is-answer { animation: cn-quiz-lock 4s steps(1, end) infinite; }
+
+@keyframes cn-quiz-scan {
+  0% { background: #12306a; color: #c9d5e8; }
+  4% { background: #2f5fc4; color: #fffef1; }
+  12% { background: #12306a; color: #c9d5e8; }
+}
+
+@keyframes cn-quiz-lock {
+  0% { background: #12306a; color: #c9d5e8; }
+  30% { background: var(--vga-gold); color: #111522; }
+  48% { background: var(--vga-green); color: #0b1b12; }
+  90% { background: #12306a; color: #c9d5e8; }
+}
+
+/* Rapid Fire: the clock really counts down. The number is a registered integer property
+   rendered through a CSS counter, so no script ticks while the page is open. ----------- */
+
+@property --cn-sec {
+  syntax: '<integer>';
+  inherits: false;
+  initial-value: 42;
+}
+
+body .cn-mode__timer {
+  position: relative;
+  color: transparent;
+  text-shadow: none;
+  counter-reset: cn-sec var(--cn-sec);
+  animation: cn-countdown 60s linear infinite;
+}
+
+body .cn-mode__timer::after {
+  content: "00:" counter(cn-sec, decimal-leading-zero);
+  position: absolute;
+  inset: 0;
+  color: #17100a;
+  text-shadow: var(--px-text-shadow);
+}
+
+@keyframes cn-countdown {
+  from { --cn-sec: 59; }
+  to { --cn-sec: 0; }
+}
+
+body .cn-mode__pulse { animation: cn-blink 1s steps(2, jump-none) infinite; }
+
+@keyframes cn-blink {
+  from { opacity: 1; }
+  to { opacity: 0.25; }
+}
+
+/* Boss Battle: three hits land, the shield flinches, the HP bar drops a chunk each time. */
+
+body .cn-mode__visual--boss > div b {
+  transform-origin: left center;
+  animation: cn-boss-hp 4.8s steps(1, end) infinite;
+}
+
+body .cn-mode__visual--boss > i { animation: cn-boss-hit 4.8s linear infinite; }
+
+@keyframes cn-boss-hp {
+  0% { transform: scaleX(1); }
+  18% { transform: scaleX(0.78); }
+  43% { transform: scaleX(0.53); }
+  68% { transform: scaleX(0.28); }
+  92% { transform: scaleX(1); }
+}
+
+@keyframes cn-boss-hit {
+  0%, 16%, 22%, 41%, 47%, 66%, 72%, 100% { transform: none; opacity: 1; }
+  18%, 43%, 68% { transform: translateX(-6px); opacity: 0.55; }
+  20%, 45%, 70% { transform: translateX(5px); opacity: 1; }
+}
+
+/* Match & Pair: a packet runs across each row, then the pair locks in. ----------------- */
+
+body .cn-mode__visual--match i { animation: cn-link-dot 3.2s steps(1, end) infinite; }
+body .cn-mode__visual--match i:nth-of-type(2) { animation-delay: 0.25s; }
+body .cn-mode__visual--match i:nth-of-type(3) { animation-delay: 1.6s; }
+body .cn-mode__visual--match i:nth-of-type(4) { animation-delay: 1.85s; }
+
+body .cn-mode__visual--match span { animation: cn-link-pair 3.2s steps(1, end) infinite; }
+body .cn-mode__visual--match span:nth-of-type(3),
+body .cn-mode__visual--match span:nth-of-type(4) { animation-delay: 1.6s; }
+
+@keyframes cn-link-dot {
+  0% { opacity: 0.2; transform: scale(0.6); }
+  8% { opacity: 1; transform: scale(1.25); }
+  45% { opacity: 0.2; transform: scale(0.6); }
+}
+
+@keyframes cn-link-pair {
+  0% { border-color: #2b5d4b; background: #0b1d17; color: #b9e8d0; }
+  16% { border-color: var(--vga-green); background: #145c3f; color: #fffef1; }
+  45% { border-color: #2b5d4b; background: #0b1d17; color: #b9e8d0; }
+}
+
+/* Network Riddles: the clue types itself out, then waits for an answer. --------------- */
+
+body .cn-mode__visual.cn-mode__visual--riddle b {
+  justify-self: start;
+  width: max-content;
+  max-width: 100%;
+  overflow: hidden;
+  font-family: var(--cn-font-pixel);
+  white-space: nowrap;
+  animation: cn-type 5s steps(32, end) infinite;
+}
+
+body .cn-mode__visual--riddle b::after {
+  content: "_";
+  animation: cn-blink 0.8s steps(2, jump-none) infinite;
+}
+
+@keyframes cn-type {
+  0% { clip-path: inset(0 100% 0 0); }
+  55%, 100% { clip-path: inset(0 0 0 0); }
+}
+
+/* Word Search: the hidden word lights up one letter at a time along its diagonal. ------- */
+
+body .cn-mode__visual--words span.is-found {
+  animation: cn-word-find 3.6s steps(1, end) infinite backwards;
+  animation-delay: calc(var(--i) * 0.09s);
+}
+
+@keyframes cn-word-find {
+  0% { border-color: #33476b; background: #101727; color: #c9d5e8; }
+  12% { border-color: var(--vga-gold); background: var(--vga-gold); color: #111522; }
+  88% { border-color: #33476b; background: #101727; color: #c9d5e8; }
+}
+
+/* Reduced motion: every preview holds its finished frame. ------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  body .cn-mode__quiz-question span,
+  body .cn-mode__timer,
+  body .cn-mode__pulse,
+  body .cn-mode__visual--boss > div b,
+  body .cn-mode__visual--boss > i,
+  body .cn-mode__visual--match i,
+  body .cn-mode__visual--match span,
+  body .cn-mode__visual--riddle b,
+  body .cn-mode__visual--riddle b::after,
+  body .cn-mode__visual--words span.is-found { animation: none; }
+
+  body .cn-mode__quiz-question span.is-answer { background: var(--vga-green); color: #0b1b12; }
+  body .cn-mode__timer { color: #17100a; text-shadow: var(--px-text-shadow); }
+  body .cn-mode__timer::after { content: none; }
+  body .cn-mode__visual--words span.is-found { background: var(--vga-gold); color: #111522; }
+}

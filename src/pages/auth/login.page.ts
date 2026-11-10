@@ -83,7 +83,7 @@ const loginPage: Page = {
       footerHtml: 'New to CN Quest? <a href="#/register">Create an account</a>',
       asideTitle: 'Your streak is waiting',
       asideText:
-        'Pick up your XP, streak and topic mastery exactly where you left them — on any device you sign in from.',
+        'Pick up your XP, streak and topic mastery exactly where you left them, on any device you sign in from.',
       perks: [
         'Progress synced to your account',
         'Daily streaks and level titles',

@@ -20,12 +20,12 @@ const ROOT_ID = 'cn-dashboard-root';
 
 /** Game modes shown as launch tiles. Locked ones stay visible and say when they arrive. */
 const MODES = [
-  { icon: 'bi-lightning-charge', name: 'Quiz Blitz', href: '#/games/quiz', note: '10 questions' },
-  { icon: 'bi-stopwatch', name: 'Rapid Fire', href: '#/games/rapid-fire', note: '60 seconds' },
-  { icon: 'bi-shield-shaded', name: 'Boss Battle', href: '#/games/boss', note: 'HP duel' },
-  { icon: 'bi-puzzle', name: 'Match & Pair', href: '#/games/matching', note: 'Tap to pair' },
-  { icon: 'bi-question-diamond', name: 'Riddles', href: '#/games/riddles', note: '5 riddles' },
-  { icon: 'bi-grid-3x3', name: 'Word Search', href: '#/games/word-search', note: 'Find words' },
+  { icon: 'bi-lightning-charge', name: 'Quiz Blitz', href: '#/games/quiz', note: '10 questions', tone: 'quiz' },
+  { icon: 'bi-stopwatch', name: 'Rapid Fire', href: '#/games/rapid-fire', note: '60 seconds', tone: 'rapid' },
+  { icon: 'bi-shield-shaded', name: 'Boss Battle', href: '#/games/boss', note: 'HP duel', tone: 'boss' },
+  { icon: 'bi-puzzle', name: 'Match & Pair', href: '#/games/matching', note: 'Tap to pair', tone: 'match' },
+  { icon: 'bi-question-diamond', name: 'Riddles', href: '#/games/riddles', note: '5 riddles', tone: 'riddle' },
+  { icon: 'bi-grid-3x3', name: 'Word Search', href: '#/games/word-search', note: 'Find words', tone: 'words' },
 ] as const;
 
 /**
@@ -42,7 +42,7 @@ function continueQuestHtml(data: DashboardData): string {
   if (!topic) {
     return `
       <section class="cn-quest-hero cn-quest-hero--empty cn-rise cn-rise-1">
-        <p class="cn-quest-hero__eyebrow">Your first quest is waiting</p>
+        <p class="cn-quest-hero__eyebrow">Your next mission</p>
         <h1 class="cn-quest-hero__title">Enter the Network</h1>
         <p class="cn-quest-hero__meta">
           Start with Introduction to Computer Networks and begin building your map of the subject.
@@ -59,7 +59,7 @@ function continueQuestHtml(data: DashboardData): string {
   return `
     <section class="cn-quest-hero cn-rise cn-rise-1" aria-labelledby="cn-quest-hero-title">
       <div class="cn-quest-hero__body">
-        <p class="cn-quest-hero__eyebrow">${resuming ? 'Continue your quest' : 'Recommended next'}</p>
+        <p class="cn-quest-hero__eyebrow">Your next mission · ${resuming ? 'In progress' : 'Recommended'}</p>
         <h1 class="cn-quest-hero__title" id="cn-quest-hero-title">${escapeHtml(topic.title)}</h1>
         <p class="cn-quest-hero__meta">
           ${escapeHtml(topic.estimatedMinutes ? `${topic.estimatedMinutes} min read` : 'Short read')}
@@ -135,19 +135,33 @@ function statusRowHtml(data: DashboardData): string {
   `;
 }
 
-function courseProgressHtml(data: DashboardData): string {
+function journeyHtml(data: DashboardData): string {
   return `
-    <section class="cn-course cn-rise cn-rise-3" aria-label="Overall course progress">
-      <div class="cn-course__head">
-        <span class="cn-label cn-label--marked">Computer Networks</span>
-        <span class="cn-course__value">${data.overallCompletion}<small>%</small></span>
+    <section class="cn-journey cn-rise cn-rise-3" aria-labelledby="cn-journey-title">
+      <div class="cn-panel__head">
+        <div>
+          <h2 class="cn-journey__title" id="cn-journey-title">Network world map</h2>
+          <p class="cn-journey__lead">${data.topicsStarted} of ${data.topicsTotal} topics started. Master every world to secure the network.</p>
+        </div>
+        <a class="btn btn-cn-ghost btn-sm" href="#/learn">Open quest map</a>
       </div>
-      <div class="cn-progress cn-progress--accent">
-        <div class="cn-progress__bar" style="width:${data.overallCompletion}%"></div>
-      </div>
-      <p class="cn-course__meta">
-        ${data.topicsStarted} of ${data.topicsTotal} topics started · mastery averaged across the syllabus
-      </p>
+      <ol class="cn-journey__route">
+        ${data.journey
+          .map(
+            ({ unit, mastery, completed, total, state }) => `
+              <li class="cn-journey__node" data-state="${state}">
+                <a href="#/learn" aria-label="${escapeHtml(unit.title)}, ${mastery}% mastery">
+                  <span class="cn-journey__icon" aria-hidden="true">
+                    <i class="bi ${state === 'mastered' ? 'bi-check-lg' : escapeHtml(unit.icon)}"></i>
+                  </span>
+                  <span class="cn-journey__world">World ${unit.number}</span>
+                  <strong>${escapeHtml(unit.title)}</strong>
+                  <span>${completed}/${total} quests · ${mastery}% mastery</span>
+                </a>
+              </li>`,
+          )
+          .join('')}
+      </ol>
     </section>
   `;
 }
@@ -204,7 +218,7 @@ function modesHtml(): string {
       <div class="cn-modes">
         ${MODES.map(
           (mode) => `
-            <a class="cn-mode-tile" href="${mode.href}">
+            <a class="cn-mode-tile" href="${mode.href}" data-tone="${mode.tone}">
               <i class="bi ${mode.icon}" aria-hidden="true"></i>
               <span class="cn-mode-tile__name">${escapeHtml(mode.name)}</span>
               <span class="cn-mode-tile__note">${escapeHtml(mode.note)}</span>
@@ -220,9 +234,10 @@ function weakTopicsHtml(data: DashboardData): string {
     return `
       <section>
         <span class="cn-label cn-label--marked">Topics to practise</span>
-        <p class="cn-ink-soft mt-3" style="font-size: var(--cn-text-sm)">
-          Play a few rounds and your weakest topics will be listed here.
-        </p>
+        <div class="cn-empty">
+          <i class="bi bi-crosshair" aria-hidden="true"></i>
+          <p>Play a few rounds and your weakest topics will be listed here.</p>
+        </div>
       </section>
     `;
   }
@@ -260,9 +275,10 @@ function achievementsHtml(data: DashboardData): string {
       </div>
       ${
         data.recentAchievements.length === 0
-          ? `<p class="cn-ink-soft mt-3" style="font-size: var(--cn-text-sm)">
-               No badges yet — finishing your first round unlocks one.
-             </p>`
+          ? `<div class="cn-empty">
+               <i class="bi bi-trophy" aria-hidden="true"></i>
+               <p>No badges yet. Finishing your first round unlocks one.</p>
+             </div>`
           : `<div class="cn-badge-strip">
                ${data.recentAchievements
                  .map(
@@ -284,7 +300,7 @@ function guestNoticeHtml(): string {
     <div class="cn-notice cn-notice--reward mt-5">
       <i class="bi bi-person-badge" aria-hidden="true"></i>
       <span>
-        Guest mode — XP, levels and progress are stored on this device only.
+        Guest mode: XP, levels and progress are stored on this device only.
         <a href="#/register">Create an account</a> to keep them anywhere.
       </span>
     </div>
@@ -296,7 +312,7 @@ function bodyHtml(data: DashboardData, isGuest: boolean): string {
     ${continueQuestHtml(data)}
     ${statusRowHtml(data)}
 
-    ${courseProgressHtml(data)}
+    ${journeyHtml(data)}
     ${nextUpHtml(data)}
     ${modesHtml()}
 
