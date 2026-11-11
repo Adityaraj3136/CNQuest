@@ -17,6 +17,8 @@ export const BASE_XP = {
   bossVictory: 100,
   packetHopCorrect: 8,
   packetDelivered: 60,
+  dashGateCorrect: 6,
+  dashPer1000Points: 5,
   firstDailyActivity: 20,
 } as const;
 

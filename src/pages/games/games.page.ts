@@ -1,5 +1,5 @@
 /**
- * Games hub — the seven modes.
+ * Games hub — the eight modes.
  * Quiz Blitz is playable from Phase 4; the rest unlock in Phase 7 and say so plainly.
  */
 
@@ -26,6 +26,16 @@ interface GameCard {
 }
 
 const GAMES: readonly GameCard[] = [
+  {
+    icon: 'bi-rocket-takeoff',
+    title: 'Packet Dash',
+    description: 'Endless 3D runner. Swipe through the right port, layer or subnet gate and dodge firewalls.',
+    href: '#/games/packet-dash',
+    note: 'New · arcade',
+    tone: 'xp',
+    format: '3D runner · endless · beat your best',
+    cta: 'Run',
+  },
   {
     icon: 'bi-send',
     title: 'Packet Runner',
@@ -122,6 +132,14 @@ function cardHtml(game: GameCard, topicQuery: string): string {
 }
 
 function modeVisualHtml(title: string, icon: string): string {
+  if (title === 'Packet Dash') {
+    return `<div class="cn-mode__visual cn-mode__visual--dash" aria-hidden="true">
+      <div class="cn-mode__dash-road"><i></i><i></i></div>
+      <span class="cn-mode__dash-gate">53</span><span class="cn-mode__dash-gate is-right">443</span><span class="cn-mode__dash-gate">22</span>
+      <b class="cn-mode__dash-packet"></b>
+      <small>HTTPS → port?</small>
+    </div>`;
+  }
   if (title === 'Packet Runner') {
     return `<div class="cn-mode__visual cn-mode__visual--packet" aria-hidden="true">
       <svg viewBox="0 0 240 140" preserveAspectRatio="xMidYMid meet">
@@ -174,7 +192,7 @@ const gamesPage: Page = {
           <header class="cn-games__head cn-rise cn-rise-1">
             <h1 class="cn-games__title">Choose a game mode</h1>
             <p class="cn-games__sub" data-role="lead">
-              Seven ways to practise the same syllabus. Every one earns XP and moves your mastery.
+              Eight ways to practise the same syllabus. Every one earns XP and moves your mastery.
             </p>
           </header>
           <div class="cn-mode-grid cn-rise cn-rise-2" data-role="grid"></div>

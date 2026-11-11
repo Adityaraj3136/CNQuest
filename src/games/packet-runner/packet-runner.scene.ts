@@ -4,9 +4,8 @@
  * Built to run on anything with WebGL, including low-end phones:
  * - Unlit MeshBasicMaterial plus additive "glow" shells instead of post-processing bloom.
  * - Shared geometries and cached materials; ~30 meshes on screen at most.
- * - Pixel ratio capped at 2, and dropped to 1 if the first seconds run under 40 fps.
- * - The render loop stops while the tab is hidden, and the GL context is released on dispose,
- *   so replaying many runs never hits the browser's context limit.
+ * - Pixel ratio, resizing, context loss and teardown come from the shared three-stage.
+ * - The render loop stops while the tab is hidden.
  * - Taps are picked through large invisible hit spheres; the page also offers plain buttons,
  *   so the 3D targets are a convenience, never the only way to play.
  *
@@ -15,6 +14,7 @@
  */
 
 import * as THREE from 'three';
+import { createThreeStage, glowTexture, labelTexture } from '@/games/shared/three-stage';
 
 export type SendOutcome = 'forward' | 'bounce' | 'deliver';
 
@@ -41,8 +41,6 @@ const CAMERA_OFFSET = new THREE.Vector3(0, 6.5, 7.5);
 const LOOK_AHEAD = new THREE.Vector3(0, 0, -3);
 const TAP_MAX_MOVE_PX = 10;
 const TAP_MAX_MS = 600;
-const LOW_FPS = 40;
-const FPS_SAMPLE_MS = 2500;
 const UP = new THREE.Vector3(0, 1, 0);
 
 const NEON_ROUTER = 0x8b5cf6;
@@ -72,70 +70,24 @@ function easeInOut(t: number): number {
   return t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
 }
 
-function labelTexture(text: string, color: string): THREE.CanvasTexture {
-  const canvas = document.createElement('canvas');
-  canvas.width = 256;
-  canvas.height = 96;
-  const ctx = canvas.getContext('2d')!;
-  ctx.fillStyle = 'rgba(6, 8, 12, 0.85)';
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 6;
-  ctx.beginPath();
-  ctx.roundRect(6, 6, 244, 84, 18);
-  ctx.fill();
-  ctx.stroke();
-  ctx.fillStyle = color;
-  ctx.font = 'bold 48px "Share Tech Mono", ui-monospace, monospace';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(text, 128, 50);
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  return texture;
-}
-
-function glowTexture(): THREE.CanvasTexture {
-  const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = 64;
-  const ctx = canvas.getContext('2d')!;
-  const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
-  gradient.addColorStop(0, 'rgba(255,255,255,1)');
-  gradient.addColorStop(0.3, 'rgba(255,255,255,0.45)');
-  gradient.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, 64, 64);
-  return new THREE.CanvasTexture(canvas);
-}
-
 /** Throws when WebGL is unavailable; the page catches that and plays without the 3D view. */
 export function createPacketScene(host: HTMLElement, options: PacketSceneOptions): PacketScene {
-  const lowDpr = window.devicePixelRatio < 2;
-  const renderer = new THREE.WebGLRenderer({
-    antialias: lowDpr, // high-DPR screens are sharp enough without paying for MSAA
-    alpha: false,
-    powerPreference: 'low-power',
+  const stage = createThreeStage(host, {
+    clearColor: 0x05060a,
+    fog: { near: 14, far: 34 },
+    fov: { landscape: 55, portrait: 72 }, // portrait needs a wider view or outer branches clip
+    far: 80,
   });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.setClearColor(0x05060a);
-  const canvas = renderer.domElement;
-  canvas.className = 'cn-pr__canvas';
-  canvas.setAttribute('aria-hidden', 'true'); // the panel carries every piece of information
-  host.appendChild(canvas);
-
-  const scene = new THREE.Scene();
-  scene.fog = new THREE.Fog(0x05060a, 14, 34);
-  const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 80);
+  const { renderer, scene, camera, canvas, keep } = stage;
+  canvas.className = 'cn-pr__canvas'; // aria-hidden: the panel carries every piece of information
 
   const grid = new THREE.GridHelper(400, 200, 0x3b1d6e, 0x1a1033);
   grid.position.y = -0.6;
   scene.add(grid);
+  keep(grid.geometry);
+  keep(grid.material as THREE.Material);
 
   // ---- shared resources
-  const disposables: { dispose(): void }[] = [];
-  const keep = <T extends { dispose(): void }>(item: T): T => {
-    disposables.push(item);
-    return item;
-  };
   const routerGeo = keep(new THREE.OctahedronGeometry(0.6, 0));
   const routerEdges = keep(new THREE.EdgesGeometry(routerGeo));
   const hitGeo = keep(new THREE.SphereGeometry(1.3, 8, 6));
@@ -372,45 +324,13 @@ export function createPacketScene(host: HTMLElement, options: PacketSceneOptions
   canvas.addEventListener('pointerup', onPointerUp);
   canvas.addEventListener('pointermove', onPointerMove);
 
-  // A lost context (GPU reset, backgrounded tab on mobile) is restored by three on its own
-  // only if the default "lose it for good" behaviour is cancelled.
-  const onContextLost = (event: Event): void => event.preventDefault();
-  canvas.addEventListener('webglcontextlost', onContextLost);
-
-  // ---- sizing
-  function resize(): void {
-    const width = Math.max(1, host.clientWidth);
-    const height = Math.max(1, host.clientHeight);
-    renderer.setSize(width, height, false);
-    camera.aspect = width / height;
-    // Portrait phones need a wider view or the outer branches fall off screen.
-    camera.fov = camera.aspect < 1 ? 72 : 55;
-    camera.updateProjectionMatrix();
-  }
-  const resizeObserver = new ResizeObserver(resize);
-  resizeObserver.observe(host);
-  resize();
-
   // ---- loop
   const clock = new THREE.Clock();
-  let sampleFrames = 0;
-  let sampleMs = 0;
-  let sampled = false;
 
   function tick(): void {
     const dt = Math.min(clock.getDelta(), 0.1);
 
-    if (!sampled) {
-      sampleFrames += 1;
-      sampleMs += dt * 1000;
-      if (sampleMs >= FPS_SAMPLE_MS) {
-        sampled = true;
-        if ((sampleFrames * 1000) / sampleMs < LOW_FPS && renderer.getPixelRatio() > 1) {
-          renderer.setPixelRatio(1);
-          resize();
-        }
-      }
-    }
+    stage.sampleFrame(dt);
 
     for (let i = tweens.length - 1; i >= 0; i -= 1) {
       const active = tweens[i];
@@ -459,19 +379,12 @@ export function createPacketScene(host: HTMLElement, options: PacketSceneOptions
     dispose() {
       renderer.setAnimationLoop(null);
       document.removeEventListener('visibilitychange', onVisibility);
-      resizeObserver.disconnect();
       canvas.removeEventListener('pointerdown', onPointerDown);
       canvas.removeEventListener('pointerup', onPointerUp);
       canvas.removeEventListener('pointermove', onPointerMove);
-      canvas.removeEventListener('webglcontextlost', onContextLost);
       tweens.forEach((t) => t.done());
       tweens.length = 0;
-      disposables.forEach((item) => item.dispose());
-      grid.geometry.dispose();
-      (grid.material as THREE.Material).dispose();
-      renderer.dispose();
-      renderer.forceContextLoss(); // frees the context now, not whenever GC gets round to it
-      canvas.remove();
+      stage.dispose();
     },
   };
 }

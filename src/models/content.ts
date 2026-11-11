@@ -17,7 +17,8 @@ export type GameType =
   | 'matching'
   | 'riddle'
   | 'word-search'
-  | 'packet-runner';
+  | 'packet-runner'
+  | 'packet-dash';
 
 export const GAME_TYPES: readonly GameType[] = [
   'quiz',
@@ -27,6 +28,7 @@ export const GAME_TYPES: readonly GameType[] = [
   'riddle',
   'word-search',
   'packet-runner',
+  'packet-dash',
 ];
 
 export const DIFFICULTIES: readonly Difficulty[] = ['easy', 'medium', 'hard'];

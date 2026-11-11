@@ -145,6 +145,12 @@ export const routes: readonly RouteDefinition[] = [
     load: () => import('@/games/packet-runner/packet-runner.page').then((m) => m.default),
   },
   {
+    path: '/games/packet-dash',
+    layout: 'bare',
+    requiresAuth: true,
+    load: () => import('@/games/packet-dash/packet-dash.page').then((m) => m.default),
+  },
+  {
     path: '/leaderboard',
     layout: 'app',
     requiresAuth: true,

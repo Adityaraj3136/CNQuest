@@ -28,6 +28,7 @@ const MODE_LABELS: Record<GameType, string> = {
   riddle: 'Network Riddles',
   'word-search': 'Word Search',
   'packet-runner': 'Packet Runner',
+  'packet-dash': 'Packet Dash',
 };
 
 /**

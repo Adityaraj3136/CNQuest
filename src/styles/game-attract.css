@@ -205,3 +205,95 @@ body .cn-mode__visual--packet circle.cn-mode__packet-dot {
 @media (prefers-reduced-motion: reduce) {
   body .cn-mode__visual--packet circle.cn-mode__packet-dot { animation: none; }
 }
+
+/* Packet Dash: the packet swerves into the right gate's lane, the gate flashes green. ---- */
+
+body .cn-mode__visual--dash {
+  perspective: 260px;
+}
+
+body .cn-mode__dash-road {
+  position: absolute;
+  left: 50%;
+  bottom: -40px;
+  width: 210px;
+  height: 260px;
+  margin-left: -105px;
+  border-inline: 2px solid #d946ef;
+  background: repeating-linear-gradient(0deg, #0b0a1c 0 18px, #110d2a 18px 36px);
+  transform: rotateX(62deg);
+  transform-origin: 50% 100%;
+  animation: cn-dash-road 0.6s linear infinite;
+}
+
+body .cn-mode__dash-road i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: repeating-linear-gradient(0deg, #6d28d9 0 14px, transparent 14px 28px);
+}
+
+body .cn-mode__dash-road i:first-child { left: 33.3%; }
+body .cn-mode__dash-road i:last-child { left: 66.6%; }
+
+@keyframes cn-dash-road {
+  to { background-position: 0 36px; }
+}
+
+body .cn-mode__dash-gate {
+  position: absolute;
+  top: 70px;
+  width: 54px;
+  padding: 10px 0;
+  border: 2px solid #22d3ee;
+  border-bottom: 0;
+  color: #e0f2fe;
+  font-family: var(--cn-font-mono);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+body .cn-mode__dash-gate:nth-of-type(1) { left: calc(50% - 90px); }
+body .cn-mode__dash-gate:nth-of-type(2) { left: calc(50% - 27px); }
+body .cn-mode__dash-gate:nth-of-type(3) { left: calc(50% + 36px); }
+body .cn-mode__dash-gate.is-right { animation: cn-dash-gate 2.8s steps(1, end) infinite; }
+
+@keyframes cn-dash-gate {
+  0%, 55% { border-color: #22d3ee; color: #e0f2fe; }
+  56%, 85% { border-color: #4ade80; color: #4ade80; box-shadow: 0 0 14px #4ade80; }
+}
+
+body .cn-mode__dash-packet {
+  position: absolute;
+  left: calc(50% - 69px);
+  bottom: 28px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 12px 4px #67e8f9;
+  animation: cn-dash-swerve 2.8s ease-in-out infinite;
+}
+
+@keyframes cn-dash-swerve {
+  0%, 20% { transform: translateX(0); }
+  40%, 100% { transform: translateX(63px); }
+}
+
+body .cn-mode__visual--dash small {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #67e8f9;
+  font-family: var(--cn-font-mono);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body .cn-mode__dash-road,
+  body .cn-mode__dash-gate.is-right,
+  body .cn-mode__dash-packet { animation: none; }
+  body .cn-mode__dash-packet { transform: translateX(63px); }
+}
