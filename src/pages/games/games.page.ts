@@ -1,5 +1,5 @@
 /**
- * Games hub — the six modes.
+ * Games hub — the seven modes.
  * Quiz Blitz is playable from Phase 4; the rest unlock in Phase 7 and say so plainly.
  */
 
@@ -26,6 +26,16 @@ interface GameCard {
 }
 
 const GAMES: readonly GameCard[] = [
+  {
+    icon: 'bi-send',
+    title: 'Packet Runner',
+    description: 'Steer a packet through a 3D network. Read each routing table; the longest prefix wins.',
+    href: '#/games/packet-runner',
+    note: 'New · 3D',
+    tone: 'accent',
+    format: '3D · 5–7 routers · TTL lives',
+    cta: 'Launch',
+  },
   {
     icon: 'bi-lightning-charge',
     title: 'Quiz Blitz',
@@ -112,6 +122,17 @@ function cardHtml(game: GameCard, topicQuery: string): string {
 }
 
 function modeVisualHtml(title: string, icon: string): string {
+  if (title === 'Packet Runner') {
+    return `<div class="cn-mode__visual cn-mode__visual--packet" aria-hidden="true">
+      <svg viewBox="0 0 240 140" preserveAspectRatio="xMidYMid meet">
+        <path d="M30 110 L120 70 M120 70 L60 20 M120 70 L120 15 M120 70 L210 25" />
+        <circle cx="30" cy="110" r="7" /><circle cx="120" cy="70" r="9" />
+        <circle cx="60" cy="20" r="7" /><circle cx="120" cy="15" r="7" /><circle cx="210" cy="25" r="7" />
+        <circle class="cn-mode__packet-dot" cx="30" cy="110" r="5" />
+      </svg>
+      <small>10.1.2.5 → /24 wins</small>
+    </div>`;
+  }
   if (title === 'Quiz Blitz') {
     return `<div class="cn-mode__visual cn-mode__visual--quiz" aria-hidden="true">
       <span class="cn-mode__visual-icon"><i class="bi ${escapeHtml(icon)}"></i></span>
@@ -153,7 +174,7 @@ const gamesPage: Page = {
           <header class="cn-games__head cn-rise cn-rise-1">
             <h1 class="cn-games__title">Choose a game mode</h1>
             <p class="cn-games__sub" data-role="lead">
-              Six ways to practise the same syllabus. Every one earns XP and moves your mastery.
+              Seven ways to practise the same syllabus. Every one earns XP and moves your mastery.
             </p>
           </header>
           <div class="cn-mode-grid cn-rise cn-rise-2" data-role="grid"></div>

@@ -83,7 +83,7 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
   {
     id: 'all-rounder',
     name: 'All-Rounder',
-    description: 'Play every one of the six game modes at least once.',
+    description: 'Play six different game modes at least once.',
     icon: 'bi-controller',
     category: 'games',
     target: 6,

@@ -20,6 +20,7 @@ const ROOT_ID = 'cn-dashboard-root';
 
 /** Game modes shown as launch tiles. Locked ones stay visible and say when they arrive. */
 const MODES = [
+  { icon: 'bi-send', name: 'Packet Runner', href: '#/games/packet-runner', note: '3D routing', tone: 'quiz' },
   { icon: 'bi-lightning-charge', name: 'Quiz Blitz', href: '#/games/quiz', note: '10 questions', tone: 'quiz' },
   { icon: 'bi-stopwatch', name: 'Rapid Fire', href: '#/games/rapid-fire', note: '60 seconds', tone: 'rapid' },
   { icon: 'bi-shield-shaded', name: 'Boss Battle', href: '#/games/boss', note: 'HP duel', tone: 'boss' },

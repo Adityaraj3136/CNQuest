@@ -166,3 +166,42 @@ body .cn-mode__visual--words span.is-found {
   body .cn-mode__timer::after { content: none; }
   body .cn-mode__visual--words span.is-found { background: var(--vga-gold); color: #111522; }
 }
+
+/* Packet Runner: a packet hops from the source router to the hub, then out the right branch. */
+
+body .cn-mode__visual--packet svg {
+  position: absolute;
+  inset: 16px 16px 36px;
+  width: calc(100% - 32px);
+  height: calc(100% - 52px);
+}
+
+body .cn-mode__visual--packet path { stroke: #8b5cf6; stroke-width: 2; fill: none; opacity: 0.7; }
+body .cn-mode__visual--packet circle { fill: #140b2a; stroke: #a78bfa; stroke-width: 2; }
+
+body .cn-mode__visual--packet small {
+  position: absolute;
+  left: 16px;
+  bottom: 10px;
+  color: #67e8f9;
+  font-family: var(--cn-font-mono);
+}
+
+body .cn-mode__visual--packet circle.cn-mode__packet-dot {
+  fill: #fff;
+  stroke: #67e8f9;
+  stroke-width: 3;
+  animation: cn-packet-hop 3.6s ease-in-out infinite;
+}
+
+/* SVG user units: source (30,110) → hub (120,70) → branch (210,25). */
+@keyframes cn-packet-hop {
+  0%, 10% { transform: translate(0, 0); opacity: 1; }
+  40%, 50% { transform: translate(90px, -40px); }
+  80% { transform: translate(180px, -85px); opacity: 1; }
+  100% { transform: translate(180px, -85px); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body .cn-mode__visual--packet circle.cn-mode__packet-dot { animation: none; }
+}

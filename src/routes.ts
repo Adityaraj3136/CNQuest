@@ -139,6 +139,12 @@ export const routes: readonly RouteDefinition[] = [
     load: () => import('@/games/word-search/word-search.page').then((m) => m.default),
   },
   {
+    path: '/games/packet-runner',
+    layout: 'bare',
+    requiresAuth: true,
+    load: () => import('@/games/packet-runner/packet-runner.page').then((m) => m.default),
+  },
+  {
     path: '/leaderboard',
     layout: 'app',
     requiresAuth: true,

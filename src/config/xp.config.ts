@@ -15,6 +15,8 @@ export const BASE_XP = {
   matchingCompleted: 30,
   wordSearchCompleted: 40,
   bossVictory: 100,
+  packetHopCorrect: 8,
+  packetDelivered: 60,
   firstDailyActivity: 20,
 } as const;
 

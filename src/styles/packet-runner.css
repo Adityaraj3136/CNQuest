@@ -1,0 +1,315 @@
+/**
+ * Packet Runner. Mobile first: 3D stage on top, panel below, page scrolls normally.
+ * From 992px the stage and panel sit side by side and fill the viewport under the HUD.
+ */
+
+.cn-pr {
+  display: grid;
+  grid-template-rows: minmax(220px, 42dvh) auto;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.cn-pr__stage {
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 30%, #140b2a 0%, #05060a 70%);
+  border-bottom: var(--cn-hairline);
+}
+
+.cn-pr__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  /* Taps only: no double-tap zoom delay, but vertical swipes still scroll the page. */
+  touch-action: manipulation;
+}
+
+.cn-pr__overlay {
+  position: absolute;
+  z-index: 1;
+  inset: var(--cn-space-3) var(--cn-space-3) auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cn-space-2);
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.cn-pr__dest,
+.cn-pr__ttl {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cn-space-2);
+  padding: 4px 10px;
+  border: 1px solid var(--cn-rule-strong);
+  border-radius: var(--cn-radius-md);
+  background: rgba(6, 8, 12, 0.8);
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-sm);
+  color: #67e8f9;
+}
+
+.cn-pr__ttl-label[data-low='true'] {
+  color: var(--cn-negative);
+}
+
+.cn-pr__ttl-bar {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.cn-pr__ttl-bar i {
+  width: 6px;
+  height: 12px;
+  border-radius: 1px;
+  background: var(--cn-rule-strong);
+}
+
+.cn-pr__ttl-bar i[data-on='true'] {
+  background: #67e8f9;
+  box-shadow: 0 0 6px #67e8f9;
+}
+
+.cn-pr__fallback {
+  position: absolute;
+  inset: auto var(--cn-space-4) var(--cn-space-4);
+  margin: 0;
+  color: var(--cn-ink-soft);
+  font-size: var(--cn-text-sm);
+}
+
+.cn-pr__stage[data-fallback='true'] {
+  min-height: 120px;
+}
+
+.cn-pr__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cn-space-3);
+  padding: var(--cn-space-4);
+  max-width: 640px;
+  width: 100%;
+  margin-inline: auto;
+}
+
+.cn-pr__table-wrap {
+  overflow-x: auto;
+}
+
+.cn-pr__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-base);
+}
+
+.cn-pr__table th {
+  padding: 6px 8px;
+  text-align: left;
+  font-size: var(--cn-text-xs);
+  font-weight: 600;
+  letter-spacing: var(--cn-tracking-label);
+  text-transform: uppercase;
+  color: var(--cn-ink-faint);
+  border-bottom: 1px solid var(--cn-rule-strong);
+}
+
+.cn-pr__table td {
+  padding: 8px;
+  border-bottom: 1px solid var(--cn-rule);
+  white-space: nowrap;
+}
+
+.cn-pr__chip {
+  display: inline-block;
+  padding: 1px 8px;
+  border: 1px solid var(--chip);
+  border-radius: var(--cn-radius-sm);
+  color: var(--chip);
+  font-family: var(--cn-font-mono);
+}
+
+.cn-pr__ask {
+  margin: 0;
+  color: var(--cn-ink-soft);
+}
+
+.cn-pr__ask strong {
+  color: #67e8f9;
+  font-family: var(--cn-font-mono);
+}
+
+.cn-pr__ifaces {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: var(--cn-space-2);
+}
+
+.cn-pr__iface {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--cn-space-2);
+  min-height: 48px; /* comfortable thumb target */
+  padding: 8px 12px;
+  border: 2px solid var(--chip);
+  border-radius: var(--cn-radius-md);
+  background: color-mix(in srgb, var(--chip) 10%, transparent);
+  color: var(--chip);
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-lg);
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+
+.cn-pr__iface kbd {
+  padding: 0 5px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  background: none;
+  color: inherit;
+  font-size: var(--cn-text-xs);
+  opacity: 0.7;
+}
+
+.cn-pr__iface:hover:not([disabled]),
+.cn-pr__iface:focus-visible {
+  background: color-mix(in srgb, var(--chip) 22%, transparent);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--chip) 60%, transparent);
+  outline: none;
+}
+
+.cn-pr__iface:active:not([disabled]) {
+  transform: scale(0.97);
+}
+
+.cn-pr__iface[disabled] {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.cn-pr__iface[data-out='true'] {
+  text-decoration: line-through;
+  opacity: 0.25;
+}
+
+.cn-pr__feedback,
+.cn-pr__last {
+  margin: 0;
+  font-size: var(--cn-text-sm);
+}
+
+.cn-pr__feedback {
+  padding: var(--cn-space-3) var(--cn-space-4);
+  border: 1px solid var(--cn-rule-strong);
+  background: var(--cn-paper-raised);
+}
+
+.cn-pr__feedback p {
+  margin: 0 0 var(--cn-space-2);
+}
+
+.cn-pr__last {
+  color: var(--cn-ink-faint);
+}
+
+/* ---- intro */
+
+.cn-pr-intro__rules {
+  padding-left: 1.2em;
+  color: var(--cn-ink-soft);
+}
+
+.cn-pr-intro__levels {
+  display: grid;
+  gap: var(--cn-space-3);
+  margin-top: var(--cn-space-4);
+}
+
+.cn-pr-level {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: var(--cn-space-4);
+  border: 1px solid var(--cn-rule-strong);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-paper-raised);
+  color: var(--cn-ink);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.cn-pr-level:hover,
+.cn-pr-level:focus-visible {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 16px rgba(139, 92, 246, 0.35);
+  outline: none;
+}
+
+.cn-pr-level__name {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-lg);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #c4b5fd;
+}
+
+.cn-pr-level__desc {
+  color: var(--cn-ink-soft);
+  font-size: var(--cn-text-sm);
+}
+
+.cn-pr-review__item {
+  margin: 0 0 var(--cn-space-2);
+  color: var(--cn-ink-soft);
+  font-size: var(--cn-text-sm);
+}
+
+/* ---- landscape phones: short screens get a shorter stage */
+@media (max-height: 500px) and (orientation: landscape) {
+  .cn-pr {
+    grid-template-rows: none;
+    grid-template-columns: 1fr minmax(280px, 42%);
+  }
+
+  .cn-pr__stage {
+    min-height: calc(100dvh - 70px);
+    border-bottom: 0;
+    border-right: var(--cn-hairline);
+  }
+}
+
+/* ---- desktop: side by side, filling the screen under the HUD */
+@media (min-width: 992px) {
+  .cn-pr {
+    grid-template-rows: none;
+    grid-template-columns: 1fr minmax(360px, 420px);
+    height: calc(100dvh - 70px);
+  }
+
+  .cn-pr__stage {
+    border-bottom: 0;
+    border-right: var(--cn-hairline);
+  }
+
+  .cn-pr__panel {
+    overflow-y: auto;
+    max-width: none;
+  }
+
+  .cn-pr-intro__levels {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cn-pr__iface,
+  .cn-pr-level {
+    transition: none;
+  }
+}

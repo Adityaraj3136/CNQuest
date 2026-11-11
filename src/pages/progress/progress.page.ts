@@ -27,6 +27,7 @@ const MODE_LABELS: Record<GameType, string> = {
   matching: 'Match & Pair',
   riddle: 'Network Riddles',
   'word-search': 'Word Search',
+  'packet-runner': 'Packet Runner',
 };
 
 /**
