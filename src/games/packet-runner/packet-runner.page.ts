@@ -21,6 +21,7 @@ import { finishRound, resultScreenHtml, savingHtml } from '@/games/shared/game-s
 import {
   enterSession,
   exitSession,
+  flyXp,
   gameHudHtml,
   setHudProgress,
   setHudStreak,
@@ -183,7 +184,13 @@ function panelHtml(feedback: HopDecision | null): string {
       ? `<p class="cn-pr__last">Last hop: ${escapeHtml(lastCorrect.explanation)}</p>`
       : '';
 
+  // A misroute explanation goes first: on a phone it then sits right under the 3D view instead
+  // of below the fold. The quiet "last hop" note stays at the bottom.
+  const misroute = feedback && !feedback.isCorrect ? result : '';
+  const footnote = misroute ? '' : result;
+
   return `
+    ${misroute}
     <p class="cn-label">Router ${escapeHtml(view.hop.name)} · routing table</p>
     <div class="cn-pr__table-wrap">
       <table class="cn-pr__table">
@@ -193,7 +200,7 @@ function panelHtml(feedback: HopDecision | null): string {
     </div>
     <p class="cn-pr__ask">Forward <strong>${escapeHtml(ipToString(view.destination))}</strong> out of:</p>
     <div class="cn-pr__ifaces" role="group" aria-label="Outgoing interface">${buttons}</div>
-    ${result}
+    ${footnote}
   `;
 }
 
@@ -209,7 +216,17 @@ function paintPanel(feedback: HopDecision | null = null): void {
   );
   const retry = qs<HTMLButtonElement>('#cn-pr-continue', panel);
   retry?.addEventListener('click', () => void advance());
-  retry?.focus();
+  retry?.focus({ preventScroll: true });
+}
+
+/** Green or red pulse around the 3D view, so the verdict lands where the eyes are. */
+function flashStage(isCorrect: boolean): void {
+  const stage = qs<HTMLElement>('#cn-pr-stage');
+  if (!stage || reducedMotion()) return;
+  stage.dataset.flash = isCorrect ? 'good' : 'bad';
+  stage.classList.remove('is-flashing');
+  void stage.offsetWidth; // restart the animation
+  stage.classList.add('is-flashing');
 }
 
 async function choose(iface: string): Promise<void> {
@@ -220,6 +237,8 @@ async function choose(iface: string): Promise<void> {
 
   busy = true;
   playCue(decision.isCorrect ? 'correct' : 'wrong');
+  flashStage(decision.isCorrect);
+  flyXp(decision.xpEarned, qs<HTMLElement>(`.cn-pr__iface[data-iface="${iface}"]`));
   runXp += decision.xpEarned;
   setHudXp(runXp);
   setHudStreak(engine.view().currentStreak);

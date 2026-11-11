@@ -72,6 +72,23 @@
   box-shadow: 0 0 6px #67e8f9;
 }
 
+.cn-pr__stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.cn-pr__stage[data-flash='good']::after { box-shadow: inset 0 0 70px rgba(74, 222, 128, 0.55); }
+.cn-pr__stage[data-flash='bad']::after { box-shadow: inset 0 0 90px rgba(239, 68, 68, 0.7); }
+.cn-pr__stage.is-flashing::after { animation: cn-pr-flash 600ms ease-out; }
+
+@keyframes cn-pr-flash {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
 .cn-pr__fallback {
   position: absolute;
   inset: auto var(--cn-space-4) var(--cn-space-4);
@@ -143,7 +160,8 @@
 
 .cn-pr__ifaces {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  /* Two columns: 3 or 4 interfaces never leave one orphan button on its own row. */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--cn-space-2);
 }
 

@@ -28,6 +28,8 @@ const DASH_COUNT = Math.ceil(TRACK_LENGTH / DASH_SPACING);
 const STREAKS = 160;
 const TRAIL = 6;
 const FOV_SPEED_KICK = 9;
+/** Relative z beyond which passed objects are hidden (the camera sits at about +6.8). */
+const PASSED_HIDE_Z = 1.5;
 
 const COLOR = {
   bg: 0x04040a,
@@ -198,7 +200,7 @@ export function createDashScene(host: HTMLElement, options: { reducedMotion: boo
     const label = new THREE.Sprite(
       new THREE.SpriteMaterial({ map: labelTexture(entity.label ?? '', '#e0f2fe', { width: 512, height: 160, font: 76 }), depthWrite: false }),
     );
-    label.scale.set(1.75, 0.55, 1);
+    label.scale.set(2.05, 0.64, 1);
     label.position.y = 1.25;
     group.add(left, right, bar, portal, label);
     return { kind: 'gate', group, frameMat, portalMat, label };
@@ -272,10 +274,13 @@ export function createDashScene(host: HTMLElement, options: { reducedMotion: boo
       }
       view.group.position.x = laneX(entity.lane);
       view.group.position.z = -(entity.z - snapshot.distance);
+      // Once past the packet, scenery only blocks the view of what is coming.
+      const passed = view.group.position.z > PASSED_HIDE_Z;
       if (view.kind === 'gate') {
         paintGate(view, entity.outcome);
+        view.group.visible = !passed;
       } else {
-        view.group.visible = entity.outcome !== 'collected';
+        view.group.visible = entity.outcome !== 'collected' && !passed;
         if (view.spin && !options.reducedMotion) {
           view.group.rotation.y = time * view.spin;
           view.group.position.y = 0.6 + Math.sin(time * 4 + entity.id) * 0.12;

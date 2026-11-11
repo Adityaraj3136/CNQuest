@@ -18,6 +18,11 @@
   --dash-display: var(--cn-font-display, "Russo One", system-ui, sans-serif);
 }
 
+/* No round progress in an endless run: the shared HUD's empty track is just a grey band. */
+.cn-dash-root .cn-hud__track {
+  display: none;
+}
+
 .cn-dash {
   position: relative;
   height: calc(100dvh - 70px);
@@ -51,6 +56,15 @@
   align-items: start;
   gap: 10px;
   pointer-events: none;
+}
+
+.cn-dash__hud {
+  transition: opacity 240ms ease;
+}
+
+/* The menu card is the whole screen until the run starts. */
+.cn-dash[data-phase='menu'] .cn-dash__hud {
+  opacity: 0;
 }
 
 .cn-dash__score {
@@ -144,6 +158,62 @@
 .cn-dash__mission small {
   font-size: var(--cn-text-xs);
   color: var(--cn-ink-soft);
+}
+
+/* The three gate labels, left to right as the lanes are, readable long before the 3D gates. */
+.cn-dash__lanes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  width: 100%;
+  margin-top: 6px;
+}
+
+.cn-dash__lanes span {
+  padding: 5px 4px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  font-family: var(--cn-font-mono);
+  font-size: clamp(0.72rem, 0.6rem + 0.5vw, 0.95rem);
+  color: var(--cn-ink-soft);
+  overflow-wrap: anywhere;
+  line-height: 1.2;
+  transition: border-color 120ms ease, color 120ms ease, background 120ms ease, transform 120ms ease;
+}
+
+.cn-dash__lanes span[data-active='true'] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.cn-dash__approach {
+  display: block;
+  width: 100%;
+  height: 3px;
+  margin-top: 6px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.cn-dash__approach i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+
+.cn-dash__mission[data-close='true'] {
+  animation: cn-dash-close 0.45s ease-in-out infinite alternate;
+}
+
+@keyframes cn-dash-close {
+  to { box-shadow: 0 0 34px color-mix(in srgb, var(--accent) 60%, transparent), inset 0 0 18px rgba(0, 0, 0, 0.4); }
 }
 
 .cn-dash__side {
@@ -456,6 +526,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .cn-dash__mission.is-new,
+  .cn-dash__mission[data-close='true'],
   .cn-dash__card,
   .cn-dash__count { animation: none; }
   .cn-dash__pop { animation: cn-dash-fade 1.8s linear forwards; }

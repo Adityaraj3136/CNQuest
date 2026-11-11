@@ -7,7 +7,14 @@
  */
 
 import type { Page } from '@/types/page';
-import { PacketDashEngine, type Category, type DashEvent, type GateRow } from '@/games/packet-dash/packet-dash.engine';
+import {
+  PacketDashEngine,
+  SEGMENT_LENGTH,
+  type Category,
+  type DashEvent,
+  type DashSnapshot,
+  type GateRow,
+} from '@/games/packet-dash/packet-dash.engine';
 import type { DashScene } from '@/games/packet-dash/packet-dash.scene';
 import { finishRound, resultScreenHtml, savingHtml } from '@/games/shared/game-shell';
 import { enterSession, exitSession, gameHudHtml, setHudLives, setHudStreak } from '@/games/shared/game-hud';
@@ -50,6 +57,8 @@ let shownPoints = -1;
 let shownBits = -1;
 let shownMultiplier = -1;
 let shownShield: boolean | null = null;
+let shownLane = -1;
+let shownLives = -1;
 let countdownTimer = 0;
 let pointerStart: { x: number; y: number } | null = null;
 
@@ -93,6 +102,10 @@ function shellHtml(): string {
           <span class="cn-dash__chip" data-role="chip"></span>
           <b data-role="prompt"></b>
           <small data-role="hint"></small>
+          <div class="cn-dash__lanes" data-role="lanes">
+            <span data-lane="0"></span><span data-lane="1"></span><span data-lane="2"></span>
+          </div>
+          <span class="cn-dash__approach"><i data-role="approach"></i></span>
         </div>
         <div class="cn-dash__side">
           <span class="cn-dash__bits"><i class="bi bi-gem"></i><b id="cn-dash-bits">0</b></span>
@@ -249,10 +262,32 @@ function renderMission(row: GateRow | null): void {
   qs('[data-role="chip"]', el)!.textContent = copy.chip;
   qs('[data-role="prompt"]', el)!.textContent = row.question.prompt;
   qs('[data-role="hint"]', el)!.textContent = copy.hint;
+  row.question.options.forEach((option, lane) => {
+    const chip = qs(`[data-lane="${lane}"]`, el);
+    if (chip) chip.textContent = option;
+  });
+  shownLane = -1; // repaint the lane highlight for the new chips
   // Re-trigger the slide-in for each new prompt.
   el.classList.remove('is-new');
   void el.offsetWidth;
   el.classList.add('is-new');
+}
+
+/** Highlights the lane the packet is in and fills the bar as the next gate row closes in. */
+function syncApproach(snap: DashSnapshot): void {
+  const mission = qs<HTMLElement>('#cn-dash-mission');
+  const row = snap.nextRow;
+  if (!mission || !row) return;
+  if (snap.lane !== shownLane) {
+    shownLane = snap.lane;
+    mission.querySelectorAll<HTMLElement>('[data-lane]').forEach((chip) => {
+      chip.dataset.active = String(Number(chip.dataset.lane) === snap.lane);
+    });
+  }
+  const remaining = Math.max(0, row.z - snap.distance);
+  const progress = Math.min(1, Math.max(0, 1 - remaining / SEGMENT_LENGTH));
+  qs<HTMLElement>('[data-role="approach"]', mission)?.style.setProperty('transform', `scaleX(${progress.toFixed(3)})`);
+  mission.dataset.close = String(remaining < snap.speed * 1.2); // about a second out
 }
 
 function syncHud(): void {
@@ -283,8 +318,12 @@ function syncHud(): void {
     shownRowId = rowId;
     renderMission(snap.nextRow);
     setHudStreak(snap.combo);
+  }
+  if (snap.lives !== shownLives) {
+    shownLives = snap.lives;
     setHudLives(snap.lives, 3);
   }
+  syncApproach(snap);
 }
 
 // ---------------------------------------------------------------- loop
@@ -293,7 +332,11 @@ function frame(now: number): void {
   rafId = requestAnimationFrame(frame);
   const dt = Math.min(MAX_FRAME_SECONDS, (now - lastFrame) / 1000 || 0);
   lastFrame = now;
-  if (!engine) return;
+  // Leaving the route replaces the DOM before unmount() runs; stop rather than write to nothing.
+  if (!engine || !root()?.isConnected || !qs('#cn-dash-stage')) {
+    stopLoop();
+    return;
+  }
 
   const events = phase === 'running' || phase === 'menu' || phase === 'countdown' ? engine.step(dt) : [];
   if (events.length) handleEvents(events);
@@ -316,8 +359,15 @@ function stopLoop(): void {
 
 // ---------------------------------------------------------------- phases
 
+/** The stage carries the phase too, so CSS can show only what belongs to it. */
+function setPhase(next: Phase): void {
+  phase = next;
+  const stage = qs<HTMLElement>('#cn-dash-stage');
+  if (stage) stage.dataset.phase = next;
+}
+
 function showMenu(): void {
-  phase = 'menu';
+  setPhase('menu');
   setOverlay(menuHtml());
   qs<HTMLButtonElement>('#cn-dash-start')?.addEventListener('click', beginCountdown);
   qs<HTMLButtonElement>('#cn-dash-start')?.focus();
@@ -325,13 +375,13 @@ function showMenu(): void {
 
 function beginCountdown(): void {
   if (phase !== 'menu') return;
-  phase = 'countdown';
+  setPhase('countdown');
   let n = 3;
   const tick = (): void => {
     if (phase !== 'countdown') return;
     if (n === 0) {
       setOverlay('');
-      phase = 'running';
+      setPhase('running');
       engine?.start();
       qs<HTMLElement>('#cn-dash-pause')!.hidden = false;
       qs<HTMLElement>('#cn-dash-stage')?.focus({ preventScroll: true });
@@ -346,7 +396,7 @@ function beginCountdown(): void {
 
 function pause(): void {
   if (phase !== 'running') return;
-  phase = 'paused';
+  setPhase('paused');
   setOverlay(pausedHtml());
   const resume = qs<HTMLButtonElement>('#cn-dash-resume');
   resume?.addEventListener('click', resumeRun);
@@ -356,13 +406,13 @@ function pause(): void {
 function resumeRun(): void {
   if (phase !== 'paused') return;
   setOverlay('');
-  phase = 'running';
+  setPhase('running');
   lastFrame = performance.now();
   qs<HTMLElement>('#cn-dash-stage')?.focus({ preventScroll: true });
 }
 
 function gameOver(): void {
-  phase = 'over';
+  setPhase('over');
   playCue('defeat');
   buzz(250);
   qs<HTMLElement>('#cn-dash-pause')!.hidden = true;
@@ -500,7 +550,7 @@ async function boot(): Promise<void> {
   window.clearTimeout(countdownTimer);
 
   engine = new PacketDashEngine();
-  shownRowId = shownPoints = shownBits = shownMultiplier = -1;
+  shownRowId = shownPoints = shownBits = shownMultiplier = shownLives = shownLane = -1;
   shownShield = null;
   container.innerHTML = shellHtml();
 

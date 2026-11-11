@@ -54,6 +54,7 @@ interface Branch {
   group: THREE.Group;
   node: THREE.Mesh;
   hit: THREE.Mesh;
+  tag: THREE.Sprite;
   linkMat: THREE.MeshBasicMaterial;
   glowMat: THREE.MeshBasicMaterial;
   dead: boolean;
@@ -191,7 +192,7 @@ export function createPacketScene(host: HTMLElement, options: PacketSceneOptions
       scene.add(routerGroup);
     }
     const label = makeLabel(routerName, '#c4b5fd', 0.8);
-    label.position.set(routerPos.x, 1.4, routerPos.z);
+    label.position.set(routerPos.x, 1.9, routerPos.z);
     scene.add(label);
 
     // Fan the branches forward, spread wider the more there are.
@@ -236,7 +237,7 @@ export function createPacketScene(host: HTMLElement, options: PacketSceneOptions
 
       group.add(link, glow, node, hit, tag);
       scene.add(group);
-      branches.push({ iface, color, end, group, node, hit, linkMat, glowMat, dead: false });
+      branches.push({ iface, color, end, group, node, hit, tag, linkMat, glowMat, dead: false });
     });
 
     enabled = true;
@@ -278,7 +279,7 @@ export function createPacketScene(host: HTMLElement, options: PacketSceneOptions
       if (other !== branch) disposeGroup(other.group);
     }
     // Keep the travelled link as a trail. Its end node goes: the live router now sits there.
-    branch.group.remove(branch.hit, branch.node);
+    branch.group.remove(branch.hit, branch.node, branch.tag);
     branches = [];
     retarget(false);
     packetTravelling = false;
