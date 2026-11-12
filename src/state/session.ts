@@ -109,6 +109,10 @@ async function handleUser(user: User | null): Promise<void> {
   endGuestSession();
   setState({ user, isGuest: false });
 
+  // Ask the browser not to evict this site's storage (where the sign-in lives) when the device
+  // runs low on space. Installed apps are usually granted it; a refusal changes nothing.
+  void navigator.storage?.persist?.().catch(() => false);
+
   try {
     const profile = await ensureUserProfile({
       uid: user.uid,

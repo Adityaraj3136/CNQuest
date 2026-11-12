@@ -8,6 +8,17 @@
 import { getFirebaseAuth, isFirebaseConfigured } from '@/config/firebase';
 import { createUserProfile, ensureUserProfile } from '@/services/user.service';
 import type { User } from 'firebase/auth';
+import { isInstalled } from '@/pwa/pwa';
+
+/**
+ * Whether a sign-in should outlive closing the app. The installed app always keeps the student
+ * signed in: "until the tab closes" means every time the app is swiped away, which is never
+ * what someone who installed it wants. In a browser tab the "Keep me signed in" box decides.
+ * Lasting sessions use IndexedDB, Firebase's most durable store.
+ */
+function keepSignedIn(remember: boolean): boolean {
+  return remember || isInstalled();
+}
 
 export class AuthServiceError extends Error {
   constructor(
@@ -112,12 +123,12 @@ export async function signIn(email: string, password: string, remember = true): 
   const {
     signInWithEmailAndPassword,
     setPersistence,
-    browserLocalPersistence,
+    indexedDBLocalPersistence,
     browserSessionPersistence,
   } = await import('firebase/auth');
 
   try {
-    await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
+    await setPersistence(auth, keepSignedIn(remember) ? indexedDBLocalPersistence : browserSessionPersistence);
     const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
     return credential.user;
   } catch (error) {
@@ -201,12 +212,12 @@ export async function signInWithGoogleIdToken(idToken: string, remember = true):
   assertConfigured();
   const authModule = warmAuthModule ?? (await import('firebase/auth'));
   const auth = warmAuth ?? (await getFirebaseAuth());
-  const { GoogleAuthProvider, signInWithCredential, setPersistence, browserLocalPersistence, browserSessionPersistence } =
+  const { GoogleAuthProvider, signInWithCredential, setPersistence, indexedDBLocalPersistence, browserSessionPersistence } =
     authModule;
 
   let user: User;
   try {
-    await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
+    await setPersistence(auth, keepSignedIn(remember) ? indexedDBLocalPersistence : browserSessionPersistence);
     user = (await signInWithCredential(auth, GoogleAuthProvider.credential(idToken))).user;
   } catch (error) {
     const code = typeof error === 'object' && error && 'code' in error ? String(error.code) : '';
@@ -229,13 +240,13 @@ export async function signInWithGoogle(remember = true): Promise<User> {
   assertConfigured();
   const authModule = warmAuthModule ?? (await import('firebase/auth'));
   const auth = warmAuth ?? (await getFirebaseAuth());
-  const { GoogleAuthProvider, signInWithRedirect, setPersistence, browserLocalPersistence, browserSessionPersistence } =
+  const { GoogleAuthProvider, signInWithRedirect, setPersistence, indexedDBLocalPersistence, browserSessionPersistence } =
     authModule;
 
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
   try {
-    await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
+    await setPersistence(auth, keepSignedIn(remember) ? indexedDBLocalPersistence : browserSessionPersistence);
     await signInWithRedirect(auth, provider);
   } catch (error) {
     throw toAuthError(error);
