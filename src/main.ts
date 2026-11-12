@@ -14,7 +14,7 @@ import { routes } from '@/routes';
 import { watchConnectivity } from '@/components/footer';
 import { startUserStateSync } from '@/services/user-state.store';
 import { applyPreferences } from '@/state/preferences';
-import { initPwa } from '@/pwa/pwa';
+import { initExitGuard, initPwa } from '@/pwa/pwa';
 import { isFirebaseConfigured, missingFirebaseKeys } from '@/config/firebase';
 import { getSession, initSession, isAuthenticated, onSessionChange, sessionReady } from '@/state/session';
 
@@ -73,3 +73,4 @@ warnIfUnconfigured();
 initPwa();
 void initSession();
 router.start();
+initExitGuard(() => router.currentHash());

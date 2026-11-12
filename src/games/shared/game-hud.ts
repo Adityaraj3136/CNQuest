@@ -11,6 +11,7 @@
  */
 
 import { escapeHtml, qs } from '@/utils/dom';
+import { setLeaveGuard } from '@/router';
 import '@/styles/arena.css';
 
 export interface GameHudOptions {
@@ -159,10 +160,21 @@ export function flyXp(amount: number, origin?: HTMLElement | null): void {
 }
 
 /** Marks the document as being in a game session, which tones the page background down. */
+/**
+ * Leaving mid-round (system back, the HUD's exit) asks first. Results and the saving screen
+ * are past the point where anything can be lost, so they leave without a question.
+ */
+function confirmLeaveGame(): boolean {
+  if (document.querySelector('.cn-result') || document.querySelector('.cn-loader')) return true;
+  return window.confirm('Leave this game? The round in progress will not be saved.');
+}
+
 export function enterSession(): void {
   document.body.classList.add('cn-in-session');
+  setLeaveGuard(confirmLeaveGame);
 }
 
 export function exitSession(): void {
   document.body.classList.remove('cn-in-session');
+  setLeaveGuard(null);
 }

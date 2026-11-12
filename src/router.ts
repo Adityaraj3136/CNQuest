@@ -85,11 +85,23 @@ export function navigate(path: string, replace = false): void {
 /** Resolves whether a protected route may render. Phase 2 replaces the default. */
 export type AuthGuard = () => Promise<boolean> | boolean;
 
+/**
+ * A screen that must not be left by accident (a game round in progress) registers a guard.
+ * Returning false cancels the navigation: the URL is put back and nothing re-renders.
+ */
+let leaveGuard: (() => boolean) | null = null;
+
+export function setLeaveGuard(guard: (() => boolean) | null): void {
+  leaveGuard = guard;
+}
+
 export class Router {
   private currentPage: Page | null = null;
   private renderToken = 0;
   private lastLayout: Layout = 'public';
   private lastPath = '/';
+  /** The full hash of the screen on display, to restore a cancelled navigation. */
+  private lastHash = '';
 
   constructor(
     private readonly routes: readonly RouteDefinition[],
@@ -113,7 +125,12 @@ export class Router {
 
   /** Re-runs the current route, e.g. after the auth identity changes. */
   reload(): void {
-    void this.resolve();
+    void this.resolve(true);
+  }
+
+  /** The hash of the screen currently shown; the exit guard restores it when a back is cancelled. */
+  currentHash(): string {
+    return this.lastHash;
   }
 
   /** Re-renders only the navbar/footer, e.g. once the profile name loads. */
@@ -122,8 +139,9 @@ export class Router {
     renderFooter(this.lastLayout);
   }
 
-  private async resolve(): Promise<void> {
+  private async resolve(force = false): Promise<void> {
     const rawHash = window.location.hash;
+
 
     // An in-page anchor must not tear down the screen the student is on.
     if (!isRouteHash(rawHash)) {
@@ -135,6 +153,18 @@ export class Router {
       }
       this.focusAnchor(rawHash.slice(1));
       return;
+    }
+
+    // A cancelled navigation restores the URL, which can re-fire hashchange for the screen
+    // already on display. Rendering it again would restart a game the student chose to stay in.
+    if (!force && this.currentPage && rawHash === this.lastHash) return;
+
+    if (leaveGuard && this.currentPage && rawHash !== this.lastHash) {
+      if (!leaveGuard()) {
+        history.pushState(history.state, '', this.lastHash || '#/');
+        return;
+      }
+      leaveGuard = null;
     }
 
     const { path, query, anchor } = parseHash(rawHash);
@@ -161,6 +191,13 @@ export class Router {
       return;
     }
 
+    // Stop the outgoing screen before anything else. Unmounting only after the next chunk had
+    // loaded left a 3D game's render loop and session mode running meanwhile; on a slow phone,
+    // or when that load failed, the screen froze with the tab bar still hidden.
+    this.currentPage?.unmount?.();
+    this.currentPage = null;
+    this.lastHash = rawHash;
+
     const outlet = requireEl('#main-content');
     this.lastLayout = route.layout;
     this.lastPath = path;
@@ -172,7 +209,6 @@ export class Router {
       const page = await route.load();
       if (token !== this.renderToken) return; // a newer navigation won
 
-      this.currentPage?.unmount?.();
       const ctx: PageContext = { params, query };
       outlet.innerHTML = page.render(ctx);
       this.currentPage = page;

@@ -157,6 +157,29 @@ export async function syncNow(announce = true): Promise<void> {
   }
 }
 
+// ---------------------------------------------------------------- exit guard
+
+/**
+ * In the installed app, the system back button on the first screen closes the app, which is
+ * easy to do by accident mid-revision. The launch entry is marked and a guard entry pushed
+ * above it; arriving back on the marked entry means the next back would exit, so it asks.
+ * Declining restores the screen the student was on. Browser tabs keep normal back behaviour.
+ */
+export function initExitGuard(currentHash: () => string): void {
+  if (!isInstalled()) return;
+  history.replaceState({ cnRoot: true }, '', window.location.href);
+  history.pushState({ cnGuard: true }, '', window.location.href);
+
+  window.addEventListener('popstate', (event) => {
+    if (!(event.state as { cnRoot?: boolean } | null)?.cnRoot) return;
+    if (window.confirm('Exit CN Quest?')) {
+      history.back(); // leave from the launch entry: the app closes
+      return;
+    }
+    history.pushState({ cnGuard: true }, '', currentHash() || window.location.href);
+  });
+}
+
 // ---------------------------------------------------------------- bootstrap
 
 /** Wires the service worker, install prompt and reconnect sync. Call once at start-up. */
