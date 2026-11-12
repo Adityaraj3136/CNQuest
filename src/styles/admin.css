@@ -459,13 +459,152 @@
   background: var(--cn-paper-sunken);
 }
 
+/* --- Search, filter, list actions --- */
+
+.cn-admin__list-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cn-space-2);
+}
+
+.cn-admin__toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--cn-space-2);
+  margin-bottom: var(--cn-space-3);
+}
+
+.cn-admin__search {
+  position: relative;
+}
+
+.cn-admin__search i {
+  position: absolute;
+  left: var(--cn-space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--cn-ink-faint);
+  pointer-events: none;
+}
+
+.cn-admin__search .form-control {
+  padding-left: calc(var(--cn-space-3) * 2 + 1rem);
+  border-radius: var(--cn-radius-md);
+}
+
+.cn-admin__toolbar .form-select {
+  width: auto;
+  border-radius: var(--cn-radius-md);
+}
+
+/* --- Editor header, back link, unsaved marker --- */
+
+.cn-admin__editor-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--cn-space-3);
+}
+
+.cn-admin__back {
+  display: none;
+  align-items: center;
+  gap: var(--cn-space-2);
+  margin-bottom: var(--cn-space-3);
+  padding: var(--cn-space-2) 0;
+  border: 0;
+  background: none;
+  color: var(--cn-accent);
+  font-weight: 600;
+}
+
+.cn-admin__dirty {
+  align-self: center;
+  padding: 2px var(--cn-space-2);
+  border-radius: var(--cn-radius-pill);
+  background: var(--cn-accent-wash);
+  color: var(--cn-accent);
+  font-size: var(--cn-text-xs);
+  font-weight: 650;
+}
+
+/* The save bar stays in view on a long form, rather than sitting after the last field. */
+.cn-admin__actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-inline: calc(var(--cn-space-6) * -1);
+  margin-bottom: calc(var(--cn-space-6) * -1);
+  padding: var(--cn-space-3) var(--cn-space-6);
+  border-radius: 0 0 var(--cn-radius-xl) var(--cn-radius-xl);
+  box-shadow: 0 -8px 16px -12px rgb(0 0 0 / 0.5);
+}
+
+.cn-admin__danger {
+  margin-left: auto;
+}
+
 @media (max-width: 999.98px) {
+  /*
+   * Phones and tablets: list and editor are separate screens instead of one long scroll with
+   * a capped list on top. Opening a document shows the editor with a back link.
+   */
+  .cn-admin__panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cn-admin__panel[data-view='editor'] .cn-admin__list-side,
+  .cn-admin__panel[data-view='list'] .cn-admin__editor {
+    display: none;
+  }
+
+  .cn-admin__back {
+    display: inline-flex;
+  }
+
   .cn-admin__list {
-    max-height: 22rem;
+    max-height: none;
   }
 
   .cn-admin__editor {
     padding: var(--cn-space-4);
+  }
+
+  .cn-admin__actions {
+    margin-inline: calc(var(--cn-space-4) * -1);
+    margin-bottom: calc(var(--cn-space-4) * -1);
+    padding: var(--cn-space-3) var(--cn-space-4);
+  }
+
+  /* Above the bottom tab bar on phones. */
+  body.has-tabbar .cn-admin__actions {
+    bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .cn-admin__head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .cn-admin__list-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--cn-space-3);
+  }
+
+  .cn-admin__list-actions .btn {
+    flex: 1;
+  }
+
+  /* Icon-only secondary actions keep the save button full size on a narrow screen. */
+  .cn-admin__actions .btn-cn-primary {
+    flex: 1;
   }
 }
 

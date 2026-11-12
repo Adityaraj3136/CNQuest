@@ -27,6 +27,8 @@ import {
 import type { AdminDocument } from '@/services/admin.service';
 import { fieldsFor } from '@/services/admin.schema';
 import { buildDocument, suggestId } from '@/services/admin.form.logic';
+import { copyId, filterDocuments, previewHref } from '@/services/admin.logic';
+import type { SourceFilter } from '@/services/admin.logic';
 import { formHtml, readForm, showFieldErrors } from './admin.form';
 import type { ReferenceOptions } from './admin.form';
 import { contentSource, getTopics, getUnits } from '@/services/content.service';
@@ -44,7 +46,29 @@ let documents: AdminDocument[] = [];
 let selectedId: string | null = null;
 let references: ReferenceOptions = { units: [], topics: [] };
 
+/** List search and filter; kept while switching documents, reset when switching collection. */
+let query = '';
+let sourceFilter: SourceFilter = 'all';
+/** On phones the list and the editor are separate screens; this says which one is showing. */
+let editorOpen = false;
+/** A new document prefilled from "Duplicate". */
+let draft: { id: string; data: Record<string, unknown> } | null = null;
+/** True once the form has been touched since it was opened or saved. */
+let dirty = false;
+
 const MEDIA_TAB = 'media';
+
+/** Asks before throwing away edits. Returns true when it is fine to continue. */
+function confirmDiscard(): boolean {
+  if (!dirty) return true;
+  const ok = window.confirm('You have unsaved changes. Discard them?');
+  if (ok) dirty = false;
+  return ok;
+}
+
+function collectionLabel(): string {
+  return collectionById(activeCollection)?.label ?? activeCollection;
+}
 
 function tabsHtml(): string {
   const collections = CONTENT_COLLECTIONS.map(
@@ -72,6 +96,37 @@ function tabsHtml(): string {
   `;
 }
 
+function visibleDocuments(): AdminDocument[] {
+  return filterDocuments(documents, query, sourceFilter);
+}
+
+function countHtml(): string {
+  const shown = visibleDocuments().length;
+  const published = documents.filter((entry) => entry.source === 'firestore').length;
+  return shown === documents.length
+    ? `${documents.length} total · ${published} published`
+    : `${shown} of ${documents.length} shown`;
+}
+
+function toolbarHtml(): string {
+  const option = (value: SourceFilter, label: string): string =>
+    `<option value="${value}"${sourceFilter === value ? ' selected' : ''}>${label}</option>`;
+  return `
+    <div class="cn-admin__toolbar" role="search">
+      <label class="visually-hidden" for="cn-admin-search">Search ${escapeHtml(collectionLabel().toLowerCase())}</label>
+      <div class="cn-admin__search">
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <input class="form-control" id="cn-admin-search" type="search" value="${escapeHtml(query)}"
+               placeholder="Search id, title or any text" autocomplete="off" />
+      </div>
+      <label class="visually-hidden" for="cn-admin-source">Show</label>
+      <select class="form-select" id="cn-admin-source">
+        ${option('all', 'All')}${option('firestore', 'Published')}${option('bundled', 'Bundle only')}
+      </select>
+    </div>
+  `;
+}
+
 function listHtml(): string {
   if (documents.length === 0) {
     return `
@@ -79,9 +134,14 @@ function listHtml(): string {
     `;
   }
 
+  const visible = visibleDocuments();
+  if (visible.length === 0) {
+    return `<p class="cn-admin__empty">No match for that search. Clear it or try another word.</p>`;
+  }
+
   return `
     <ul class="cn-admin__list">
-      ${documents
+      ${visible
         .map(
           (entry) => `
             <li>
@@ -109,20 +169,37 @@ function editorHtml(): string {
   const collection = collectionById(activeCollection);
   const selected = documents.find((entry) => entry.id === selectedId);
   const specs = fieldsFor(activeCollection);
-  const data = selected?.data ?? {};
+  const data = selected?.data ?? draft?.data ?? {};
   const label = collection?.label ?? activeCollection;
   const singular = label.replace(/s$/, '');
+  const preview = selected ? previewHref(activeCollection, selected.id) : null;
 
   return `
     <form class="cn-admin__editor" id="cn-admin-form" novalidate>
+      <button type="button" class="cn-admin__back" id="cn-admin-back">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> All ${escapeHtml(label.toLowerCase())}
+      </button>
       <header class="cn-admin__editor-head">
-        <h2 class="cn-admin__subtitle">
-          ${selected ? `Editing ${escapeHtml(singular.toLowerCase())}` : `New ${escapeHtml(singular.toLowerCase())}`}
-        </h2>
+        <div>
+          <h2 class="cn-admin__subtitle">
+            ${selected ? `Editing ${escapeHtml(singular.toLowerCase())}` : `New ${escapeHtml(singular.toLowerCase())}`}
+          </h2>
+          ${
+            selected
+              ? `<p class="cn-admin__editing-id">${escapeHtml(selected.id)}${
+                  selected.source === 'bundled' ? ' <span class="cn-admin__unpublished">from app bundle</span>' : ''
+                }</p>`
+              : `<p class="cn-field__hint">${
+                  draft ? 'A copy: change the id and anything else, then create it.' : 'The id is filled in from the title — you can change it before saving.'
+                }</p>`
+          }
+        </div>
         ${
-          selected
-            ? `<p class="cn-admin__editing-id">${escapeHtml(selected.id)}</p>`
-            : '<p class="cn-field__hint">The id is filled in from the title — you can change it before saving.</p>'
+          preview
+            ? `<a class="btn btn-cn-ghost btn-sm" href="${escapeHtml(preview)}" target="_blank" rel="noopener">
+                 <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> View in app
+               </a>`
+            : ''
         }
       </header>
 
@@ -131,7 +208,7 @@ function editorHtml(): string {
         <input
           class="form-control"
           id="cn-admin-id"
-          value="${escapeHtml(selectedId ?? '')}"
+          value="${escapeHtml(selectedId ?? draft?.id ?? '')}"
           placeholder="filled in automatically"
           ${selected ? 'readonly' : ''}
         />
@@ -156,12 +233,13 @@ function editorHtml(): string {
       </details>
 
       <div class="cn-admin__actions">
-        <button class="btn btn-cn-primary" type="submit">
+        <button class="btn btn-cn-primary" type="submit" title="Save (Ctrl+S)">
           <i class="bi bi-check-lg" aria-hidden="true"></i>
           ${selected ? 'Save changes' : `Create ${escapeHtml(singular.toLowerCase())}`}
         </button>
-        <button class="btn btn-cn-ghost" type="button" id="cn-admin-new">
-          <i class="bi bi-plus-lg" aria-hidden="true"></i> New
+        <span class="cn-admin__dirty" id="cn-admin-dirty" hidden>Unsaved changes</span>
+        <button class="btn btn-cn-ghost" type="button" id="cn-admin-duplicate" ${selected ? '' : 'disabled'}>
+          <i class="bi bi-copy" aria-hidden="true"></i> Duplicate
         </button>
         <button
           class="btn btn-cn-ghost cn-admin__danger"
@@ -179,21 +257,25 @@ function editorHtml(): string {
 function panelHtml(): string {
   if (activeCollection === MEDIA_TAB) return mediaTabHtml();
 
-  const collection = collectionById(activeCollection);
-
   return `
-    <div class="cn-admin__panel">
+    <div class="cn-admin__panel" data-view="${editorOpen ? 'editor' : 'list'}">
       <div class="cn-admin__list-side">
         <div class="cn-admin__list-head">
           <h2 class="cn-admin__subtitle">
-            ${escapeHtml(collection?.label ?? activeCollection)}
-            <span class="cn-admin__count">${documents.length} editable, ${documents.filter((entry) => entry.source === 'firestore').length} published</span>
+            ${escapeHtml(collectionLabel())}
+            <span class="cn-admin__count" id="cn-admin-count">${countHtml()}</span>
           </h2>
-          <button class="btn btn-cn-ghost btn-sm" type="button" id="cn-admin-publish">
-            <i class="bi bi-cloud-upload" aria-hidden="true"></i> Publish bundled
-          </button>
+          <div class="cn-admin__list-actions">
+            <button class="btn btn-cn-primary btn-sm" type="button" id="cn-admin-new">
+              <i class="bi bi-plus-lg" aria-hidden="true"></i> New
+            </button>
+            <button class="btn btn-cn-ghost btn-sm" type="button" id="cn-admin-publish" title="Upload the app's built-in copies to Firestore">
+              <i class="bi bi-cloud-upload" aria-hidden="true"></i> Publish bundled
+            </button>
+          </div>
         </div>
-        ${listHtml()}
+        ${toolbarHtml()}
+        <div id="cn-admin-list">${listHtml()}</div>
       </div>
       ${editorHtml()}
     </div>
@@ -234,7 +316,46 @@ function repaintPanel(root: HTMLElement): void {
   bindPanel(root);
 }
 
-async function loadCollection(root: HTMLElement): Promise<void> {
+/** Updates only the list and its count, so the search box keeps focus while typing. */
+function repaintList(root: HTMLElement): void {
+  const list = qs('#cn-admin-list', root);
+  const count = qs('#cn-admin-count', root);
+  if (list) list.innerHTML = listHtml();
+  if (count) count.textContent = countHtml();
+  bindRows(root);
+}
+
+function bindRows(root: HTMLElement): void {
+  qsa<HTMLButtonElement>('.cn-admin__row', root).forEach((button) => {
+    button.addEventListener('click', () => {
+      if (button.dataset.id === selectedId && editorOpen) return;
+      if (!confirmDiscard()) return;
+      selectedId = button.dataset.id ?? null;
+      draft = null;
+      editorOpen = true;
+      repaintPanel(root);
+      qs('#cn-admin-form', root)?.scrollIntoView({ block: 'start' });
+    });
+  });
+}
+
+/** Opens an empty editor, or one prefilled with a copy. */
+function openNew(root: HTMLElement, copy: typeof draft = null): void {
+  selectedId = null;
+  draft = copy;
+  editorOpen = true;
+  dirty = Boolean(copy); // a copy is unsaved work from the start
+  repaintPanel(root);
+  if (copy) setDirtyBadge(root);
+  qs<HTMLInputElement>('#cn-admin-id', root)?.focus();
+}
+
+function setDirtyBadge(root: HTMLElement): void {
+  const badge = qs('#cn-admin-dirty', root);
+  if (badge) badge.hidden = !dirty;
+}
+
+async function loadCollection(root: HTMLElement, keepId: string | null = null): Promise<void> {
   const panel = qs('#cn-admin-panel', root);
   if (panel) panel.innerHTML = loaderHtml('Loading');
 
@@ -258,27 +379,56 @@ async function loadCollection(root: HTMLElement): Promise<void> {
     });
   }
 
-  selectedId = null;
+  // After a save, stay on the document just saved rather than dropping back to an empty form.
+  selectedId = keepId && documents.some((entry) => entry.id === keepId) ? keepId : null;
+  editorOpen = selectedId !== null;
+  draft = null;
+  dirty = false;
   repaintPanel(root);
 }
 
 function bindPanel(root: HTMLElement): void {
-  qsa<HTMLButtonElement>('.cn-admin__row', root).forEach((button) => {
-    button.addEventListener('click', () => {
-      selectedId = button.dataset.id ?? null;
-      repaintPanel(root);
-    });
-  });
+  bindRows(root);
 
-  qs<HTMLFormElement>('#cn-admin-form', root)?.addEventListener('submit', (event) => {
+  const form = qs<HTMLFormElement>('#cn-admin-form', root);
+  form?.addEventListener('submit', (event) => {
     event.preventDefault();
     void handleSave(root);
   });
+  const markDirty = (): void => {
+    if (dirty) return;
+    dirty = true;
+    setDirtyBadge(root);
+  };
+  form?.addEventListener('input', markDirty);
+  form?.addEventListener('change', markDirty);
+
+  qs<HTMLInputElement>('#cn-admin-search', root)?.addEventListener('input', (event) => {
+    query = (event.target as HTMLInputElement).value;
+    repaintList(root);
+  });
+  qs<HTMLSelectElement>('#cn-admin-source', root)?.addEventListener('change', (event) => {
+    sourceFilter = (event.target as HTMLSelectElement).value as SourceFilter;
+    repaintList(root);
+  });
 
   qs<HTMLButtonElement>('#cn-admin-new', root)?.addEventListener('click', () => {
-    selectedId = null;
+    if (confirmDiscard()) openNew(root);
+  });
+
+  qs<HTMLButtonElement>('#cn-admin-back', root)?.addEventListener('click', () => {
+    if (!confirmDiscard()) return;
+    editorOpen = false;
     repaintPanel(root);
-    qs<HTMLInputElement>('#cn-admin-id', root)?.focus();
+    qs(`.cn-admin__row[data-id="${CSS.escape(selectedId ?? '')}"]`, root)?.scrollIntoView({ block: 'center' });
+  });
+
+  qs<HTMLButtonElement>('#cn-admin-duplicate', root)?.addEventListener('click', () => {
+    const source = documents.find((entry) => entry.id === selectedId);
+    if (!source || !confirmDiscard()) return;
+    const id = copyId(source.id, new Set(documents.map((entry) => entry.id)));
+    openNew(root, { id, data: { ...source.data, id } });
+    showToast(`Copied to "${id}". Change what differs, then create it.`, { variant: 'info' });
   });
 
   qs<HTMLButtonElement>('#cn-admin-delete', root)?.addEventListener('click', () => {
@@ -368,7 +518,7 @@ async function handleSave(root: HTMLElement): Promise<void> {
   try {
     await saveDocument(activeCollection, id, data);
     showToast(`Saved. Students will see this on their next load.`, { variant: 'success' });
-    await loadCollection(root);
+    await loadCollection(root, id);
   } catch (error) {
     console.error('[admin] save failed', error);
     showToast('Firestore refused the write. Confirm you are signed in as the admin account.', {
@@ -401,7 +551,7 @@ async function handleSaveRaw(root: HTMLElement): Promise<void> {
   try {
     await saveDocument(activeCollection, id, result.data);
     showToast('Saved.', { variant: 'success' });
-    await loadCollection(root);
+    await loadCollection(root, id);
   } catch (error) {
     console.error('[admin] raw save failed', error);
     errorEl.textContent = 'Firestore refused the write.';
@@ -516,7 +666,10 @@ const adminPage: Page = {
 
     qsa<HTMLButtonElement>('.cn-admin__tab', root).forEach((tab) => {
       tab.addEventListener('click', () => {
+        if (tab.dataset.collection === activeCollection || !confirmDiscard()) return;
         activeCollection = tab.dataset.collection ?? activeCollection;
+        query = '';
+        sourceFilter = 'all';
         qsa<HTMLButtonElement>('.cn-admin__tab', root).forEach((other) => {
           other.setAttribute('aria-pressed', String(other === tab));
         });
@@ -524,14 +677,36 @@ const adminPage: Page = {
       });
     });
 
-    await loadCollection(root);
+    document.addEventListener('keydown', onKeydown);
+    window.addEventListener('beforeunload', onBeforeUnload);
 
-    if (requestedId && documents.some((entry) => entry.id === requestedId)) {
-      selectedId = requestedId;
-      repaintPanel(root);
-      qs('#cn-admin-form', root)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    await loadCollection(root, requestedId);
+    if (selectedId) qs('#cn-admin-form', root)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  },
+
+  unmount() {
+    document.removeEventListener('keydown', onKeydown);
+    window.removeEventListener('beforeunload', onBeforeUnload);
+    dirty = false;
+    editorOpen = false;
+    draft = null;
   },
 };
+
+/** Ctrl+S / Cmd+S saves the open document instead of saving the web page. */
+function onKeydown(event: KeyboardEvent): void {
+  if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 's') return;
+  const form = qs<HTMLFormElement>('#cn-admin-form');
+  if (!form) return;
+  event.preventDefault();
+  form.requestSubmit();
+}
+
+/** Closing or reloading the tab with unsaved edits asks first. */
+function onBeforeUnload(event: BeforeUnloadEvent): void {
+  if (!dirty) return;
+  event.preventDefault();
+  event.returnValue = '';
+}
 
 export default adminPage;

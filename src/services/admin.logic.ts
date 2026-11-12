@@ -42,3 +42,47 @@ export function parseDocumentInput(raw: string, expectedId: string): ParseResult
 
   return { data };
 }
+
+export type SourceFilter = 'all' | 'firestore' | 'bundled';
+
+interface FilterableDocument {
+  id: string;
+  data: Record<string, unknown>;
+  source: 'firestore' | 'bundled';
+}
+
+/**
+ * The document list after search and source filter. Search matches the id, the summary and
+ * every value in the document, so a question can be found by any word in it or by its topic id.
+ */
+export function filterDocuments<T extends FilterableDocument>(
+  documents: readonly T[],
+  query: string,
+  source: SourceFilter,
+): T[] {
+  const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+  return documents.filter((doc) => {
+    if (source !== 'all' && doc.source !== source) return false;
+    if (terms.length === 0) return true;
+    const haystack = `${doc.id} ${JSON.stringify(doc.data)}`.toLowerCase();
+    return terms.every((term) => haystack.includes(term));
+  });
+}
+
+/** Where a document can be seen in the app, for "View in app"; null when it has no page. */
+export function previewHref(collection: string, id: string): string | null {
+  const encoded = encodeURIComponent(id);
+  if (collection === 'topics') return `#/learn/${encoded}`;
+  if (collection === 'units') return `#/learn#unit-${encoded}`;
+  if (collection === 'dictionary') return `#/dictionary?term=${encoded}`;
+  return null;
+}
+
+/** An unused id for a copy of `id`: "osi-model-copy", then "osi-model-copy-2", and so on. */
+export function copyId(id: string, taken: ReadonlySet<string>): string {
+  const base = `${id}-copy`;
+  if (!taken.has(base)) return base;
+  let n = 2;
+  while (taken.has(`${base}-${n}`)) n += 1;
+  return `${base}-${n}`;
+}
