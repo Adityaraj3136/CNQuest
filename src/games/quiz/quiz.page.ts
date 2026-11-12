@@ -14,7 +14,7 @@ import { loaderHtml, stateHtml } from '@/components/loader';
 import { showToast } from '@/components/toast';
 import { finishRound, resultScreenHtml, savingHtml } from '@/games/shared/game-shell';
 import { playCue } from '@/services/sound';
-import { suggestDifficulty } from '@/services/adaptive';
+import { questionScope, startAdaptiveSession, type AdaptiveSession } from '@/services/adaptive';
 import { escapeHtml, qs, qsa } from '@/utils/dom';
 import {
   enterSession,
@@ -158,7 +158,10 @@ function resultsHtml(summary: GameSummary, processed: ProcessedResult): string {
         { label: 'Accuracy', value: `${result.accuracy}%` },
         { label: 'Best streak', value: String(result.bestStreak ?? 0) },
         { label: 'Time', value: `${minutes}m ${String(seconds).padStart(2, '0')}s` },
-        { label: 'Difficulty', value: String(result.difficulty ?? 'mixed') },
+        {
+          label: 'Difficulty',
+          value: adaptive ? `Adaptive · next ${adaptive.difficulty()}` : String(result.difficulty ?? 'mixed'),
+        },
       ],
       xpRows: [
         { label: `${result.correct} correct answers`, xp: xp.answerXp },
@@ -351,6 +354,10 @@ function bindKeys(): void {
 let roundOptions: { topicId?: string; difficulty?: Difficulty; count: number } = {
   count: QUIZ_DEFAULTS.questionCount,
 };
+/** Set when no difficulty was chosen: each question is then picked to fit the student live. */
+let adaptive: AdaptiveSession | null = null;
+/** Adaptive rounds draw from a pool this many times the round length, across all levels. */
+const ADAPTIVE_POOL_FACTOR = 3;
 
 async function startRound(): Promise<void> {
   const container = root();
@@ -361,7 +368,8 @@ async function startRound(): Promise<void> {
   container.innerHTML = `<div class="cn-container">${loaderHtml('Loading your questions…')}</div>`;
 
   try {
-    const questions = await getQuestionRound(roundOptions.count, {
+    const poolSize = adaptive ? roundOptions.count * ADAPTIVE_POOL_FACTOR : roundOptions.count;
+    const questions = await getQuestionRound(poolSize, {
       gameType: 'quiz',
       ...(roundOptions.topicId ? { topicId: roundOptions.topicId } : {}),
       ...(roundOptions.difficulty ? { difficulty: roundOptions.difficulty } : {}),
@@ -386,6 +394,8 @@ async function startRound(): Promise<void> {
 
     engine = new QuizEngine(questions, {
       ...(roundOptions.topicId ? { topicId: roundOptions.topicId } : {}),
+      roundLength: roundOptions.count,
+      ...(adaptive ? { adaptive } : {}),
     });
     paintQuestion();
   } catch (error) {
@@ -417,14 +427,13 @@ const quizPage: Page = {
         ? difficultyParam
         : undefined;
 
-    // No explicit difficulty and a topic with history: let the adaptive engine pick the level.
-    const adaptiveDifficulty =
-      !difficulty && topicId ? await suggestDifficulty(topicId) : null;
+    // No explicit difficulty: the adaptive engine picks every question to fit the student.
+    adaptive = difficulty ? null : await startAdaptiveSession(questionScope(topicId), topicId);
 
     roundOptions = {
       count: Number.isFinite(countParam) && countParam > 0 ? Math.min(countParam, 30) : QUIZ_DEFAULTS.questionCount,
       ...(topicId ? { topicId } : {}),
-      ...(difficulty ?? adaptiveDifficulty ? { difficulty: (difficulty ?? adaptiveDifficulty)! } : {}),
+      ...(difficulty ? { difficulty } : {}),
     };
 
     topicLabel = topicId ? ((await getTopic(topicId))?.title ?? 'Computer Networks') : 'Mixed topics';
@@ -438,6 +447,7 @@ const quizPage: Page = {
   unmount() {
     exitSession();
     roundXp = 0;
+    adaptive = null;
     stopTimer();
     if (keyHandler) {
       window.removeEventListener('keydown', keyHandler);

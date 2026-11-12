@@ -4,7 +4,7 @@
 
 import type { Page } from '@/types/page';
 import { getPreferences, setPreference } from '@/state/preferences';
-import { clearLearnedPolicy, learnedPolicySize } from '@/services/adaptive';
+import { clearLearnedPolicy, clearSkillEstimates, learnedPolicySize } from '@/services/adaptive';
 import { previewSound } from '@/services/sound';
 import { canInstall, isInstalled, onInstallAvailabilityChange, promptInstall, syncNow } from '@/pwa/pwa';
 import { clearQueue, pendingCount, pendingResults } from '@/services/sync-queue';
@@ -122,6 +122,13 @@ function bodyHtml(): string {
         'Reset',
         learnedPolicySize() === 0,
       )}
+      ${actionHtml(
+        'cn-reset-skill',
+        'Reset adaptive difficulty',
+        'Quiz, Rapid Fire, Boss Battle, Packet Dash and Packet Runner adjust their difficulty to how you perform. This forgets that estimate and starts each one fresh.',
+        'Reset',
+        false,
+      )}
     </section>
 
     <section class="cn-settings__group cn-rise cn-rise-4">
@@ -222,6 +229,11 @@ function paint(): void {
     clearLearnedPolicy();
     showToast('Learned policy cleared.', { variant: 'warning' });
     paint();
+  });
+
+  qs<HTMLButtonElement>('#cn-reset-skill', root)?.addEventListener('click', () => {
+    clearSkillEstimates();
+    showToast('Adaptive difficulty reset.', { variant: 'warning' });
   });
 
   qs<HTMLButtonElement>('#cn-install', root)?.addEventListener('click', () => {

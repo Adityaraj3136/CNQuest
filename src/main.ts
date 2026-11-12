@@ -12,6 +12,7 @@ import '@/styles/theme/index.css';
 import { Router } from '@/router';
 import { routes } from '@/routes';
 import { watchConnectivity } from '@/components/footer';
+import { startUserStateSync } from '@/services/user-state.store';
 import { applyPreferences } from '@/state/preferences';
 import { initPwa } from '@/pwa/pwa';
 import { isFirebaseConfigured, missingFirebaseKeys } from '@/config/firebase';
@@ -67,6 +68,7 @@ function identityOf(session: ReturnType<typeof getSession>): string {
 
 applyPreferences();
 watchConnectivity();
+startUserStateSync();
 warnIfUnconfigured();
 initPwa();
 void initSession();

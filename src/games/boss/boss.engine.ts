@@ -8,6 +8,7 @@
 import type { Boss, Difficulty, Question } from '../../models/content.ts';
 import type { AnsweredQuestion, GameResult, GameSummary } from '../../models/game.ts';
 import { BASE_XP, calculateRoundXp, xpForCorrectAnswer } from '../../config/xp.config.ts';
+import { promoteChoice, type AdaptivePicker } from '../../services/adaptive/skill.engine.ts';
 
 /** Damage dealt to the boss for a correct answer, by question difficulty. */
 export const BOSS_DAMAGE: Record<Difficulty, number> = {
@@ -39,6 +40,8 @@ export interface BossView {
 
 export interface BossOptions {
   now?: () => number;
+  /** Adaptive difficulty: hears every answer and picks each next question from the pool. */
+  adaptive?: AdaptivePicker;
 }
 
 export class BossEngine {
@@ -46,6 +49,7 @@ export class BossEngine {
   private readonly questions: Question[];
   private readonly now: () => number;
   private readonly startedAt: number;
+  private readonly adaptive: AdaptivePicker | undefined;
 
   private index = 0;
   private status: BossStatus = 'fighting';
@@ -66,6 +70,13 @@ export class BossEngine {
     this.startedAt = this.now();
     this.bossHp = boss.hp;
     this.playerHp = boss.playerHp;
+    this.adaptive = options.adaptive;
+    this.promoteNext();
+  }
+
+  private promoteNext(): void {
+    const adaptive = this.adaptive;
+    if (adaptive) promoteChoice(this.questions, this.index, (rest) => adaptive.chooseNext(rest));
   }
 
   view(): BossView {
@@ -122,6 +133,7 @@ export class BossEngine {
     };
 
     this.answers.push(recorded);
+    this.adaptive?.record(question.difficulty, isCorrect);
     this.status = 'feedback';
     return recorded;
   }
@@ -137,6 +149,7 @@ export class BossEngine {
     if (this.index >= this.questions.length - 1) return this.finish('defeat');
 
     this.index += 1;
+    this.promoteNext();
     this.status = 'fighting';
     return this.status;
   }

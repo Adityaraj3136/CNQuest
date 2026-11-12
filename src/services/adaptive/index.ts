@@ -7,7 +7,8 @@ import { getTopics } from '@/services/content.service';
 import { activeStore } from '@/services/progress.store';
 import { toLocalDateKey } from '@/services/streak.logic';
 import { getPreferences } from '@/state/preferences';
-import { difficultyForAccuracy, ruleBasedEngine } from '@/services/adaptive/rule-based.engine';
+import { getUserState, saveQTable } from '@/services/user-state.store';
+import { ruleBasedEngine } from '@/services/adaptive/rule-based.engine';
 import { QLearningAdaptiveEngine } from '@/services/adaptive/q-learning.engine';
 import type { QTable, QTableStore } from '@/services/adaptive/q-learning.engine';
 import type {
@@ -18,30 +19,19 @@ import type {
 } from '@/services/adaptive/adaptive.types';
 import { STRUGGLE_ACCURACY } from '@/services/adaptive/adaptive.types';
 import type { Difficulty } from '@/models/content';
+
+// In-round adaptive difficulty (quiz and games): see skill.engine.ts for the model.
+export { clearSkillEstimates, questionScope, startAdaptiveSession } from '@/services/adaptive/skill.store';
+export type { AdaptiveSession } from '@/services/adaptive/skill.store';
 import type { GameAttempt, UserProgress } from '@/models/progress';
 
-const Q_TABLE_KEY = 'cn-quest.q-table';
 /** Rounds considered "recent" when measuring accuracy, pace and repeated failure. */
 const RECENT_ROUNDS = 5;
 
+// The learned table lives in the synced user state, so it follows the student across devices.
 const qTableStore: QTableStore = {
-  load(): QTable {
-    try {
-      const raw = localStorage.getItem(Q_TABLE_KEY);
-      return raw ? (JSON.parse(raw) as QTable) : {};
-    } catch (error) {
-      console.error('[adaptive] Q-table unreadable, starting fresh', error);
-      localStorage.removeItem(Q_TABLE_KEY);
-      return {};
-    }
-  },
-  save(table: QTable): void {
-    try {
-      localStorage.setItem(Q_TABLE_KEY, JSON.stringify(table));
-    } catch (error) {
-      console.error('[adaptive] could not persist Q-table', error);
-    }
-  },
+  load: (): QTable => getUserState().qTable,
+  save: (table: QTable): void => saveQTable(table),
 };
 
 const qLearningEngine = new QLearningAdaptiveEngine(qTableStore);
@@ -52,7 +42,7 @@ export function activeEngine(): AdaptiveLearningEngine {
 }
 
 export function clearLearnedPolicy(): void {
-  localStorage.removeItem(Q_TABLE_KEY);
+  saveQTable({});
 }
 
 /** How many state/action pairs the policy has learned — shown in Settings. */
@@ -148,24 +138,6 @@ export async function recommendNext(): Promise<Recommendation | null> {
   });
 
   return activeEngine().recommendNextActivity(state);
-}
-
-/**
- * Suggests the difficulty for a topic about to be played, when the student has not chosen one.
- * Falls back to medium if nothing is known.
- */
-export async function suggestDifficulty(topicId: string): Promise<Difficulty | null> {
-  const store = activeStore();
-  if (!store) return null;
-
-  try {
-    const progress = await store.loadTopicProgress(topicId);
-    if (!progress || progress.attempted === 0) return null;
-    return difficultyForAccuracy(progress.accuracy);
-  } catch (error) {
-    console.error('[adaptive] could not suggest a difficulty', error);
-    return null;
-  }
 }
 
 /** Feeds a finished round back to the engine. A no-op for the rule-based engine. */

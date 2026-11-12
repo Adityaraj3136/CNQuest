@@ -257,6 +257,31 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // ------------------------------------------------------------ user state
+
+    // Per-student state that is not progress: adaptive skill estimates, the Packet Dash best
+    // and the experimental Q-table. Private to its owner. Clients write it with merge, so
+    // `incoming()` is the whole merged document and these checks cover every field in it.
+    function userStateIsValid(userId) {
+      return incoming().keys().hasOnly(['uid', 'skill', 'skillResetAt', 'dashBest', 'qTable', 'qTableAt', 'updatedAt'])
+        && incoming().uid == userId
+        && (!('skill' in incoming()) || (incoming().skill is map && incoming().skill.size() <= 200))
+        && (!('qTable' in incoming()) || (incoming().qTable is map && incoming().qTable.size() <= 500))
+        && (!('skillResetAt' in incoming()) || incoming().skillResetAt is number)
+        && (!('qTableAt' in incoming()) || incoming().qTableAt is number)
+        && (!('dashBest' in incoming()) || (incoming().dashBest is number && incoming().dashBest >= 0));
+    }
+
+    match /userState/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && userStateIsValid(userId);
+      // A personal best never goes down, whichever device writes last.
+      allow update: if isOwner(userId)
+        && userStateIsValid(userId)
+        && (!('dashBest' in existing()) || incoming().dashBest >= existing().dashBest);
+      allow delete: if false;
+    }
+
     // ---------------------------------------------------------------- default
 
     // Anything not matched above is denied.

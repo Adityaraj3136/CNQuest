@@ -10,6 +10,7 @@
 
 import type { AnsweredQuestion, GameResult, GameSummary } from '../../models/game.ts';
 import { BASE_XP, calculateRoundXp } from '../../config/xp.config.ts';
+import type { Difficulty } from '../../models/content.ts';
 import { mulberry32 } from '../word-search/word-search.generator.ts';
 import {
   TIER_2_AT,
@@ -69,6 +70,8 @@ export interface DashEntity {
 export interface GateRow {
   id: number;
   z: number;
+  /** Gate index the question was drawn for, after the adaptive head start. */
+  level: number;
   question: GateQuestion;
   result?: { chosenLane: number; isCorrect: boolean };
 }
@@ -109,7 +112,28 @@ export interface MissedGate {
   explanation: string;
 }
 
-const DIFFICULTY_BY_CATEGORY: Record<Category, 'easy' | 'medium' | 'hard'> = {
+/**
+ * Adaptive difficulty for a run: reports each gate and supplies a 0–1 intensity (0.5 = the
+ * default tuning). Stronger students start faster, accelerate harder and meet later question
+ * families sooner; struggling ones get a gentler ramp.
+ */
+export interface DashAdaptive {
+  record(difficulty: Difficulty, isCorrect: boolean): void;
+  intensity(): number;
+}
+
+const DEFAULT_INTENSITY = 0.5;
+/** Start speed ×0.85 at intensity 0 up to ×1.15 at 1. */
+const START_SPEED_SPREAD = 0.3;
+/** Acceleration ×0.6 at intensity 0 up to ×1.4 at 1. */
+const ACCELERATION_SPREAD = 0.8;
+
+/** How many gates ahead an above-average student starts: all families open at intensity 1. */
+export function unlockHeadStart(intensity: number): number {
+  return Math.round(Math.max(0, intensity - DEFAULT_INTENSITY) * 2 * TIER_3_AT);
+}
+
+const DIFFICULTY_BY_CATEGORY: Record<Category, Difficulty> = {
   port: 'easy',
   transport: 'easy',
   device: 'easy',
@@ -154,16 +178,24 @@ export class PacketDashEngine {
   private gatesCorrect = 0;
   private readonly answers: AnsweredQuestion[] = [];
   private readonly missed: MissedGate[] = [];
+  private readonly adaptive: DashAdaptive | undefined;
+  private unlockedTier = 1;
 
-  constructor(options: { seed?: number; now?: () => number } = {}) {
+  constructor(options: { seed?: number; now?: () => number; adaptive?: DashAdaptive } = {}) {
     this.rng = mulberry32(options.seed ?? Date.now());
     this.now = options.now ?? (() => Date.now());
+    this.adaptive = options.adaptive;
+  }
+
+  private intensity(): number {
+    return this.adaptive?.intensity() ?? DEFAULT_INTENSITY;
   }
 
   start(): void {
     if (this.status !== 'ready') return;
     this.status = 'running';
     this.startedAt = this.now();
+    this.speed = SPEED_START * (1 + (this.intensity() - DEFAULT_INTENSITY) * START_SPEED_SPREAD);
     // The attract loop moved the world; the first gate is always the same distance away.
     this.nextSegmentAt = this.distance + FIRST_GATE_AT;
     this.spawnAhead();
@@ -204,7 +236,8 @@ export class PacketDashEngine {
     const from = this.distance;
     this.distance += this.speed * dt;
     this.points += this.speed * dt; // one point per metre
-    this.speed = Math.min(SPEED_MAX, this.speed + ACCELERATION * dt);
+    const accelerationScale = 1 + (this.intensity() - DEFAULT_INTENSITY) * ACCELERATION_SPREAD;
+    this.speed = Math.min(SPEED_MAX, this.speed + ACCELERATION * accelerationScale * dt);
     this.invulnerableFor = Math.max(0, this.invulnerableFor - dt);
 
     for (const row of this.rows) {
@@ -255,9 +288,15 @@ export class PacketDashEngine {
     }
 
     this.gatesAttempted += 1;
-    if (this.gatesAttempted === TIER_2_AT) events.push({ type: 'unlock', tier: 2 });
-    if (this.gatesAttempted === TIER_3_AT) events.push({ type: 'unlock', tier: 3 });
+    // Announce a tier once the next gate can draw from it (sooner with an adaptive head start).
+    const reached = row.level + 1;
+    const tier = reached >= TIER_3_AT ? 3 : reached >= TIER_2_AT ? 2 : 1;
+    if (tier > this.unlockedTier) {
+      this.unlockedTier = tier;
+      events.push({ type: 'unlock', tier: tier as 2 | 3 });
+    }
     const { question } = row;
+    this.adaptive?.record(DIFFICULTY_BY_CATEGORY[question.category], isCorrect);
     this.answers.push({
       questionId: `packet-dash:${question.category}:${question.prompt}`,
       question: question.prompt,
@@ -321,7 +360,7 @@ export class PacketDashEngine {
   }
 
   private spawnSegment(z: number): void {
-    const gateIndex = this.gatesSpawned;
+    const gateIndex = this.gatesSpawned + unlockHeadStart(this.intensity());
     const question = questionFor(gateIndex, this.rng, {
       lastCategory: this.lastCategory,
       recent: new Set(this.recentKeys),
@@ -329,7 +368,7 @@ export class PacketDashEngine {
     this.lastCategory = question.category;
     this.recentKeys.push(questionKey(question));
     if (this.recentKeys.length > RECENT_QUESTIONS) this.recentKeys.shift();
-    const row: GateRow = { id: this.nextId++, z, question };
+    const row: GateRow = { id: this.nextId++, z, level: gateIndex, question };
     this.rows.push(row);
     question.options.forEach((label, lane) => this.add({ kind: 'gate', lane, z, rowId: row.id, label }));
     this.gatesSpawned += 1;

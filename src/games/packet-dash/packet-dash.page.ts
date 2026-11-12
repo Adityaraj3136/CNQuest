@@ -24,6 +24,8 @@ import { CATEGORY_META, TIER_UNLOCK_COPY } from '@/games/packet-dash/packet-dash
 import { finishRound, resultScreenHtml, savingHtml } from '@/games/shared/game-shell';
 import { enterSession, exitSession, gameHudHtml } from '@/games/shared/game-hud';
 import { playCue } from '@/services/sound';
+import { startAdaptiveSession } from '@/services/adaptive';
+import { getUserState, saveDashBest } from '@/services/user-state.store';
 import { escapeHtml, qs } from '@/utils/dom';
 import '@/styles/games.css';
 import '@/styles/arena.css';
@@ -31,7 +33,6 @@ import '@/styles/packet-dash.css';
 
 const ROOT_ID = 'cn-dash-root';
 const AGAIN_ID = 'cn-dash-again';
-const BEST_KEY = 'cn-quest.packet-dash.best';
 const MAX_FRAME_SECONDS = 0.05;
 const SWIPE_MIN_PX = 28;
 const TAP_MAX_MOVE_PX = 12;
@@ -66,20 +67,13 @@ function reducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
+/** Personal best, synced across the student's devices (user-state.store). */
 function readBest(): number {
-  try {
-    return Number(localStorage.getItem(BEST_KEY)) || 0;
-  } catch {
-    return 0; // private mode or blocked storage: no best score, game still works
-  }
+  return getUserState().dashBest;
 }
 
 function writeBest(points: number): void {
-  try {
-    localStorage.setItem(BEST_KEY, String(points));
-  } catch {
-    // Not worth interrupting the results screen over.
-  }
+  saveDashBest(points);
 }
 
 // ---------------------------------------------------------------- markup
@@ -609,7 +603,8 @@ async function boot(): Promise<void> {
   disposeScene();
   window.clearTimeout(countdownTimer);
 
-  engine = new PacketDashEngine();
+  // Pace and question families follow the student's skill estimate, refined at every gate.
+  engine = new PacketDashEngine({ adaptive: await startAdaptiveSession('packet-dash') });
   shownRowId = shownPoints = shownBits = shownCombo = shownLives = shownLane = shownSpeed = shownDistance = -1;
   shownShield = null;
   container.innerHTML = shellHtml();

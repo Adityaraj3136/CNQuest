@@ -208,3 +208,20 @@ test('steering is clamped to the three lanes', () => {
   engine.steer(1);
   assert.equal(engine.snapshot().lane, LANES - 1);
 });
+
+test('adaptive intensity: strong students start faster with later families open; every gate is reported', () => {
+  const reports: boolean[] = [];
+  const strong = new PacketDashEngine({
+    seed: 3,
+    adaptive: { intensity: () => 1, record: (_difficulty, isCorrect) => reports.push(isCorrect) },
+  });
+  const weak = new PacketDashEngine({ seed: 3, adaptive: { intensity: () => 0, record: () => {} } });
+  strong.start();
+  weak.start();
+  assert.ok(strong.snapshot().speed > SPEED_START && weak.snapshot().speed < SPEED_START);
+  assert.ok(strong.snapshot().rows[0].level >= TIER_3_AT, 'all families open from the first gate');
+  assert.equal(weak.snapshot().rows[0].level, 0);
+
+  runToNextGate(strong, (lane) => lane);
+  assert.deepEqual(reports, [true]);
+});

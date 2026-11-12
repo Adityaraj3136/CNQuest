@@ -28,6 +28,7 @@ import {
   setHudXp,
 } from '@/games/shared/game-hud';
 import { playCue } from '@/services/sound';
+import { startAdaptiveSession, type AdaptiveSession } from '@/services/adaptive';
 import { escapeHtml, qs, qsa } from '@/utils/dom';
 import '@/styles/games.css';
 import '@/styles/arena.css';
@@ -51,6 +52,8 @@ const DIFFICULTY_COPY: Record<Difficulty, string> = {
 let engine: PacketRunnerEngine | null = null;
 let scene: PacketScene | null = null;
 let difficulty: Difficulty = 'easy';
+/** Skill estimate for routing; recommends a level on the intro and hears every hop. */
+let adaptive: AdaptiveSession | null = null;
 let busy = false;
 let runXp = 0;
 /** Interfaces already proven wrong at the current router. */
@@ -72,6 +75,7 @@ function chipHtml(iface: string): string {
 // ---------------------------------------------------------------- intro
 
 function introHtml(): string {
+  const recommended = adaptive?.difficulty();
   return `
     ${gameHudHtml({ mode: 'Packet Runner' })}
     <div class="cn-container cn-arena cn-arena--narrow cn-pr-intro">
@@ -89,8 +93,8 @@ function introHtml(): string {
       <div class="cn-pr-intro__levels" role="group" aria-label="Choose difficulty">
         ${DIFFICULTIES.map(
           (level) => `
-            <button type="button" class="cn-pr-level" data-level="${level}">
-              <span class="cn-pr-level__name">${level}</span>
+            <button type="button" class="cn-pr-level${level === recommended ? ' is-recommended' : ''}" data-level="${level}">
+              <span class="cn-pr-level__name">${level}${level === recommended ? '<span class="cn-pr-level__tag">Fits you</span>' : ''}</span>
               <span class="cn-pr-level__desc">${escapeHtml(DIFFICULTY_COPY[level])}</span>
             </button>`,
         ).join('')}
@@ -110,7 +114,7 @@ function showIntro(): void {
       void start();
     }),
   );
-  qs<HTMLButtonElement>('.cn-pr-level', container)?.focus();
+  (qs<HTMLButtonElement>('.cn-pr-level.is-recommended', container) ?? qs<HTMLButtonElement>('.cn-pr-level', container))?.focus();
 }
 
 // ---------------------------------------------------------------- run
@@ -234,6 +238,7 @@ async function choose(iface: string): Promise<void> {
   const view = engine.view();
   const decision = engine.choose(iface);
   if (!decision) return;
+  adaptive?.record(difficulty, decision.isCorrect);
 
   busy = true;
   playCue(decision.isCorrect ? 'correct' : 'wrong');
@@ -390,9 +395,10 @@ const packetRunnerPage: Page = {
     return `<section id="${ROOT_ID}"></section>`;
   },
 
-  mount(ctx: PageContext) {
+  async mount(ctx: PageContext) {
     enterSession();
     document.addEventListener('keydown', onKey);
+    adaptive = await startAdaptiveSession('packet-runner');
     const requested = ctx.query.get('difficulty') as Difficulty | null;
     if (requested && DIFFICULTIES.includes(requested)) {
       difficulty = requested;
@@ -407,6 +413,7 @@ const packetRunnerPage: Page = {
     exitSession();
     disposeScene();
     engine = null;
+    adaptive = null;
   },
 };
 

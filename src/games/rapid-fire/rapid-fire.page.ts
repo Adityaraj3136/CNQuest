@@ -8,6 +8,7 @@ import { RapidFireEngine, RAPID_FIRE_DEFAULTS } from '@/games/rapid-fire/rapid-f
 import { finishRound, resultScreenHtml, savingHtml } from '@/games/shared/game-shell';
 import { playCue } from '@/services/sound';
 import { getQuestionRound, getTopic } from '@/services/content.service';
+import { questionScope, startAdaptiveSession } from '@/services/adaptive';
 import { loaderHtml, stateHtml } from '@/components/loader';
 import { escapeHtml, qs, qsa } from '@/utils/dom';
 import { enterSession, exitSession, gameHudHtml, setHudStreak, setHudTimer } from '@/games/shared/game-hud';
@@ -384,10 +385,13 @@ async function start(): Promise<void> {
   container.innerHTML = `<div class="cn-container">${loaderHtml('Loading questions')}</div>`;
 
   try {
-    const questions = await getQuestionRound(RAPID_FIRE_DEFAULTS.questionPool, {
-      gameType: 'rapid-fire',
-      ...(topicId ? { topicId } : {}),
-    });
+    const [questions, adaptive] = await Promise.all([
+      getQuestionRound(RAPID_FIRE_DEFAULTS.questionPool, {
+        gameType: 'rapid-fire',
+        ...(topicId ? { topicId } : {}),
+      }),
+      startAdaptiveSession(questionScope(topicId), topicId),
+    ]);
 
     if (questions.length === 0) {
       container.innerHTML = `<div class="cn-container">${stateHtml({
@@ -400,7 +404,7 @@ async function start(): Promise<void> {
       return;
     }
 
-    engine = new RapidFireEngine(questions, { ...(topicId ? { topicId } : {}) });
+    engine = new RapidFireEngine(questions, { ...(topicId ? { topicId } : {}), adaptive });
     container.innerHTML = arenaHtml();
     bindOptionListeners();
     startTimer();

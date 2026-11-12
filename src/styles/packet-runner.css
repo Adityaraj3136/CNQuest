@@ -277,6 +277,22 @@
   color: #c4b5fd;
 }
 
+.cn-pr-level.is-recommended {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 1px #8b5cf6 inset;
+}
+
+.cn-pr-level__tag {
+  margin-left: var(--cn-space-2);
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #8b5cf6;
+  color: #0b0614;
+  font-size: var(--cn-text-xs, 0.7rem);
+  letter-spacing: 0.04em;
+  vertical-align: middle;
+}
+
 .cn-pr-level__desc {
   color: var(--cn-ink-soft);
   font-size: var(--cn-text-sm);

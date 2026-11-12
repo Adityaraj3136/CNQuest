@@ -232,3 +232,40 @@ test('calculateRoundXp awards no bonuses for an empty round', () => {
   assert.equal(breakdown.total, 0);
   assert.equal(breakdown.perfectBonus, 0, '0 of 0 is not a perfect round');
 });
+
+test('adaptive rounds: the picker hears each answer before choosing, and roundLength caps the round', () => {
+  const pool = [
+    makeQuestion('e1', 0, 'easy'),
+    makeQuestion('h1', 0, 'hard'),
+    makeQuestion('e2', 0, 'easy'),
+    makeQuestion('h2', 0, 'hard'),
+  ];
+  const log: string[] = [];
+  let wantHard = false;
+  const engine = new QuizEngine(pool, {
+    roundLength: 3,
+    adaptive: {
+      record: (difficulty, isCorrect) => {
+        log.push(`record:${difficulty}:${isCorrect}`);
+        wantHard = isCorrect;
+      },
+      chooseNext: (rest) => {
+        log.push('choose');
+        return rest.findIndex((question) => question.difficulty === (wantHard ? 'hard' : 'easy'));
+      },
+    },
+  });
+
+  assert.equal(engine.view().totalQuestions, 3);
+  assert.equal(engine.view().question.id, 'e1');
+  engine.answer(0); // correct, so the next pick should be hard
+  engine.next();
+  assert.equal(engine.view().question.difficulty, 'hard');
+  engine.answer(1); // wrong, so back to easy
+  engine.next();
+  assert.equal(engine.view().question.id, 'e2');
+  engine.answer(0);
+  assert.equal(engine.next(), 'finished');
+  assert.deepEqual(log.slice(0, 3), ['choose', 'record:easy:true', 'choose']);
+  assert.equal(engine.summary().result.attempted, 3);
+});

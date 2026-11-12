@@ -9,6 +9,7 @@ import { BossEngine } from '@/games/boss/boss.engine';
 import { finishRound, resultScreenHtml, savingHtml } from '@/games/shared/game-shell';
 import { playCue } from '@/services/sound';
 import { getBosses, getQuestionRound } from '@/services/content.service';
+import { questionScope, startAdaptiveSession } from '@/services/adaptive';
 import { loaderHtml, stateHtml } from '@/components/loader';
 import { escapeHtml, qs, qsa } from '@/utils/dom';
 import { enterSession, exitSession, gameHudHtml, setHudLives } from '@/games/shared/game-hud';
@@ -233,10 +234,11 @@ async function start(): Promise<void> {
   container.innerHTML = `<div class="cn-container">${loaderHtml('Summoning the boss')}</div>`;
 
   try {
-    const questions = await getQuestionRound(QUESTION_POOL, {
-      gameType: 'boss',
-      unitId: activeBoss.unitId,
-    });
+    // A boss spans a whole unit, so it shares the mixed-topic skill estimate.
+    const [questions, adaptive] = await Promise.all([
+      getQuestionRound(QUESTION_POOL, { gameType: 'boss', unitId: activeBoss.unitId }),
+      startAdaptiveSession(questionScope()),
+    ]);
 
     if (questions.length === 0) {
       container.innerHTML = `<div class="cn-container">${stateHtml({
@@ -249,7 +251,7 @@ async function start(): Promise<void> {
       return;
     }
 
-    engine = new BossEngine(activeBoss, questions);
+    engine = new BossEngine(activeBoss, questions, { adaptive });
     paint();
   } catch (error) {
     console.error('[boss] could not start', error);

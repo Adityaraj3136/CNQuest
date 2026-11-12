@@ -11,6 +11,7 @@
 import type { Difficulty, Question } from '../../models/content.ts';
 import type { AnsweredQuestion, GameResult, GameSummary } from '../../models/game.ts';
 import { BASE_XP, calculateRoundXp, xpForCorrectAnswer } from '../../config/xp.config.ts';
+import { promoteChoice, type AdaptivePicker } from '../../services/adaptive/skill.engine.ts';
 
 export const QUIZ_DEFAULTS = {
   questionCount: 10,
@@ -27,6 +28,10 @@ export interface QuizEngineOptions {
   /** Topic the round was started from; 'mixed' when questions span topics. */
   topicId?: string;
   unitId?: string;
+  /** Questions to ask; defaults to all of them. Lets `questions` be a larger pool to choose from. */
+  roundLength?: number;
+  /** Adaptive difficulty: hears every answer and picks each next question from the pool. */
+  adaptive?: AdaptivePicker;
 }
 
 export interface QuizView {
@@ -48,6 +53,9 @@ export class QuizEngine {
   private readonly now: () => number;
   private readonly topicId: string;
   private readonly unitId: string | undefined;
+  private readonly total: number;
+  private readonly adaptive: AdaptivePicker | undefined;
+  private readonly chooseNext: ((rest: readonly Question[]) => number) | undefined;
 
   private index = 0;
   private status: QuizStatus = 'asking';
@@ -68,6 +76,10 @@ export class QuizEngine {
     this.now = options.now ?? (() => Date.now());
     this.topicId = options.topicId ?? this.deriveTopicId();
     this.unitId = options.unitId ?? this.deriveUnitId();
+    this.total = Math.max(1, Math.min(options.roundLength ?? this.questions.length, this.questions.length));
+    this.adaptive = options.adaptive;
+    this.chooseNext = options.adaptive && ((rest) => options.adaptive!.chooseNext(rest));
+    promoteChoice(this.questions, 0, this.chooseNext);
 
     this.startedAt = this.now();
     this.questionStartedAt = this.startedAt;
@@ -87,9 +99,9 @@ export class QuizEngine {
   view(): QuizView {
     return {
       status: this.status,
-      questionNumber: Math.min(this.index + 1, this.questions.length),
-      totalQuestions: this.questions.length,
-      question: this.questions[Math.min(this.index, this.questions.length - 1)],
+      questionNumber: Math.min(this.index + 1, this.total),
+      totalQuestions: this.total,
+      question: this.questions[Math.min(this.index, this.total - 1)],
       lastAnswer: this.status === 'asking' ? null : (this.answers[this.answers.length - 1] ?? null),
       score: this.correctCount(),
       currentStreak: this.currentStreak,
@@ -131,6 +143,7 @@ export class QuizEngine {
     };
 
     this.answers.push(recorded);
+    this.adaptive?.record(question.difficulty, isCorrect, timeTakenMs / (this.secondsPerQuestion * 1000));
     this.status = 'feedback';
     return recorded;
   }
@@ -139,13 +152,14 @@ export class QuizEngine {
   next(): QuizStatus {
     if (this.status !== 'feedback') return this.status;
 
-    if (this.index >= this.questions.length - 1) {
+    if (this.index >= this.total - 1) {
       this.status = 'finished';
       this.finishedAt = this.now();
       return this.status;
     }
 
     this.index += 1;
+    promoteChoice(this.questions, this.index, this.chooseNext);
     this.status = 'asking';
     this.questionStartedAt = this.now();
     return this.status;

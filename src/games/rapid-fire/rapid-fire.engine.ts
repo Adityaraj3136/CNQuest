@@ -8,6 +8,7 @@
 import type { Difficulty, Question } from '../../models/content.ts';
 import type { AnsweredQuestion, GameResult, GameSummary } from '../../models/game.ts';
 import { BASE_XP, calculateRoundXp, xpForCorrectAnswer } from '../../config/xp.config.ts';
+import { promoteChoice, type AdaptivePicker } from '../../services/adaptive/skill.engine.ts';
 
 export const RAPID_FIRE_DEFAULTS = {
   durationSeconds: 60,
@@ -23,6 +24,8 @@ export const RAPID_FIRE_DEFAULTS = {
   extraStreakBonusSeconds: 1,
   /** Maximum time cap so user cannot accumulate infinite time */
   maxDurationSeconds: 90,
+  /** Seconds that count as a slow answer for adaptive difficulty (there is no per-question clock). */
+  adaptiveReferenceSeconds: 10,
 } as const;
 
 export interface RapidFireOptions {
@@ -33,6 +36,8 @@ export interface RapidFireOptions {
   now?: () => number;
   topicId?: string;
   unitId?: string;
+  /** Adaptive difficulty: hears every answer and picks each next question from the pool. */
+  adaptive?: AdaptivePicker;
 }
 
 export interface RapidFireAnswerResult extends AnsweredQuestion {
@@ -62,6 +67,7 @@ export class RapidFireEngine {
   private readonly correctBonusSeconds: number;
   private readonly wrongPenaltySeconds: number;
   private readonly maxDurationSeconds: number;
+  private readonly adaptive: AdaptivePicker | undefined;
 
   private index = 0;
   private readonly answers: AnsweredQuestion[] = [];
@@ -84,6 +90,8 @@ export class RapidFireEngine {
     this.correctBonusSeconds = options.correctBonusSeconds ?? RAPID_FIRE_DEFAULTS.correctBonusSeconds;
     this.wrongPenaltySeconds = options.wrongPenaltySeconds ?? RAPID_FIRE_DEFAULTS.wrongPenaltySeconds;
     this.maxDurationSeconds = options.maxDurationSeconds ?? RAPID_FIRE_DEFAULTS.maxDurationSeconds;
+    this.adaptive = options.adaptive;
+    this.promoteNext();
 
     const topicIds = new Set(this.questions.map((question) => question.topicId));
     const unitIds = new Set(this.questions.map((question) => question.unitId));
@@ -176,9 +184,20 @@ export class RapidFireEngine {
     };
 
     this.answers.push(recorded);
+    this.adaptive?.record(
+      question.difficulty,
+      isCorrect,
+      Math.min(1, recorded.timeTakenMs / (RAPID_FIRE_DEFAULTS.adaptiveReferenceSeconds * 1000)),
+    );
     this.index += 1;
+    this.promoteNext();
     this.questionStartedAt = this.now();
     return recorded;
+  }
+
+  private promoteNext(): void {
+    const adaptive = this.adaptive;
+    if (adaptive) promoteChoice(this.questions, this.index, (rest) => adaptive.chooseNext(rest));
   }
 
   /** Ends the round early (student quit, or the clock ran out). */
