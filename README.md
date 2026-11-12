@@ -3,16 +3,19 @@
 **Reinforcement AI Based Gamified Learning Platform for Computer Networks**
 
 CN Quest is an installable Progressive Web App that helps B.Tech / undergraduate Computer Science
-students revise the Computer Networks syllabus through short learning topics, six game modes, XP,
-levels, daily streaks, achievements and topic-wise mastery tracking.
+students revise the Computer Networks syllabus through in-depth learning topics, eight game modes
+(two of them in 3D), XP, levels, daily streaks, achievements, topic-wise mastery tracking and
+difficulty that adapts to each student as they play.
 
 It is designed as a **supplement to textbooks and classroom teaching**, not a replacement.
 
-> **Status: live and feature complete.** Six game modes, the gamification engine, dashboard,
-> quest-based Learn, networking library, progression screen, leaderboard, achievements, an
-> admin content workspace, an installable offline-capable PWA and a two-implementation adaptive
-> engine. **239 automated self-checks pass**, the security rules are hardened and deployed, and
-> the manual test plan lives in [TESTING.md](TESTING.md).
+> **Status: live and feature complete.** Eight game modes including the 3D Packet Runner and
+> Packet Dash, the gamification engine, dashboard, quest-based Learn with in-depth sections and
+> worked examples, networking library, progression screen, leaderboard, achievements, an admin
+> content workspace, in-app Google sign-in, an installable offline-capable PWA with in-app
+> updates, and adaptive difficulty synced across devices. **290 automated self-checks pass**,
+> the security rules are hardened and deployed, and the manual test plan lives in
+> [TESTING.md](TESTING.md).
 >
 > **Live:** [cn-quest.web.app](https://cn-quest.web.app) (Firebase Hosting) and
 > [adityaraj3136.github.io/CNQuest](https://adityaraj3136.github.io/CNQuest/) (GitHub Pages).
@@ -28,10 +31,11 @@ It is designed as a **supplement to textbooks and classroom teaching**, not a re
 | Build tool | Vite 6 |
 | Markup / styling | HTML5, CSS3 custom properties, Bootstrap 5 |
 | Icons | Bootstrap Icons |
-| Authentication | Firebase Authentication |
+| 3D | three.js (Packet Runner and Packet Dash only, lazy-loaded) |
+| Authentication | Firebase Authentication; Google sign-in through Google Identity Services |
 | Database | Cloud Firestore (with a bundled offline fallback) |
-| Hosting | Firebase Hosting |
-| Adaptive | Rule-based engine, opt-in tabular Q-learning |
+| Hosting | Firebase Hosting and GitHub Pages |
+| Adaptive | IRT/Elo skill model for in-play difficulty; rule-based recommender, opt-in tabular Q-learning |
 | Offline | Service worker (Workbox via vite-plugin-pwa) + localStorage sync queue |
 
 No heavyweight frontend framework is used — screens are plain TypeScript modules rendered by a small
@@ -216,35 +220,84 @@ Shipped in Phase 12:
 - Audit clean: no `console.log`, no committed secrets, `.env` and service keys git-ignored
 - **Profile screen** (§49): identity, level and XP, headline statistics, earned badges, editable
   display name and preset avatar, and a password-reset action for account holders
-services, progress analytics, networking dictionary, leaderboard, service worker with offline sync,
-and the adaptive learning engine.
+
+Shipped after Phase 12:
+
+- **Retro arcade redesign** — an original 8/16-bit "VGA network expedition" look across landing,
+  auth, dashboard and games (see the design section below), with responsive layouts checked at
+  phone, tablet and desktop widths, game motion and feedback polish, and answer positions
+  balanced across all four options in the question bank
+- **Packet Runner** (3D) — you are the router: read each hop's routing table and send the packet
+  out of the interface whose route matches its destination; when several match, the longest
+  prefix wins. 5–7 hops by difficulty, TTL as lives, misroutes explained.
+- **Packet Dash** (3D endless runner) — steer the packet through the gate carrying the right
+  answer while dodging firewalls. Nine question families unlock in tiers: ports, transport
+  (TCP/UDP/ICMP), devices and PDUs from the first gate; OSI layers, sizes and private ranges from
+  gate 3; subnets and host counts from gate 8. Scrolling neon grid, glowing tunnel, gates tinted
+  by question type, pooled particle bursts, all without post-processing so budget phones keep up.
+- **Animated game cards** — the Packet Dash and Packet Runner cards on the Games screen loop a
+  short demo of their own game in pure CSS (frozen under reduced motion)
+- **Adaptive difficulty in play** (`services/adaptive/skill.engine.ts`) — a one-parameter IRT/Elo
+  skill model updates after every answer, weighting by item difficulty and counting a slow
+  correct answer as partial credit. The next question targets about 70% predicted success.
+  Quiz (when no difficulty is fixed), Rapid Fire and Boss Battle pick each question live from a
+  mixed pool; Packet Dash scales speed, acceleration and question-family unlocks; Packet Runner
+  recommends the level that fits. Estimates seed from existing topic accuracy.
+- **Cross-device sync** (`services/user-state.*`) — skill estimates, the Packet Dash best and the
+  Q-learning table live in `userState/{uid}`. Reads come from a local cache; changes push a few
+  seconds later sending only what the cloud lacks, retry on reconnect, and merge on sign-in
+  (newer estimate wins, higher best wins). A reset in Settings clears every device.
+- **Learn on phones** — unit headers in one column so descriptions read as full lines, quest
+  rows with the status beside the quest number, and an app-style footer: on phones the bottom
+  tab bar carries navigation, so the footer shrinks to one status line above it
+- **In-depth topics** — every topic gains an "In depth" block: 75 sections (about 8,900 words)
+  with mechanisms and worked numericals such as CRC division, Hamming (7,4), sliding-window
+  efficiency, ALOHA and CSMA/CD maths, fragmentation, VLSM, Dijkstra and count-to-infinity
+  traces, token bucket, TCP RTO, cwnd traces, RSA and Diffie-Hellman with small numbers
+- **Readable prose** — long paragraphs split at sentence boundaries, each section's first sentence
+  as a lead, addresses, bit strings and formulas in monospace, and a "Worked example" tag; all
+  derived after escaping from the plain text the admin editor stores
+- **In-app Google sign-in** — Google Identity Services shows the browser's own account chooser
+  (FedCM in Chrome and Edge) over the page with the accounts already on the device; Firebase signs
+  in with the returned token. No popup window. Origins not yet authorised use a same-tab redirect.
+- **Admin editor** — search across every field with a Published / Bundle-only filter, an
+  unsaved-changes guard, Duplicate, "View in app", Ctrl/Cmd+S, a sticky save bar, an editor
+  field for in-depth sections, and on phones separate list and editor screens
+- **App updates from Settings** — "Check for updates" fetches the newest build and reloads into
+  it; "Repair offline copy" clears cached app files for a device stuck on an old version; the
+  running build's timestamp is shown so a phone can be checked. Open apps also check hourly and
+  whenever they come back to the foreground.
 
 ---
 
-## Design system — "Quiet Arcade"
+## Design system — "VGA network expedition"
 
-CN Quest is **a learning game a university would still take seriously.** Warm paper, soft edges,
-generous space, and one electric blue meaning "this is the way forward".
+An original 8/16-bit visual language built from networking objects: packet routes, relay towers,
+terminals, ports and gateways. It does not reproduce any third-party game art.
+
+The theme is five stylesheet layers in `src/styles/theme/`, loaded in a fixed order so later layers
+override earlier ones:
+
+| Layer | File | Role |
+| --- | --- | --- |
+| 1–2 | `adventure-base.css`, `adventure-screens.css` | Layout, controls, landing, dashboard, games |
+| 3–4 | `vga-base.css`, `vga-screens.css` | Palette, console chrome, per-screen colour |
+| 5 | `arcade.css` | Game typography, pixel shadows, press-down buttons, CRT wash |
 
 | Element | Decision |
 | --- | --- |
-| Canvas | Warm off-white `#fbfaf8`; a faint blueprint grid on the hero and syllabus only |
-| Ink | Near-black `#16181d` for headings, softer `#545a63` for prose |
-| Accent | One electric blue `#0b46ff` for every interactive signal and active state |
-| Reward | Amber `#ff8a00`, reserved **exclusively** for XP and streaks |
-| Mastered | Emerald `#0f7a52` for a finished topic or unit |
-| Rare | Violet `#6d4aff` for bosses and level-ups, nothing else |
-| Locked | Grey `#a9aeb7` for content not yet reached |
-| Type | Sans for everything readable; monospace only for values (XP, timers, ports, masks) |
-| Radius | 6px controls, 8px buttons, 12px cards, 16px feature panels. Nothing larger |
-| Depth | Short-range shadows. A card looks lifted, never floating |
+| Canvas | Night `#0b1020` and panel `#121a2c`, with raised surfaces at `#1a2640` |
+| Accent | Sky `#55a8ff` and blue `#2368dc` for interactive signals and active state |
+| Reward | Gold `#ffd447` for XP, streaks and primary calls to action |
+| Success / error | Green `#65d46e` and red `#ff5d73` for right and wrong |
+| Data | Cyan `#55e6c1` for connectivity and live values |
+| Type | A blocky display face for headings, a terminal-style mono for values and labels; system fallbacks, no web fonts |
 
-Four rules for anyone extending it (also stated at the top of `variables.css`):
+Rules that still hold from the original system:
 
-1. **Colour communicates state.** If it is not XP, progress, success or a lock, it is grey.
-2. **Separation comes from space first**, a soft surface second, a border only if needed.
-3. **Monospace is for values a student reads as data**, not for interface text.
-4. **Nothing is uppercase** unless it is a genuine label of three words or fewer.
+1. **Colour communicates state** — reward, success, error, progress or a lock; everything else is muted.
+2. **Monospace is for values a student reads as data**: XP, timers, ports, masks, addresses.
+3. **Motion uses transform and opacity**, and stops under `prefers-reduced-motion` or the in-app setting.
 
 Games take this further into a **session mode**: entering any mode drops the navbar, footer and
 tab bar entirely, replacing them with a 64px HUD carrying exit, progress, streak, XP and timer.
@@ -266,7 +319,8 @@ Every game feeds one shared result pipeline. Games never touch XP, levels, strea
 directly.
 
 ```
-Quiz · Rapid Fire · Boss Battle · Match & Pair · Riddles · Word Search
+Quiz · Rapid Fire · Boss Battle · Match & Pair · Riddles · Word Search · Packet Runner · Packet Dash
+                          |       (every answer also updates the in-play skill estimate)
                           |
                       GameResult
                           |
@@ -294,21 +348,27 @@ CN Quest/
 │   ├── offline.html              # Offline fallback page
 │   └── icons/                    # App icons (standard + maskable)
 ├── src/
-│   ├── components/               # navbar, footer, loader, toast
-│   ├── config/                   # app.config.ts, firebase.ts, level.config.ts
-│   ├── data/                     # Bundled seed content (units, topics, questions, …)
-│   ├── games/
-│   │   └── quiz/                 # quiz.engine.ts (pure rules) + quiz.page.ts (UI)
-│   ├── models/                   # user.ts, content.ts (document shapes)
-│   ├── services/                 # auth, user, content service + pure content filters
-│   ├── state/                    # session.ts (single source of truth for auth)
+│   ├── components/               # navbar + tab bar, footer, loader, toast
+│   ├── config/                   # app.config.ts, firebase.ts, level.config.ts, xp.config.ts
+│   ├── data/                     # Bundled content; topics.depth.ts holds the in-depth sections
+│   ├── games/                    # one folder per mode: *.engine.ts (pure rules) + *.page.ts (UI)
+│   │   ├── quiz/ rapid-fire/ boss/ matching/ riddles/ word-search/
+│   │   ├── packet-runner/        # 3D routing game (three.js scene, lazy-loaded)
+│   │   ├── packet-dash/          # 3D endless runner + nine question families
+│   │   └── shared/               # results shell, HUD, three.js stage
+│   ├── models/                   # user.ts, content.ts, game.ts, progress.ts (document shapes)
+│   ├── services/                 # auth, Google Identity, content, gamification, admin, sync
+│   │   └── adaptive/             # skill model (in-play), rule-based and Q-learning recommenders
+│   ├── state/                    # session.ts, preferences.ts, guest.ts
+│   ├── pwa/                      # service worker registration, install, updates, sync
 │   ├── pages/
-│   │   ├── landing/
+│   │   ├── landing/ dashboard/ games/ progress/ achievements/ profile/ settings/
 │   │   ├── auth/                 # login, register, forgot-password, logout, shared shell
-│   │   ├── dashboard/
-│   │   ├── learn/                # unit browser + topic detail
-│   │   └── leaderboard/          # all-time XP ranking
-│   ├── styles/                   # variables, global, components, landing, auth, dashboard
+│   │   ├── learn/                # quest line, topic detail, prose formatter
+│   │   ├── dictionary/           # networking library
+│   │   ├── leaderboard/          # all-time XP ranking
+│   │   └── admin/                # content workspace and media library
+│   ├── styles/                   # base styles, theme/ layers, per-page stylesheets
 │   ├── types/                    # Page / route contracts
 │   ├── utils/                    # dom + validation helpers
 │   ├── router.ts                 # Hash router
@@ -325,8 +385,8 @@ CN Quest/
 └── .env.example
 ```
 
-Directories for `src/games/`, `src/services/` and `src/models/` are introduced in the phases that
-first need them, so the tree stays free of empty folders.
+Pure logic (engines, models, `*.logic.ts`) uses relative imports only, so Node's test runner can
+load it directly without Vite.
 
 ---
 
@@ -365,7 +425,7 @@ The dev server starts on <http://localhost:5173>.
 
 1. Create a project in the [Firebase Console](https://console.firebase.google.com/).
 2. Add a **Web app** to the project and copy the SDK configuration values.
-3. Enable **Authentication → Sign-in method → Email/Password**.
+3. Enable **Authentication → Sign-in method → Email/Password** and **Google**.
 4. Create a **Cloud Firestore** database (start in production mode; rules land in Phase 3).
 5. Copy the environment template and fill it in:
 
@@ -380,7 +440,16 @@ The dev server starts on <http://localhost:5173>.
    VITE_FIREBASE_STORAGE_BUCKET=your-project.firebasestorage.app
    VITE_FIREBASE_MESSAGING_SENDER_ID=...
    VITE_FIREBASE_APP_ID=...
+
+   # Optional, for in-app Google sign-in (no popup):
+   VITE_GOOGLE_CLIENT_ID=...apps.googleusercontent.com
+   VITE_GOOGLE_GIS_ORIGINS=https://your-project.firebaseapp.com,https://your-project.web.app
    ```
+
+   The client id is the project's OAuth **Web client** (Firebase Console → Authentication → Google
+   → Web SDK configuration). Every origin in `VITE_GOOGLE_GIS_ORIGINS` must also be listed under
+   **Authorised JavaScript origins** for that client in Google Cloud Console → APIs & Services →
+   Credentials. On any other origin the app uses a same-tab Google redirect instead.
 
 6. Restart `npm run dev` so Vite picks up the new variables.
 7. Deploy the security rules before registering a student — the default locked database rejects the
@@ -422,6 +491,7 @@ Functions), so `firestore.rules` is the enforcement layer. It provides defence i
 | Leaderboard field allow-list | `leaderboard/{uid}` accepts *only* `uid`, `name`, `level`,
   `totalXP`, `updatedAt` — no profile field can be smuggled into a world-readable document,
   and its XP is monotonic and rate-limited exactly like the profile it mirrors |
+| Private user state | `userState/{uid}` is owner-only, accepts only its seven known fields with size caps, and its Packet Dash best can never decrease |
 | Default deny | Any path not explicitly matched is refused |
 
 **Stated honestly:** these rules stop tampering and implausible values, but a client can still
@@ -440,7 +510,7 @@ The attack cases to run against a live project are in [TESTING.md](TESTING.md#7-
 ## Deployment
 
 ```bash
-npm run verify                 # typecheck + 239 tests + production build
+npm run verify                 # typecheck + 290 tests + production build
 npx firebase-tools login
 npx firebase-tools use --add   # select your Firebase project
 npm run deploy                 # verify, then deploy hosting + rules
@@ -466,12 +536,17 @@ The app is deployed twice from one build:
 
 Pages must be set to source **GitHub Actions**, not a branch: the repository root holds source,
 and GitHub serves `.ts` as `video/mp2t`, which the browser refuses to execute. The workflow
-builds with `BASE_PATH=/CNQuest/` so every asset URL carries the project-site prefix, and reads
-the six `VITE_FIREBASE_*` values from repository secrets.
+builds with `BASE_PATH=/CNQuest/` so every asset URL carries the project-site prefix, reads
+the `VITE_FIREBASE_*` values from repository secrets, and sets the public
+`VITE_GOOGLE_CLIENT_ID` directly.
 
-Google sign-in is more reliable on the Firebase-hosted origin. The popup loads a hidden frame
-from the auth domain, and serving the app from an unrelated origin can break it; the app falls
-back to a full-page redirect when that happens.
+Google sign-in uses Google Identity Services on origins authorised for the OAuth client (today
+`cn-quest.firebaseapp.com` and `adityaraj3136.github.io`): the account chooser appears over the
+page and no window opens. `cn-quest.web.app` uses a same-tab redirect until it is added under
+Authorised JavaScript origins and to `VITE_GOOGLE_GIS_ORIGINS`.
+
+After a deploy, installed apps pick up the new build within the hour, when reopened, or straight
+away from **Settings → Check for updates**.
 
 `firebase.json` serves `dist/`, rewrites all paths to `index.html`, applies immutable caching to
 hashed assets, and leaves `index.html` and the manifest uncached so updates are picked up.
@@ -479,7 +554,8 @@ hashed assets, and leaves `index.html` and the manifest uncached so updates are 
 ### Deployment checklist
 
 - [ ] `.env` filled in with the production Firebase project
-- [ ] Authentication → Email/Password enabled
+- [ ] Authentication → Email/Password and Google enabled
+- [ ] Hosting origins listed under Authorised JavaScript origins for the OAuth Web client
 - [ ] Firestore database created
 - [ ] `npm run deploy:rules` run **before** any student signs up
 - [ ] `npm run seed` run if you want content editable from the Console
@@ -494,7 +570,8 @@ hashed assets, and leaves `index.html` and the manifest uncached so updates are 
 Content (read-only for students): `units` · `topics` · `questions` · `riddles` · `dictionary` ·
 `achievements` · `matchingSets` · `wordSearchSets` · `bosses`
 
-Per-student: `users` · `gameAttempts` · `userProgress` · `userAchievements`
+Per-student: `users` · `gameAttempts` · `userProgress` · `userAchievements` · `userState`
+(adaptive skill estimates, Packet Dash best and the Q-learning table, synced across devices)
 
 Shared, readable by any signed-in student: `leaderboard` — one document per student holding
 `uid`, `name`, `level`, `totalXP` and `updatedAt`, and nothing else. It is a mirror of the
@@ -505,15 +582,17 @@ public-safe slice of `users/{uid}`, written by the owner on every profile save.
 ## Testing
 
 ```bash
-npm run verify        # typecheck + 239 self-checks + production build
+npm run verify        # typecheck + 290 self-checks + production build
 npm run test:units    # self-checks only
 ```
 
-**239 automated self-checks** run on Node's built-in test runner with no framework — see the
+**290 automated self-checks** run on Node's built-in test runner with no framework — see the
 coverage table in [TESTING.md](TESTING.md#1-automated-coverage). They cover the logic that
 silently breaks a gamified app: streak dates across DST and year boundaries, mastery that must
 never exceed 100, achievements that must never award twice, seed-data cross-references, the
-word-search generator, the offline queue, and the Q-learning update.
+word-search generator, the offline queue, the Q-learning update, the skill model, cross-device
+merge of user state, the Packet Runner and Packet Dash engines, the prose formatter, and the
+admin search and form round-trip.
 
 Everything a browser is needed for — layout, event wiring, PWA behaviour, accessibility — is in
 the **manual plan**: [TESTING.md](TESTING.md). It contains 60+ functional cases, responsive and
@@ -541,10 +620,24 @@ accessibility checklists, a browser matrix, the PWA procedure, security-rule att
 | 10 | Service worker, offline content, sync queue | ✅ Done |
 | 11 | Adaptive learning engine | ✅ Done |
 | 12 | Testing, security review, deployment | ✅ Done |
+| 13 | Retro redesign, 3D games, adaptive difficulty in play, cross-device sync | ✅ Done |
+| 14 | Mobile polish, in-depth content, in-app Google sign-in, admin upgrade, in-app updates | ✅ Done |
 
 ---
 
 ## Troubleshooting
+
+**Phone or installed app still shows an old version**
+
+Open **Settings → Update the app → Check for updates**. It fetches the newest build and reloads;
+the row shows which build the device is running. If it still looks old, use **Repair offline
+copy**, which clears the downloaded app files and reloads them. Sign-in and progress are kept.
+
+**Google sign-in goes to a Google page instead of opening over the app**
+
+That origin is not yet authorised for Google Identity Services, so the app uses the same-tab
+redirect. Add it under Authorised JavaScript origins for the OAuth Web client and to
+`VITE_GOOGLE_GIS_ORIGINS`, then rebuild.
 
 **Icons show as blank boxes**
 - *In development:* Vite's dependency optimiser had cached `bootstrap-icons` and lost the entry
@@ -602,6 +695,11 @@ Stated plainly rather than discovered in a viva:
    by the same change.
 10. **Students outside the top 50 see their own row without a rank.** Computing "you are 137th"
     means an aggregate count query per page load for a number nobody asked for.
+11. **In-app Google sign-in depends on the browser.** Chrome and Edge show their built-in account
+    chooser over the page; browsers without FedCM show Google's own small dialog, and origins not
+    authorised for the OAuth client fall back to a same-tab redirect.
+12. **Matching, Word Search and Riddles do not adapt difficulty in play yet.** The skill model
+    drives Quiz, Rapid Fire, Boss Battle, Packet Dash and Packet Runner.
 
 ---
 
@@ -610,8 +708,8 @@ Stated plainly rather than discovered in a viva:
 - Cloud Functions for server-side XP validation and anti-cheating
 - Contextual-bandit / Q-learning replacement for the rule-based adaptive engine
 - Weekly leaderboard (needs a resetting per-week XP counter) and class/cohort filtering
-- Dark mode
-- Rich-text editing and image uploads for topic notes
+- Adaptive difficulty for Match & Pair, Word Search and Riddles
+- Rich-text editing for topic notes
 
 ---
 
