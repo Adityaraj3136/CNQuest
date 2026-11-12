@@ -10,6 +10,10 @@ interface ImportMetaEnv {
   readonly VITE_FIREBASE_APP_ID: string;
   readonly VITE_FIREBASE_MEASUREMENT_ID?: string;
   readonly VITE_USE_FIREBASE_EMULATORS?: string;
+  /** Public OAuth Web client id for in-app Google sign-in (Google Identity Services). */
+  readonly VITE_GOOGLE_CLIENT_ID?: string;
+  /** Comma-separated origins authorised for that client; GIS is used only on these. */
+  readonly VITE_GOOGLE_GIS_ORIGINS?: string;
 }
 
 interface ImportMeta {

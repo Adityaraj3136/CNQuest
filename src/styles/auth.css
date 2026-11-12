@@ -161,6 +161,34 @@
   flex: none;
 }
 
+/* Google's own button renders an iframe into this slot. Reserve its height so the form does
+   not jump when it arrives, and centre it, since GIS caps its width at 400px. */
+.cn-auth__gis {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.cn-auth__gis-alt {
+  margin: var(--cn-space-2) 0 0;
+  text-align: center;
+  font-size: var(--cn-text-xs);
+  color: var(--cn-ink-faint);
+}
+
+.cn-auth__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--cn-accent);
+  text-decoration: underline;
+}
+
+.cn-auth__gis[aria-busy='true'] {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
 /* --- Specimen panel --- */
 
 .cn-auth__aside {

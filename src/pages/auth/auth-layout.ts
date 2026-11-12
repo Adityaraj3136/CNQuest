@@ -2,7 +2,8 @@
 
 import { APP } from '@/config/app.config';
 import { escapeHtml, qs, qsa } from '@/utils/dom';
-import { signInWithGoogle, warmUpGoogleSignIn } from '@/services/auth.service';
+import { signInWithGoogle, signInWithGoogleIdToken, warmUpGoogleSignIn } from '@/services/auth.service';
+import { cancelGooglePrompt, mountGoogleButton } from '@/services/google-identity';
 import { vgaSceneSvg } from '@/components/vga-scene';
 import '@/styles/auth.css';
 
@@ -84,14 +85,21 @@ export function fieldHtml({
 }
 
 export const GOOGLE_BUTTON_ID = 'cn-google-btn';
+const GOOGLE_GIS_ID = 'cn-google-gis';
 
 /**
- * Google sign-in button. The mark is inlined rather than fetched: the app must work offline,
- * and Google's branding guidance requires the official four-colour "G".
+ * Google sign-in. The slot receives Google's own button (Google Identity Services), which signs
+ * in with an account already on the device without leaving the page. The plain button below it
+ * is the fallback for when GIS cannot load, and stays hidden unless needed; its mark is inlined
+ * so it works offline, as Google's branding guidance requires the four-colour "G".
  */
 export function googleButtonHtml(label = 'Continue with Google'): string {
   return `
-    <button class="btn btn-cn-ghost w-100 cn-auth__google" type="button" id="${GOOGLE_BUTTON_ID}">
+    <div class="cn-auth__gis" id="${GOOGLE_GIS_ID}" data-label="${escapeHtml(label)}" aria-live="polite"></div>
+    <p class="cn-auth__gis-alt" hidden>
+      Google button not working? <button type="button" class="cn-auth__link">Sign in with Google in this tab</button>
+    </p>
+    <button class="btn btn-cn-ghost w-100 cn-auth__google" type="button" id="${GOOGLE_BUTTON_ID}" hidden>
       <svg viewBox="0 0 18 18" width="18" height="18" aria-hidden="true" focusable="false">
         <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/>
         <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.81.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"/>
@@ -112,24 +120,55 @@ export function bindGoogleButton(
   options: { onSuccess: () => void; onError: (message: string) => void },
 ): void {
   const button = qs<HTMLButtonElement>(`#${GOOGLE_BUTTON_ID}`, form);
-  if (!button) return;
+  const slot = qs<HTMLElement>(`#${GOOGLE_GIS_ID}`, form);
+  if (!button || !slot) return;
 
-  // Fetch the auth chunk now, not when the button is pressed: a popup opened after a network
-  // round-trip is treated as unsolicited and blocked.
-  void warmUpGoogleSignIn();
+  void warmUpGoogleSignIn(); // the token exchange then starts the moment an account is picked
+  const remember = (): boolean => qs<HTMLInputElement>('#remember', form)?.checked ?? true;
+  const fail = (error: unknown): void =>
+    options.onError(error instanceof Error ? error.message : 'Something went wrong. Please try again.');
+
+  // In-app path: Google's account chooser over the page, then a token exchange with Firebase.
+  const text = /sign up/i.test(slot.dataset.label ?? '') ? 'signup_with' : 'continue_with';
+  const useFallback = (): void => {
+    slot.hidden = true;
+    button.hidden = false; // GIS unavailable: offer the same-tab redirect instead
+  };
+  void mountGoogleButton(
+    slot,
+    (idToken) => {
+      void (async () => {
+        slot.setAttribute('aria-busy', 'true');
+        try {
+          await signInWithGoogleIdToken(idToken, remember());
+          options.onSuccess();
+        } catch (error) {
+          fail(error);
+        } finally {
+          slot.removeAttribute('aria-busy');
+        }
+      })();
+    },
+    text,
+  ).then((mounted) => {
+    if (!mounted) useFallback();
+    else qs<HTMLElement>('.cn-auth__gis-alt', form)?.removeAttribute('hidden');
+  });
+  // Leaving the screen must not leave the account chooser floating over the next one.
+  window.addEventListener('hashchange', cancelGooglePrompt, { once: true });
+
+  // A way out if Google's button misbehaves (blocked third-party sign-in, odd browser).
+  qs<HTMLButtonElement>('.cn-auth__gis-alt button', form)?.addEventListener('click', () => button.click());
 
   button.addEventListener('click', () => {
     void (async () => {
-      setSubmitting(button, true, 'Opening Google…');
+      setSubmitting(button, true, 'Going to Google…');
       try {
-        const remember = qs<HTMLInputElement>('#remember', form)?.checked ?? true;
-        await signInWithGoogle(remember);
+        await signInWithGoogle(remember());
         options.onSuccess();
       } catch (error) {
         setSubmitting(button, false, '');
-        options.onError(
-          error instanceof Error ? error.message : 'Something went wrong. Please try again.',
-        );
+        fail(error);
       }
     })();
   });

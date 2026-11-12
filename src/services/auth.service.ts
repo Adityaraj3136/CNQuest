@@ -31,27 +31,11 @@ const FRIENDLY_MESSAGES: Record<string, string> = {
   'auth/too-many-requests': 'Too many attempts. Wait a moment and try again.',
   'auth/network-request-failed': 'Network error. Check your connection and try again.',
   'auth/operation-not-allowed': 'Email/password sign-in is not enabled in the Firebase project.',
-  // Closing the Google window is a decision, not a fault — say nothing accusatory.
-  'auth/popup-closed-by-user': 'Google sign-in was cancelled.',
-  'auth/cancelled-popup-request': 'Google sign-in was cancelled.',
-  'auth/popup-blocked': 'Your browser blocked the Google sign-in window. Allow pop-ups and try again.',
   'auth/account-exists-with-different-credential':
     'An account with this email already exists. Log in with your password instead.',
   'auth/unauthorized-domain':
     'This site is not an authorised domain for sign-in. Add it in Firebase Console → Authentication → Settings.',
 };
-
-/**
- * Popup failures that are about the *environment*, not the student's choice. These fall back
- * to a full-page redirect; `popup-closed-by-user` deliberately does not, since the student
- * closing the window is an answer.
- */
-const POPUP_UNAVAILABLE_CODES = new Set([
-  'auth/popup-blocked',
-  'auth/operation-not-supported-in-this-environment',
-  'auth/web-storage-unsupported',
-  'auth/internal-error',
-]);
 
 const NOT_CONFIGURED_MESSAGE =
   'CN Quest is not connected to Firebase yet. Copy .env.example to .env, add your Firebase keys, and restart the dev server.';
@@ -143,17 +127,13 @@ export async function signIn(email: string, password: string, remember = true): 
 
 type AuthModule = typeof import('firebase/auth');
 
-/** Resolved copies of the pieces the popup path needs, so the click itself awaits nothing slow. */
+/** Resolved copies of the auth pieces, so finishing a Google sign-in awaits nothing slow. */
 let warmAuthModule: AuthModule | null = null;
 let warmAuth: Awaited<ReturnType<typeof getFirebaseAuth>> | null = null;
 
 /**
- * Loads the Firebase Auth chunk and instance ahead of the click.
- *
- * A browser only allows `window.open` while the user's click is still "active", and that
- * activation does not survive a network fetch. Awaiting the lazily-imported auth chunk inside
- * the click handler meant the popup was requested too late and was blocked before Google was
- * ever contacted, which is why sign-in failed without an authorisation window ever appearing.
+ * Loads the Firebase Auth chunk and instance while the student is still choosing an account,
+ * so the token exchange starts the moment they pick one.
  *
  * Call this when the sign-in button is rendered; it is safe to call repeatedly.
  */
@@ -164,7 +144,7 @@ export async function warmUpGoogleSignIn(): Promise<void> {
     warmAuthModule = module;
     warmAuth = auth;
   } catch (error) {
-    // Not fatal: the click path still works, it is just slower and may hit the popup blocker.
+    // Not fatal: sign-in still works, it just loads the chunk on demand.
     console.error('[auth] could not pre-load Google sign-in', error);
   }
 }
@@ -187,73 +167,15 @@ export async function completeGoogleRedirect(): Promise<User | null> {
     const result = await getRedirectResult(auth);
     if (!result) return null;
 
-    const { user } = result;
-    await ensureUserProfile({
-      uid: user.uid,
-      name: user.displayName?.trim() || user.email?.split('@')[0] || 'Student',
-      email: user.email ?? '',
-      ...(user.photoURL ? { photoURL: user.photoURL } : {}),
-    });
-    return user;
+    await ensureGoogleProfile(result.user);
+    return result.user;
   } catch (error) {
     console.error('[auth] could not complete redirect sign-in', error);
     return null;
   }
 }
 
-/**
- * Signs in with Google.
- *
- * Google hands back a display name and photo but no Firestore profile, so this calls
- * `ensureUserProfile` — the same idempotent path session bootstrap uses — rather than
- * `createUserProfile`, which would fail the second time the student signs in.
- */
-export async function signInWithGoogle(remember = true): Promise<User> {
-  assertConfigured();
-  const authModule = warmAuthModule ?? (await import('firebase/auth'));
-  const auth = warmAuth ?? (await getFirebaseAuth());
-  const {
-    GoogleAuthProvider,
-    signInWithPopup,
-    setPersistence,
-    browserLocalPersistence,
-    browserSessionPersistence,
-  } = authModule;
-
-  const provider = new GoogleAuthProvider();
-  // Always show the chooser: shared and lab machines are the normal case here.
-  provider.setCustomParameters({ prompt: 'select_account' });
-
-  let user: User;
-  try {
-    // The popup is opened first and persistence set afterwards. Awaiting a storage write before
-    // opening the window is another chance for the browser to decide the click has gone stale.
-    user = (await signInWithPopup(auth, provider)).user;
-    await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
-  } catch (error) {
-    const code = typeof error === 'object' && error && 'code' in error ? String(error.code) : '';
-
-    // A popup is the better experience when it works, but plenty of environments refuse it:
-    // in-app browsers, strict popup blockers, and hosting the app on an origin that is not the
-    // auth domain, where the hidden gapi iframe the popup depends on fails to load at all.
-    // That last one throws a bare Error with no Firebase code, so anything uncoded falls back
-    // too. Redirect uses no iframe, which is exactly why it survives those environments.
-    //
-    // `popup-closed-by-user` is deliberately excluded: closing the window is an answer, and
-    // navigating the student to Google anyway would override a decision they just made.
-    const cancelled = code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request';
-
-    if (!cancelled && (POPUP_UNAVAILABLE_CODES.has(code) || !code)) {
-      console.warn('[auth] popup unavailable, falling back to redirect', code || error);
-      const { signInWithRedirect } = await import('firebase/auth');
-      await signInWithRedirect(auth, provider);
-      // The page navigates away; completeGoogleRedirect() picks the session up on return.
-      return new Promise<User>(() => {});
-    }
-
-    throw toAuthError(error);
-  }
-
+async function ensureGoogleProfile(user: User): Promise<void> {
   try {
     await ensureUserProfile({
       uid: user.uid,
@@ -265,8 +187,60 @@ export async function signInWithGoogle(remember = true): Promise<User> {
     // The account is valid; only the profile write failed. Session bootstrap retries it.
     console.error('[auth] profile creation failed after Google sign-in', error);
   }
+}
 
+/**
+ * Finishes an in-app Google sign-in: the ID token comes from Google Identity Services (the
+ * account chooser shown over the page, see google-identity.ts) and Firebase turns it into a
+ * session. No window or tab is opened.
+ *
+ * Google hands back a display name and photo but no Firestore profile, so this calls
+ * `ensureUserProfile`, the same idempotent path session bootstrap uses.
+ */
+export async function signInWithGoogleIdToken(idToken: string, remember = true): Promise<User> {
+  assertConfigured();
+  const authModule = warmAuthModule ?? (await import('firebase/auth'));
+  const auth = warmAuth ?? (await getFirebaseAuth());
+  const { GoogleAuthProvider, signInWithCredential, setPersistence, browserLocalPersistence, browserSessionPersistence } =
+    authModule;
+
+  let user: User;
+  try {
+    await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
+    user = (await signInWithCredential(auth, GoogleAuthProvider.credential(idToken))).user;
+  } catch (error) {
+    const code = typeof error === 'object' && error && 'code' in error ? String(error.code) : '';
+    // The shared message for this code talks about passwords; a Google token has none.
+    if (code === 'auth/invalid-credential') {
+      throw new AuthServiceError('Google sign-in could not be verified. Try again.', code);
+    }
+    throw toAuthError(error);
+  }
+  await ensureGoogleProfile(user);
   return user;
+}
+
+/**
+ * Fallback when Google Identity Services cannot load (offline at first paint, blocked script,
+ * origin not yet authorised): a full-page redirect in the same tab. Never a popup window.
+ * completeGoogleRedirect() picks the session up when the browser comes back.
+ */
+export async function signInWithGoogle(remember = true): Promise<User> {
+  assertConfigured();
+  const authModule = warmAuthModule ?? (await import('firebase/auth'));
+  const auth = warmAuth ?? (await getFirebaseAuth());
+  const { GoogleAuthProvider, signInWithRedirect, setPersistence, browserLocalPersistence, browserSessionPersistence } =
+    authModule;
+
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
+  try {
+    await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
+    await signInWithRedirect(auth, provider);
+  } catch (error) {
+    throw toAuthError(error);
+  }
+  return new Promise<User>(() => {}); // the page navigates away
 }
 
 export async function signOut(): Promise<void> {
