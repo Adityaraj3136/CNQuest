@@ -8,16 +8,21 @@
 
 import type { Page } from '@/types/page';
 import {
+  COMBO_PER_MULTIPLIER,
+  MAX_MULTIPLIER,
   PacketDashEngine,
   SEGMENT_LENGTH,
-  type Category,
+  SPEED_MAX,
+  SPEED_START,
+  START_LIVES,
   type DashEvent,
   type DashSnapshot,
   type GateRow,
 } from '@/games/packet-dash/packet-dash.engine';
 import type { DashScene } from '@/games/packet-dash/packet-dash.scene';
+import { CATEGORY_META, TIER_UNLOCK_COPY } from '@/games/packet-dash/packet-dash.categories';
 import { finishRound, resultScreenHtml, savingHtml } from '@/games/shared/game-shell';
-import { enterSession, exitSession, gameHudHtml, setHudLives, setHudStreak } from '@/games/shared/game-hud';
+import { enterSession, exitSession, gameHudHtml } from '@/games/shared/game-hud';
 import { playCue } from '@/services/sound';
 import { escapeHtml, qs } from '@/utils/dom';
 import '@/styles/games.css';
@@ -32,18 +37,7 @@ const SWIPE_MIN_PX = 28;
 const TAP_MAX_MOVE_PX = 12;
 const GAME_OVER_HOLD_MS = 1400;
 const COUNTDOWN_STEP_MS = 650;
-
-const MISSION_COPY: Record<Category, { chip: string; hint: string }> = {
-  port: { chip: 'Port', hint: 'Fly through its port number' },
-  layer: { chip: 'OSI layer', hint: 'Fly through its layer' },
-  subnet: { chip: 'Subnet', hint: 'Fly through the subnet that holds it' },
-};
-
-const UNLOCK_COPY: Record<Category, string> = {
-  port: '',
-  layer: 'New gates: OSI layers',
-  subnet: 'New gates: subnets',
-};
+const LONG_PROMPT_CHARS = 18;
 
 type Phase = 'menu' | 'countdown' | 'running' | 'paused' | 'over';
 
@@ -55,7 +49,9 @@ let lastFrame = 0;
 let shownRowId = -1;
 let shownPoints = -1;
 let shownBits = -1;
-let shownMultiplier = -1;
+let shownCombo = -1;
+let shownSpeed = -1;
+let shownDistance = -1;
 let shownShield: boolean | null = null;
 let shownLane = -1;
 let shownLives = -1;
@@ -89,14 +85,19 @@ function writeBest(points: number): void {
 // ---------------------------------------------------------------- markup
 
 function shellHtml(): string {
+  const hearts = Array.from({ length: START_LIVES }, () => '<i class="bi bi-heart-fill" data-on="true"></i>').join('');
+  const pips = Array.from({ length: COMBO_PER_MULTIPLIER }, () => '<i></i>').join('');
   return `
-    ${gameHudHtml({ mode: 'Packet Dash', lives: { remaining: 3, total: 3 }, streak: 0 })}
-    <div class="cn-dash" id="cn-dash-stage">
+    ${gameHudHtml({ mode: 'Packet Dash' })}
+    <div class="cn-dash" id="cn-dash-stage" data-phase="menu">
       <div class="cn-dash__hud" aria-hidden="true">
-        <div class="cn-dash__score">
+        <div class="cn-dash__panel cn-dash__panel--score">
           <span class="cn-dash__cap">Score</span>
-          <b id="cn-dash-points">0</b>
-          <span class="cn-dash__mult" id="cn-dash-mult" data-level="1">×1</span>
+          <b class="cn-dash__points" id="cn-dash-points">0</b>
+          <div class="cn-dash__combo">
+            <span class="cn-dash__mult" id="cn-dash-mult" data-level="1">×1</span>
+            <span class="cn-dash__pips" id="cn-dash-pips">${pips}</span>
+          </div>
         </div>
         <div class="cn-dash__mission" id="cn-dash-mission" hidden>
           <span class="cn-dash__chip" data-role="chip"></span>
@@ -107,14 +108,34 @@ function shellHtml(): string {
           </div>
           <span class="cn-dash__approach"><i data-role="approach"></i></span>
         </div>
-        <div class="cn-dash__side">
-          <span class="cn-dash__bits"><i class="bi bi-gem"></i><b id="cn-dash-bits">0</b></span>
-          <span class="cn-dash__shield" id="cn-dash-shield" hidden><i class="bi bi-shield-fill-check"></i></span>
+        <div class="cn-dash__panel cn-dash__panel--status">
+          <span class="cn-dash__hearts" id="cn-dash-hearts">${hearts}</span>
+          <div class="cn-dash__pickups">
+            <span class="cn-dash__bits"><i class="bi bi-gem"></i><b id="cn-dash-bits">0</b></span>
+            <span class="cn-dash__shield" id="cn-dash-shield" hidden><i class="bi bi-shield-fill-check"></i></span>
+          </div>
         </div>
       </div>
-      <button type="button" class="cn-dash__pause" id="cn-dash-pause" aria-label="Pause" hidden>
-        <i class="bi bi-pause-fill" aria-hidden="true"></i>
-      </button>
+
+      <div class="cn-dash__gauge" aria-hidden="true">
+        <span class="cn-dash__cap">Link speed</span>
+        <b><span id="cn-dash-speed">0</span><small>Mb/s</small></b>
+        <span class="cn-dash__gauge-bar"><i id="cn-dash-speed-bar"></i></span>
+        <span class="cn-dash__distance"><span id="cn-dash-distance">0</span> m travelled</span>
+      </div>
+
+      <div class="cn-dash__controls">
+        <button type="button" class="cn-dash__steer" data-dir="-1" aria-label="Move left">
+          <i class="bi bi-chevron-left" aria-hidden="true"></i><kbd aria-hidden="true">←</kbd>
+        </button>
+        <button type="button" class="cn-dash__pause" id="cn-dash-pause" aria-label="Pause">
+          <i class="bi bi-pause-fill" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="cn-dash__steer" data-dir="1" aria-label="Move right">
+          <i class="bi bi-chevron-right" aria-hidden="true"></i><kbd aria-hidden="true">→</kbd>
+        </button>
+      </div>
+
       <p class="visually-hidden" id="cn-dash-live" aria-live="polite"></p>
       <div class="cn-dash__pops" id="cn-dash-pops" aria-hidden="true"></div>
       <div class="cn-dash__flash" id="cn-dash-flash" aria-hidden="true"></div>
@@ -240,7 +261,7 @@ function handleEvents(events: readonly DashEvent[]): void {
         pop('Shield up', 'info');
         break;
       case 'unlock':
-        pop(UNLOCK_COPY[event.category], 'gold', true);
+        pop(TIER_UNLOCK_COPY[event.tier], 'gold', true);
         break;
       case 'bit':
       case 'over':
@@ -256,11 +277,14 @@ function renderMission(row: GateRow | null): void {
     el.hidden = true;
     return;
   }
-  const copy = MISSION_COPY[row.question.category];
+  const copy = CATEGORY_META[row.question.category];
   el.hidden = false;
   el.dataset.category = row.question.category;
+  el.style.setProperty('--accent', copy.color);
   qs('[data-role="chip"]', el)!.textContent = copy.chip;
   qs('[data-role="prompt"]', el)!.textContent = row.question.prompt;
+  // Sentence-length prompts (device clues) step down a size so the card stays compact.
+  el.dataset.long = String(row.question.prompt.length > LONG_PROMPT_CHARS);
   qs('[data-role="hint"]', el)!.textContent = copy.hint;
   row.question.options.forEach((option, lane) => {
     const chip = qs(`[data-lane="${lane}"]`, el);
@@ -290,6 +314,47 @@ function syncApproach(snap: DashSnapshot): void {
   mission.dataset.close = String(remaining < snap.speed * 1.2); // about a second out
 }
 
+function syncHearts(lives: number): void {
+  const hearts = qs<HTMLElement>('#cn-dash-hearts');
+  if (!hearts) return;
+  hearts.querySelectorAll<HTMLElement>('i').forEach((heart, index) => {
+    heart.dataset.on = String(index < lives);
+  });
+  if (shownLives > lives) {
+    hearts.classList.remove('is-hit');
+    void hearts.offsetWidth; // restart the shake
+    hearts.classList.add('is-hit');
+  }
+}
+
+function syncCombo(combo: number, multiplier: number): void {
+  const mult = qs<HTMLElement>('#cn-dash-mult');
+  if (mult) {
+    mult.textContent = `×${multiplier}`;
+    mult.dataset.level = String(multiplier);
+  }
+  // Pips count progress to the next multiplier; at the cap they all stay lit.
+  const filled = multiplier >= MAX_MULTIPLIER ? COMBO_PER_MULTIPLIER : combo % COMBO_PER_MULTIPLIER;
+  qs('#cn-dash-pips')?.querySelectorAll<HTMLElement>('i').forEach((pip, index) => {
+    pip.dataset.on = String(index < filled);
+  });
+}
+
+function syncGauge(snap: DashSnapshot): void {
+  const linkSpeed = Math.round(snap.speed * 10);
+  if (linkSpeed !== shownSpeed) {
+    shownSpeed = linkSpeed;
+    qs('#cn-dash-speed')!.textContent = String(linkSpeed);
+    const ratio = (snap.speed - SPEED_START) / (SPEED_MAX - SPEED_START);
+    qs<HTMLElement>('#cn-dash-speed-bar')!.style.transform = `scaleX(${Math.max(0.04, ratio).toFixed(3)})`;
+  }
+  const metres = Math.floor(snap.distance / 10) * 10;
+  if (metres !== shownDistance) {
+    shownDistance = metres;
+    qs('#cn-dash-distance')!.textContent = metres.toLocaleString();
+  }
+}
+
 function syncHud(): void {
   if (!engine) return;
   const snap = engine.snapshot();
@@ -302,12 +367,9 @@ function syncHud(): void {
     shownBits = snap.bits;
     qs('#cn-dash-bits')!.textContent = String(snap.bits);
   }
-  if (snap.multiplier !== shownMultiplier) {
-    shownMultiplier = snap.multiplier;
-    const mult = qs<HTMLElement>('#cn-dash-mult')!;
-    mult.textContent = `×${snap.multiplier}`;
-    mult.dataset.level = String(snap.multiplier);
-    setHudStreak(snap.combo);
+  if (snap.combo !== shownCombo) {
+    shownCombo = snap.combo;
+    syncCombo(snap.combo, snap.multiplier);
   }
   if (snap.hasShield !== shownShield) {
     shownShield = snap.hasShield;
@@ -317,12 +379,12 @@ function syncHud(): void {
   if (rowId !== shownRowId) {
     shownRowId = rowId;
     renderMission(snap.nextRow);
-    setHudStreak(snap.combo);
   }
   if (snap.lives !== shownLives) {
+    syncHearts(snap.lives);
     shownLives = snap.lives;
-    setHudLives(snap.lives, 3);
   }
+  syncGauge(snap);
   syncApproach(snap);
 }
 
@@ -383,7 +445,6 @@ function beginCountdown(): void {
       setOverlay('');
       setPhase('running');
       engine?.start();
-      qs<HTMLElement>('#cn-dash-pause')!.hidden = false;
       qs<HTMLElement>('#cn-dash-stage')?.focus({ preventScroll: true });
       return;
     }
@@ -415,7 +476,6 @@ function gameOver(): void {
   setPhase('over');
   playCue('defeat');
   buzz(250);
-  qs<HTMLElement>('#cn-dash-pause')!.hidden = true;
   const points = engine?.stats().points ?? 0;
   setOverlay(`
     <div class="cn-dash__card cn-dash__card--over">
@@ -550,7 +610,7 @@ async function boot(): Promise<void> {
   window.clearTimeout(countdownTimer);
 
   engine = new PacketDashEngine();
-  shownRowId = shownPoints = shownBits = shownMultiplier = shownLives = shownLane = -1;
+  shownRowId = shownPoints = shownBits = shownCombo = shownLives = shownLane = shownSpeed = shownDistance = -1;
   shownShield = null;
   container.innerHTML = shellHtml();
 
@@ -559,6 +619,13 @@ async function boot(): Promise<void> {
   stage.addEventListener('pointerdown', onPointerDown);
   stage.addEventListener('pointerup', onPointerUp);
   qs('#cn-dash-pause')?.addEventListener('click', pause);
+  stage.querySelectorAll<HTMLButtonElement>('.cn-dash__steer').forEach((button) => {
+    // pointerdown, not click: a lane change has to land on the press, not the release.
+    button.addEventListener('pointerdown', (event) => {
+      event.preventDefault();
+      steer(Number(button.dataset.dir) < 0 ? -1 : 1);
+    });
+  });
 
   try {
     const { createDashScene } = await import('@/games/packet-dash/packet-dash.scene');

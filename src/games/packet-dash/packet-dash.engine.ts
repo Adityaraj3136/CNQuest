@@ -11,7 +11,19 @@
 import type { AnsweredQuestion, GameResult, GameSummary } from '../../models/game.ts';
 import { BASE_XP, calculateRoundXp } from '../../config/xp.config.ts';
 import { mulberry32 } from '../word-search/word-search.generator.ts';
-import { cidrToString, ipFromString, ipToString, networkOf } from '../packet-runner/packet-runner.engine.ts';
+import {
+  TIER_2_AT,
+  TIER_3_AT,
+  pick,
+  questionFor,
+  questionKey,
+  shuffle,
+  type Category,
+  type Rng,
+  type GateQuestion,
+} from './packet-dash.questions.ts';
+
+export { TIER_2_AT, TIER_3_AT, questionFor, type Category, type GateQuestion };
 
 export const LANES = 3;
 export const START_LIVES = 3;
@@ -30,113 +42,12 @@ const INVULNERABLE_SECONDS = 1;
 
 export const BIT_POINTS = 10;
 export const GATE_POINTS = 100;
-const COMBO_PER_MULTIPLIER = 3;
-const MAX_MULTIPLIER = 5;
+export const COMBO_PER_MULTIPLIER = 3;
+export const MAX_MULTIPLIER = 5;
 /** Round bonuses (accuracy, perfect, streak) need a real run, not one gate and a crash. */
 export const MIN_GATES_FOR_BONUS = 5;
-
-/** Gate counts at which a new question family joins the mix. */
-export const UNLOCK_LAYERS_AT = 4;
-export const UNLOCK_SUBNETS_AT = 10;
-
-// ---------------------------------------------------------------- questions
-
-export type Category = 'port' | 'layer' | 'subnet';
-
-export interface GateQuestion {
-  category: Category;
-  /** The thing being asked about, e.g. "HTTPS". */
-  prompt: string;
-  /** One label per lane. */
-  options: string[];
-  answerLane: number;
-  explanation: string;
-}
-
-const PORTS: readonly [string, string][] = [
-  ['HTTP', '80'], ['HTTPS', '443'], ['DNS', '53'], ['SSH', '22'], ['SMTP', '25'],
-  ['FTP', '21'], ['Telnet', '23'], ['DHCP server', '67'], ['POP3', '110'], ['IMAP', '143'],
-  ['SNMP', '161'], ['NTP', '123'], ['RDP', '3389'], ['BGP', '179'], ['LDAP', '389'],
-];
-
-const LAYER_NAMES = ['Physical', 'Data Link', 'Network', 'Transport', 'Session', 'Presentation', 'Application'];
-
-const LAYERS: readonly [string, number][] = [
-  ['Router', 3], ['Switch', 2], ['Hub', 1], ['Repeater', 1], ['HTTP', 7], ['DNS', 7],
-  ['TCP', 4], ['UDP', 4], ['IP', 3], ['ICMP', 3], ['MAC address', 2], ['Ethernet frame', 2],
-  ['Segment', 4], ['Packet', 3], ['Bits on the wire', 1],
-];
-
-type Rng = () => number;
-
-function pick<T>(items: readonly T[], rng: Rng): T {
-  return items[Math.floor(rng() * items.length)];
-}
-
-function shuffle<T>(items: readonly T[], rng: Rng): T[] {
-  const copy = [...items];
-  for (let i = copy.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(rng() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
-
-/** Answer plus two distinct decoys from the same family, shuffled across the lanes. */
-function laneOptions(answer: string, decoyPool: readonly string[], rng: Rng): { options: string[]; answerLane: number } {
-  const decoys = shuffle(decoyPool.filter((d) => d !== answer), rng).slice(0, LANES - 1);
-  const options = shuffle([answer, ...decoys], rng);
-  return { options, answerLane: options.indexOf(answer) };
-}
-
-function portQuestion(rng: Rng): GateQuestion {
-  const [protocol, port] = pick(PORTS, rng);
-  return {
-    category: 'port',
-    prompt: protocol,
-    ...laneOptions(port, PORTS.map(([, p]) => p), rng),
-    explanation: `${protocol} uses port ${port}.`,
-  };
-}
-
-function layerQuestion(rng: Rng): GateQuestion {
-  const [thing, layer] = pick(LAYERS, rng);
-  return {
-    category: 'layer',
-    prompt: thing,
-    ...laneOptions(`L${layer}`, LAYER_NAMES.map((_, i) => `L${i + 1}`), rng),
-    explanation: `${thing} belongs to Layer ${layer} (${LAYER_NAMES[layer - 1]}).`,
-  };
-}
-
-function subnetQuestion(rng: Rng, prefixLen: number): GateQuestion {
-  const third = 1 + Math.floor(rng() * 254);
-  const base = ipFromString(`192.168.${third}.0`);
-  const blockSize = 2 ** (32 - prefixLen);
-  const blocks = Array.from({ length: 256 / blockSize }, (_, i) => (base + i * blockSize) >>> 0);
-  const answerBlock = pick(blocks, rng);
-  // A usable host: never the network or broadcast address of its block.
-  const host = (answerBlock + 1 + Math.floor(rng() * (blockSize - 2))) >>> 0;
-  const label = (network: number): string => cidrToString({ network, prefixLen });
-  const answer = label(networkOf(host, prefixLen));
-  return {
-    category: 'subnet',
-    prompt: ipToString(host),
-    ...laneOptions(answer, blocks.map(label), rng),
-    explanation: `${ipToString(host)} sits inside ${answer}.`,
-  };
-}
-
-/** Ports from the start, OSI layers after a few gates, subnets once the student is flying. */
-export function questionFor(gateIndex: number, rng: Rng): GateQuestion {
-  const families: Category[] = ['port'];
-  if (gateIndex >= UNLOCK_LAYERS_AT) families.push('layer');
-  if (gateIndex >= UNLOCK_SUBNETS_AT) families.push('subnet');
-  const family = pick(families, rng);
-  if (family === 'layer') return layerQuestion(rng);
-  if (family === 'subnet') return subnetQuestion(rng, gateIndex >= UNLOCK_SUBNETS_AT * 2 ? 27 : 26);
-  return portQuestion(rng);
-}
+/** How many recent questions are kept out of the next pick. */
+const RECENT_QUESTIONS = 8;
 
 // ---------------------------------------------------------------- world
 
@@ -168,7 +79,7 @@ export type DashEvent =
   | { type: 'shield-saved' }
   | { type: 'shield-pickup' }
   | { type: 'bit' }
-  | { type: 'unlock'; category: Category }
+  | { type: 'unlock'; tier: 2 | 3 }
   | { type: 'over' };
 
 export type DashStatus = 'ready' | 'running' | 'over';
@@ -198,6 +109,18 @@ export interface MissedGate {
   explanation: string;
 }
 
+const DIFFICULTY_BY_CATEGORY: Record<Category, 'easy' | 'medium' | 'hard'> = {
+  port: 'easy',
+  transport: 'easy',
+  device: 'easy',
+  pdu: 'easy',
+  layer: 'medium',
+  size: 'medium',
+  private: 'medium',
+  subnet: 'hard',
+  hosts: 'hard',
+};
+
 export function multiplierFor(combo: number): number {
   return Math.min(MAX_MULTIPLIER, 1 + Math.floor(combo / COMBO_PER_MULTIPLIER));
 }
@@ -225,6 +148,8 @@ export class PacketDashEngine {
   private nextId = 1;
   private nextSegmentAt = FIRST_GATE_AT;
   private gatesSpawned = 0;
+  private lastCategory: Category | undefined;
+  private readonly recentKeys: string[] = [];
   private gatesAttempted = 0;
   private gatesCorrect = 0;
   private readonly answers: AnsweredQuestion[] = [];
@@ -330,8 +255,8 @@ export class PacketDashEngine {
     }
 
     this.gatesAttempted += 1;
-    if (this.gatesAttempted === UNLOCK_LAYERS_AT) events.push({ type: 'unlock', category: 'layer' });
-    if (this.gatesAttempted === UNLOCK_SUBNETS_AT) events.push({ type: 'unlock', category: 'subnet' });
+    if (this.gatesAttempted === TIER_2_AT) events.push({ type: 'unlock', tier: 2 });
+    if (this.gatesAttempted === TIER_3_AT) events.push({ type: 'unlock', tier: 3 });
     const { question } = row;
     this.answers.push({
       questionId: `packet-dash:${question.category}:${question.prompt}`,
@@ -341,7 +266,7 @@ export class PacketDashEngine {
       selectedAnswer: this.lane,
       isCorrect,
       explanation: question.explanation,
-      difficulty: question.category === 'subnet' ? 'hard' : question.category === 'layer' ? 'medium' : 'easy',
+      difficulty: DIFFICULTY_BY_CATEGORY[question.category],
       timeTakenMs: 0,
       xpEarned: isCorrect ? BASE_XP.dashGateCorrect : 0,
     });
@@ -397,7 +322,13 @@ export class PacketDashEngine {
 
   private spawnSegment(z: number): void {
     const gateIndex = this.gatesSpawned;
-    const question = questionFor(gateIndex, this.rng);
+    const question = questionFor(gateIndex, this.rng, {
+      lastCategory: this.lastCategory,
+      recent: new Set(this.recentKeys),
+    });
+    this.lastCategory = question.category;
+    this.recentKeys.push(questionKey(question));
+    if (this.recentKeys.length > RECENT_QUESTIONS) this.recentKeys.shift();
     const row: GateRow = { id: this.nextId++, z, question };
     this.rows.push(row);
     question.options.forEach((label, lane) => this.add({ kind: 'gate', lane, z, rowId: row.id, label }));
