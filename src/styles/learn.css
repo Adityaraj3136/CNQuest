@@ -21,11 +21,12 @@
 /* --- Unit --- */
 
 .cn-unit__head {
+  /* One column: heading, description, meter stacked. A two-column grid here let the title
+     claim the first column and squeezed the description into a few words per line. */
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: var(--cn-space-3) var(--cn-space-4);
-  align-items: baseline;
-  padding-bottom: var(--cn-space-3);
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--cn-space-2);
+  padding: var(--cn-space-4) var(--cn-space-5);
   border-bottom: var(--cn-hairline-strong);
 }
 
@@ -470,6 +471,52 @@
 .cn-quest[data-state='locked'] .cn-quest__meta,
 .cn-quest[data-state='locked'] .cn-quest__marker {
   color: var(--cn-locked);
+}
+
+/* Phones: the status moves up beside "Quest 01", so title and meta get the full width
+   instead of wrapping around a column reserved for "Not started". */
+@media (max-width: 575.98px) {
+  .cn-unit__head {
+    padding: var(--cn-space-4);
+  }
+  .cn-unit__desc {
+    font-size: var(--cn-text-base);
+    line-height: 1.55;
+  }
+
+  .cn-unit__meter {
+    flex-wrap: wrap;
+    row-gap: var(--cn-space-1);
+  }
+
+  .cn-quest {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'marker number state'
+      'marker title title'
+      'marker meta meta';
+    column-gap: var(--cn-space-3);
+    row-gap: 2px;
+    padding: var(--cn-space-3) var(--cn-space-4);
+  }
+
+  .cn-quest__body {
+    display: contents;
+  }
+
+  .cn-quest__marker {
+    grid-area: marker;
+    align-self: center;
+  }
+
+  .cn-quest__number { grid-area: number; }
+  .cn-quest__title { grid-area: title; line-height: 1.3; }
+  .cn-quest__meta { grid-area: meta; }
+
+  .cn-quest__state {
+    grid-area: state;
+    align-self: center;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
