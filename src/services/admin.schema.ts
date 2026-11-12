@@ -96,6 +96,14 @@ export const COLLECTION_FIELDS: Readonly<Record<string, readonly FieldSpec[]>> =
     { key: 'overview', label: 'Overview', kind: 'textarea', required: true, rows: 6 },
     { key: 'keyPoints', label: 'Key points', kind: 'list', help: 'One point per line.' },
     {
+      key: 'sections',
+      label: 'In depth sections',
+      kind: 'pairs',
+      pairLabels: ['Heading', 'Body'],
+      pairKeys: ['heading', 'body'],
+      help: 'Shown after the key points. One section per line: a heading, a "|", then one paragraph.',
+    },
+    {
       key: 'definitions',
       label: 'Definitions',
       kind: 'pairs',

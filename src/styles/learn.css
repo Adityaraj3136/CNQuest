@@ -184,6 +184,31 @@
   font-size: var(--cn-text-sm);
 }
 
+/* In depth: longer prose than the key points, so it gets reading-width lines and clear
+   sub-headings to scan by. */
+.cn-depth__section {
+  max-width: var(--cn-measure);
+  padding-top: var(--cn-space-4);
+}
+
+.cn-depth__section + .cn-depth__section {
+  margin-top: var(--cn-space-2);
+  border-top: var(--cn-hairline);
+}
+
+.cn-depth__heading {
+  margin: 0 0 var(--cn-space-2);
+  font-size: var(--cn-text-base);
+  font-weight: 650;
+  color: var(--cn-ink);
+}
+
+.cn-depth__body {
+  margin: 0;
+  color: var(--cn-ink-soft);
+  line-height: 1.7;
+}
+
 .cn-example {
   padding: var(--cn-space-3) var(--cn-space-4);
   border-left: 2px solid var(--cn-accent);

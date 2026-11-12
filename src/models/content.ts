@@ -49,6 +49,12 @@ export interface TopicDefinition {
   meaning: string;
 }
 
+/** One "In depth" section of a topic: a heading and a single paragraph. */
+export interface TopicSection {
+  heading: string;
+  body: string;
+}
+
 /** A single studyable topic with its revision notes. */
 export interface Topic {
   id: string;
@@ -66,6 +72,11 @@ export interface Topic {
 
   overview: string;
   keyPoints: string[];
+  /**
+   * The mechanisms and worked numericals behind the key points, read after them. Each is one
+   * paragraph so the admin editor can hold it as one "Heading | Body" line.
+   */
+  sections?: TopicSection[];
   definitions: TopicDefinition[];
   examples?: string[];
 

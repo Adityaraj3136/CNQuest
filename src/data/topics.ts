@@ -11,8 +11,12 @@
  */
 
 import type { Topic } from '../models/content.ts';
+import { TOPIC_SECTIONS } from './topics.depth.ts';
 
-export const TOPICS: readonly Topic[] = [
+/** Reading speed used to add the in-depth sections to each topic's estimated time. */
+const WORDS_PER_MINUTE = 200;
+
+const BASE_TOPICS: readonly Topic[] = [
   // ---------------------------------------------------------------- Unit 1
 
   {
@@ -664,3 +668,15 @@ export const TOPICS: readonly Topic[] = [
     relatedTerms: ['firewall', 'encryption', 'vpn', 'ddos'],
   },
 ];
+
+/** Notes plus their in-depth sections, with reading time adjusted for the extra text. */
+export const TOPICS: readonly Topic[] = BASE_TOPICS.map((topic) => {
+  const sections = TOPIC_SECTIONS[topic.id];
+  if (!sections?.length) return topic;
+  const words = sections.reduce((sum, section) => sum + section.body.split(/\s+/).length, 0);
+  return {
+    ...topic,
+    sections: [...sections],
+    estimatedMinutes: topic.estimatedMinutes + Math.round(words / WORDS_PER_MINUTE),
+  };
+});

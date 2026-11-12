@@ -10,6 +10,7 @@ import assert from 'node:assert/strict';
 
 import { UNITS } from './units.ts';
 import { TOPICS } from './topics.ts';
+import { TOPIC_SECTIONS } from './topics.depth.ts';
 import { QUESTIONS } from './questions.ts';
 import { RIDDLES } from './riddles.ts';
 import { DICTIONARY } from './dictionary.ts';
@@ -97,6 +98,20 @@ test('every riddle and game set references real units and topics', () => {
   }
   for (const boss of BOSSES) {
     assert.ok(unitIds.has(boss.unitId), `${boss.id} → unknown unit ${boss.unitId}`);
+  }
+});
+
+test('every topic has in-depth sections the admin editor can round-trip', () => {
+  for (const id of Object.keys(TOPIC_SECTIONS)) assert.ok(topicIds.has(id), `sections for unknown topic "${id}"`);
+  for (const topic of TOPICS) {
+    const sections = topic.sections ?? [];
+    assert.ok(sections.length >= 4, `${topic.id} has ${sections.length} in-depth sections`);
+    for (const { heading, body } of sections) {
+      // The editor stores one "Heading | Body" line per section, split on the first "|".
+      assert.ok(heading.trim() && !heading.includes('|'), `${topic.id}: bad heading "${heading}"`);
+      assert.ok(!/[\r\n]/.test(heading + body), `${topic.id}: "${heading}" contains a line break`);
+      assert.ok(body.split(/\s+/).length >= 60, `${topic.id}: "${heading}" is too thin`);
+    }
   }
 });
 

@@ -247,6 +247,23 @@ function bodyHtml(
           </ul>
         </section>
 
+        ${
+          topic.sections && topic.sections.length > 0
+            ? `<section class="cn-topic__block cn-depth">
+                 <h2>In depth</h2>
+                 ${topic.sections
+                   .map(
+                     (section) => `
+                       <div class="cn-depth__section">
+                         <h3 class="cn-depth__heading">${escapeHtml(section.heading)}</h3>
+                         <p class="cn-depth__body">${escapeHtml(section.body)}</p>
+                       </div>`,
+                   )
+                   .join('')}
+               </section>`
+            : ''
+        }
+
         <section class="cn-topic__block">
           <h2>Important definitions</h2>
           <dl class="cn-deflist">

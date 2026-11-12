@@ -90,19 +90,34 @@ async function load<T>(collectionName: string, bundled: readonly T[]): Promise<r
 
 // ---------------- Units & topics ----------------
 
+const BUNDLED_SECTIONS = new Map(TOPICS.map((topic) => [topic.id, topic.sections]));
+
+/**
+ * Topics published to Firestore before "In depth" sections existed have none. Fill those in
+ * from the bundle so an older override does not hide them; a topic whose sections were set
+ * in the admin editor keeps its own.
+ */
+async function loadTopics(): Promise<Topic[]> {
+  const topics = await load<Topic>('topics', TOPICS);
+  return topics.map((topic) => {
+    const sections = topic.sections ?? BUNDLED_SECTIONS.get(topic.id);
+    return sections ? { ...topic, sections } : topic;
+  });
+}
+
 export async function getUnits(): Promise<Unit[]> {
   const units = await load<Unit>('units', UNITS);
   return [...units].sort((a, b) => a.order - b.order);
 }
 
 export async function getTopics(unitId?: string): Promise<Topic[]> {
-  const topics = await load<Topic>('topics', TOPICS);
+  const topics = await loadTopics();
   if (unitId) return topicsForUnit(topics, unitId);
   return [...topics].sort((a, b) => a.order - b.order);
 }
 
 export async function getTopic(topicId: string): Promise<Topic | null> {
-  const topics = await load<Topic>('topics', TOPICS);
+  const topics = await loadTopics();
   return topics.find((topic) => topic.id === topicId) ?? null;
 }
 
