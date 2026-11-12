@@ -182,6 +182,12 @@
   color: var(--cn-field-ink);
 }
 
+.cn-footer__blurb {
+  max-width: 36ch;
+  margin: var(--cn-space-3) 0 0;
+  font-size: var(--cn-text-sm);
+}
+
 .cn-footer__grid {
   display: grid;
   gap: var(--cn-space-6);
@@ -545,6 +551,69 @@
   /* Clears the bar so the last element on a page is never trapped underneath it. */
   body.has-tabbar .app-main {
     padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  /*
+   * Phone footer. Signed in, the tab bar and its "More" drawer already reach every page the
+   * footer links to, so a website-style footer only repeated them, 870px tall, with its
+   * online badge hidden under the bar. It becomes one status line instead, and the
+   * clearance for the bar moves from the page to the footer, which is now what sits last.
+   */
+  body.has-tabbar .app-main:has(+ #app-footer:not(:empty)) {
+    padding-bottom: var(--cn-space-5);
+  }
+  body.has-tabbar #app-footer {
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .cn-footer {
+    margin-top: var(--cn-space-6);
+    padding-block: var(--cn-space-5) var(--cn-space-4);
+  }
+  .cn-footer__blurb,
+  .cn-footer__extra {
+    display: none;
+  }
+
+  .cn-footer--app {
+    margin-top: 0;
+    padding-block: var(--cn-space-3);
+  }
+  .cn-footer--app .cn-footer__grid {
+    display: none;
+  }
+  .cn-footer--app .cn-footer__bottom {
+    flex-wrap: nowrap;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  /* Public pages have no tab bar: keep the links, three to a row, without the blurb. */
+  .cn-footer--public .cn-footer__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--cn-space-5) var(--cn-space-3);
+  }
+  .cn-footer--public .cn-footer__grid h3 {
+    margin-bottom: var(--cn-space-2);
+  }
+  .cn-footer--public .cn-footer__grid ul {
+    gap: var(--cn-space-1);
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+  .cn-footer--public .cn-footer__bottom {
+    margin-top: var(--cn-space-4);
+  }
+
+  /* An installed app has no use for a copyright line: just the connection state. */
+  @media (display-mode: standalone) {
+    .cn-footer--app .cn-footer__legal {
+      display: none;
+    }
+    .cn-footer--app .cn-footer__bottom {
+      justify-content: center;
+    }
   }
 }
 

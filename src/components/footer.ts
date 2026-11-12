@@ -42,16 +42,18 @@ export function renderFooter(layout: Layout): void {
     return;
   }
 
+  // Phones: the signed-in footer collapses to one status line (the tab bar carries the links);
+  // public pages keep a compact link grid. Both handled in CSS via the layout modifier.
   footer.innerHTML = `
-    <div class="cn-footer">
+    <div class="cn-footer cn-footer--${layout}">
       <div class="cn-container">
         <div class="cn-footer__grid">
-          <div>
+          <div class="cn-footer__about">
             <a class="cn-brand" href="#/">
               <img src="${import.meta.env.BASE_URL}icons/icon.svg" alt="" width="34" height="34" />
               <span>${escapeHtml(APP.name)}</span>
             </a>
-            <p class="mt-3 mb-0" style="font-size: var(--cn-text-sm); max-width: 36ch;">
+            <p class="cn-footer__blurb">
               A gamified companion for the ${escapeHtml(APP.subject)} syllabus. Built to supplement
               textbooks and classroom teaching, not to replace them.
             </p>
@@ -79,7 +81,10 @@ export function renderFooter(layout: Layout): void {
         </div>
 
         <div class="cn-footer__bottom">
-          <span>&copy; ${new Date().getFullYear()} ${escapeHtml(APP.name)} · Academic project · v${escapeHtml(APP.version)} · ${escapeHtml(APP.phase)}</span>
+          <span class="cn-footer__legal">
+            &copy; ${new Date().getFullYear()} ${escapeHtml(APP.name)}<span class="cn-footer__extra"> · Academic project</span>
+            · v${escapeHtml(APP.version)}<span class="cn-footer__extra"> · ${escapeHtml(APP.phase)}</span>
+          </span>
           ${statusHtml()}
         </div>
       </div>
