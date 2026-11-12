@@ -9,8 +9,14 @@ import { fileURLToPath, URL } from 'node:url';
  */
 const base = process.env.BASE_PATH ?? '/';
 
+/** When this build was made (UTC), shown in Settings so a phone can confirm it has the latest. */
+const buildId = new Date().toISOString().slice(0, 16).replace('T', ' ');
+
 export default defineConfig({
   base,
+  define: {
+    __APP_BUILD__: JSON.stringify(buildId),
+  },
   plugins: [
     VitePWA({
       // A new build takes effect on the next visit rather than nagging mid-quiz.

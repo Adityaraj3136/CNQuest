@@ -6,7 +6,16 @@ import type { Page } from '@/types/page';
 import { getPreferences, setPreference } from '@/state/preferences';
 import { clearLearnedPolicy, clearSkillEstimates, learnedPolicySize } from '@/services/adaptive';
 import { previewSound } from '@/services/sound';
-import { canInstall, isInstalled, onInstallAvailabilityChange, promptInstall, syncNow } from '@/pwa/pwa';
+import {
+  BUILD_ID,
+  canInstall,
+  checkForUpdate,
+  isInstalled,
+  onInstallAvailabilityChange,
+  promptInstall,
+  repairOfflineCopy,
+  syncNow,
+} from '@/pwa/pwa';
 import { clearQueue, pendingCount, pendingResults } from '@/services/sync-queue';
 import { deleteGuestProgress, hasGuestProgress } from '@/state/guest';
 import { getSession } from '@/state/session';
@@ -135,6 +144,18 @@ function bodyHtml(): string {
       <span class="cn-label cn-label--marked">Offline</span>
       ${installRowHtml()}
       ${actionHtml(
+        'cn-check-update',
+        'Update the app',
+        `This device is running the build from ${BUILD_ID} UTC. Fetches the latest version now and reloads into it; progress is kept.`,
+        'Check for updates',
+      )}
+      ${actionHtml(
+        'cn-repair-cache',
+        'Repair offline copy',
+        'Still seeing an old version after updating? Clears the downloaded app files and reloads them fresh. You stay signed in and keep your progress.',
+        'Repair',
+      )}
+      ${actionHtml(
         'cn-sync',
         'Pending progress',
         queued === 0
@@ -239,6 +260,49 @@ function paint(): void {
   qs<HTMLButtonElement>('#cn-install', root)?.addEventListener('click', () => {
     void promptInstall().then((accepted) => {
       if (!accepted) showToast('Installation cancelled.', { variant: 'info' });
+    });
+  });
+
+  const updateButton = qs<HTMLButtonElement>('#cn-check-update', root);
+  updateButton?.addEventListener('click', () => {
+    if (!navigator.onLine) {
+      showToast('You are offline. Connect to the internet to check for updates.', { variant: 'warning' });
+      return;
+    }
+    updateButton.disabled = true;
+    updateButton.textContent = 'Checking…';
+    void checkForUpdate()
+      .then((result) => {
+        if (result === 'updating') {
+          showToast('Installing the new version. The app reloads in a moment.', { title: 'Updating', variant: 'success' });
+          return;
+        }
+        showToast(
+          result === 'current'
+            ? `You already have the latest version (build ${BUILD_ID} UTC).`
+            : 'This browser does not cache the app, so it always loads the latest version.',
+          { variant: 'info' },
+        );
+        updateButton.disabled = false;
+        updateButton.textContent = 'Check for updates';
+      })
+      .catch((error: unknown) => {
+        console.error('[settings] update check failed', error);
+        showToast('Could not reach the server to check for updates. Try again shortly.', { variant: 'error' });
+        updateButton.disabled = false;
+        updateButton.textContent = 'Check for updates';
+      });
+  });
+
+  qs<HTMLButtonElement>('#cn-repair-cache', root)?.addEventListener('click', () => {
+    if (!navigator.onLine) {
+      showToast('Repair needs a connection to download the app again. Connect first.', { variant: 'warning' });
+      return;
+    }
+    if (!window.confirm('Clear the downloaded app files and reload? You stay signed in and keep your progress.')) return;
+    void repairOfflineCopy().catch((error: unknown) => {
+      console.error('[settings] repair failed', error);
+      showToast('Could not clear the app files. Close and reopen the app instead.', { variant: 'error' });
     });
   });
 

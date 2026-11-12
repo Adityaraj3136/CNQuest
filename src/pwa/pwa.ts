@@ -68,8 +68,71 @@ export async function promptInstall(): Promise<boolean> {
 
 // ---------------------------------------------------------------- updates
 
+/** How often an open app asks the server for a newer build. */
+const UPDATE_CHECK_INTERVAL_MS = 60 * 60 * 1000;
+/** How long to wait for a just-found update to finish downloading. */
+const INSTALL_WAIT_MS = 20_000;
+
+/** The build this copy of the app came from, shown in Settings so a phone can be checked. */
+export const BUILD_ID = __APP_BUILD__;
+
 export async function applyUpdate(): Promise<void> {
   await updateServiceWorker?.(true);
+}
+
+export type UpdateResult = 'updating' | 'current' | 'unsupported';
+
+/** Resolves with the new worker once it has downloaded, or null if it fails or takes too long. */
+function waitForInstall(registration: ServiceWorkerRegistration): Promise<ServiceWorker | null> {
+  const worker = registration.installing;
+  if (!worker) return Promise.resolve(registration.waiting);
+  return new Promise((resolve) => {
+    const timer = window.setTimeout(() => resolve(registration.waiting), INSTALL_WAIT_MS);
+    worker.addEventListener('statechange', () => {
+      if (worker.state === 'installed' || worker.state === 'redundant') {
+        window.clearTimeout(timer);
+        resolve(worker.state === 'installed' ? worker : null);
+      }
+    });
+  });
+}
+
+/**
+ * Asks the server for a newer build now instead of waiting for the next visit. When one is
+ * found it is activated and the page reloads into it. Progress lives in localStorage and
+ * Firestore, never in the service worker's cache, so nothing is lost.
+ */
+export async function checkForUpdate(): Promise<UpdateResult> {
+  if (!('serviceWorker' in navigator)) return 'unsupported';
+  const registration = await navigator.serviceWorker.getRegistration();
+  if (!registration) return 'unsupported';
+
+  await registration.update();
+  const waiting = registration.waiting ?? (await waitForInstall(registration));
+  if (!waiting) return 'current';
+
+  if (updateServiceWorker) {
+    await updateServiceWorker(true); // tells the new worker to take over, then reloads
+  } else {
+    navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload(), { once: true });
+    waiting.postMessage({ type: 'SKIP_WAITING' });
+  }
+  return 'updating';
+}
+
+/**
+ * Last resort for a device stuck on an old version: removes the service worker and every
+ * cached app file, then reloads from the network. Sign-in (IndexedDB) and progress
+ * (localStorage, Firestore) are untouched; only downloadable files are thrown away.
+ */
+export async function repairOfflineCopy(): Promise<void> {
+  const registrations = (await navigator.serviceWorker?.getRegistrations()) ?? [];
+  await Promise.all(registrations.map((registration) => registration.unregister()));
+  if ('caches' in window) {
+    const keys = await caches.keys();
+    await Promise.all(keys.map((key) => caches.delete(key)));
+  }
+  window.location.reload();
 }
 
 // ---------------------------------------------------------------- sync
@@ -124,10 +187,22 @@ export function initPwa(): void {
       if (sessionStorage.getItem(UPDATE_NOTICE_KEY)) return;
       sessionStorage.setItem(UPDATE_NOTICE_KEY, '1');
 
-      showToast('A new version is ready. Reload to update - your progress is safe.', {
+      showToast('A new version is ready. Reopen the app, or go to Settings → Check for updates. Your progress is safe.', {
         title: 'Update available',
         variant: 'info',
         durationMs: 0,
+      });
+    },
+    onRegisteredSW(_url: string, registration: ServiceWorkerRegistration | undefined) {
+      if (!registration) return;
+      // An installed app can stay open for days. Without these checks it would only learn
+      // about a new build when fully closed and reopened, which is why phones lagged behind.
+      const check = (): void => {
+        if (navigator.onLine) void registration.update().catch(() => {});
+      };
+      window.setInterval(check, UPDATE_CHECK_INTERVAL_MS);
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') check();
       });
     },
     onOfflineReady() {
