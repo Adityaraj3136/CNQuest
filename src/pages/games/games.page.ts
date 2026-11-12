@@ -131,21 +131,52 @@ function cardHtml(game: GameCard, topicQuery: string): string {
   `;
 }
 
+/** Speed streaks fan out above the road only; the road hides anything lower. */
+const DASH_STREAK_ANGLES = [170, 195, 220, 250, 290, 320, 345, 10];
+
+/** Two questions per loop, showing that gates ask more than ports. `x` is the right lane's offset. */
+const DASH_WAVES = [
+  { ask: 'HTTPS → port?', options: ['53', '443', '22'], right: 1, x: 0 },
+  { ask: 'Ping → carried by?', options: ['TCP', 'UDP', 'ICMP'], right: 2, x: 63 },
+];
+
+function dashWaveHtml(wave: (typeof DASH_WAVES)[number], index: number): string {
+  const gates = wave.options
+    .map((option, lane) => `<span${lane === wave.right ? ' class="is-right"' : ''}>${escapeHtml(option)}</span>`)
+    .join('');
+  return `<div class="cn-mode__dash-wave" style="--wave:${index};--x:${wave.x}px">
+    <small>${escapeHtml(wave.ask)}</small>
+    <div class="cn-mode__dash-row">${gates}</div>
+    <em>+100</em>
+  </div>`;
+}
+
 function modeVisualHtml(title: string, icon: string): string {
   if (title === 'Packet Dash') {
     return `<div class="cn-mode__visual cn-mode__visual--dash" aria-hidden="true">
+      <div class="cn-mode__dash-tunnel"><i></i><i></i><i></i></div>
+      <div class="cn-mode__dash-streaks">${DASH_STREAK_ANGLES.map((angle, i) => `<s style="--a:${angle}deg;--i:${i}"></s>`).join('')}</div>
       <div class="cn-mode__dash-road"><i></i><i></i></div>
-      <span class="cn-mode__dash-gate">53</span><span class="cn-mode__dash-gate is-right">443</span><span class="cn-mode__dash-gate">22</span>
+      ${DASH_WAVES.map(dashWaveHtml).join('')}
       <b class="cn-mode__dash-packet"></b>
-      <small>HTTPS → port?</small>
     </div>`;
   }
   if (title === 'Packet Runner') {
     return `<div class="cn-mode__visual cn-mode__visual--packet" aria-hidden="true">
+      <ol class="cn-mode__route-table">
+        <li class="cn-mode__route-ttl">TTL <span><b>64</b><b>63</b></span></li>
+        <li>10.0.0.0/8</li><li>10.1.0.0/16</li><li class="is-best">10.1.2.0/24</li>
+      </ol>
       <svg viewBox="0 0 240 140" preserveAspectRatio="xMidYMid meet">
-        <path d="M30 110 L120 70 M120 70 L60 20 M120 70 L120 15 M120 70 L210 25" />
-        <circle cx="30" cy="110" r="7" /><circle cx="120" cy="70" r="9" />
-        <circle cx="60" cy="20" r="7" /><circle cx="120" cy="15" r="7" /><circle cx="210" cy="25" r="7" />
+        <path class="cn-route-link" d="M30 110 L120 70" />
+        <path class="cn-route-link is-a" d="M120 70 L60 20" />
+        <path class="cn-route-link is-b" d="M120 70 L120 15" />
+        <path class="cn-route-link is-best" d="M120 70 L210 25" />
+        <path class="cn-route-flow" d="M30 110 L120 70 L210 25" />
+        <circle class="cn-route-ripple is-hub" cx="120" cy="70" r="9" />
+        <circle class="cn-route-ripple is-dest" cx="210" cy="25" r="7" />
+        <circle cx="30" cy="110" r="7" /><circle class="cn-route-hub" cx="120" cy="70" r="9" />
+        <circle cx="60" cy="20" r="7" /><circle cx="120" cy="15" r="7" /><circle class="cn-route-dest" cx="210" cy="25" r="7" />
         <circle class="cn-mode__packet-dot" cx="30" cy="110" r="5" />
       </svg>
       <small>10.1.2.5 → /24 wins</small>

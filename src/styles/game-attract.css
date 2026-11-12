@@ -167,7 +167,11 @@ body .cn-mode__visual--words span.is-found {
   body .cn-mode__visual--words span.is-found { background: var(--vga-gold); color: #111522; }
 }
 
-/* Packet Runner: a packet hops from the source router to the hub, then out the right branch. */
+/* Packet Runner: the packet reaches the hub, the routing table scans /8 and /16, locks the
+   longest prefix /24, TTL drops, and the packet rides the matching link to a green delivery.
+   One 4.8s loop; every piece keys off the same percentages. --------------------------- */
+
+body .cn-mode__visual--packet { container-type: inline-size; }
 
 body .cn-mode__visual--packet svg {
   position: absolute;
@@ -176,8 +180,41 @@ body .cn-mode__visual--packet svg {
   height: calc(100% - 52px);
 }
 
-body .cn-mode__visual--packet path { stroke: #8b5cf6; stroke-width: 2; fill: none; opacity: 0.7; }
+body .cn-mode__visual--packet path { fill: none; }
 body .cn-mode__visual--packet circle { fill: #140b2a; stroke: #a78bfa; stroke-width: 2; }
+
+body .cn-mode__visual--packet .cn-route-link { stroke: #8b5cf6; stroke-width: 2; opacity: 0.7; }
+body .cn-mode__visual--packet .cn-route-link.is-a { animation: cn-route-try-a 4.8s steps(1, end) infinite; }
+body .cn-mode__visual--packet .cn-route-link.is-b { animation: cn-route-try-b 4.8s steps(1, end) infinite; }
+body .cn-mode__visual--packet .cn-route-link.is-best { animation: cn-route-pick 4.8s ease-out infinite; }
+
+/* Data flowing along the chosen path, all the time. */
+body .cn-mode__visual--packet .cn-route-flow {
+  stroke: #67e8f9;
+  stroke-width: 2;
+  stroke-dasharray: 3 9;
+  opacity: 0.55;
+  animation: cn-route-flow 0.8s linear infinite;
+}
+
+body .cn-mode__visual--packet circle.cn-route-ripple {
+  fill: none;
+  stroke: #67e8f9;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: cn-route-ripple-hub 4.8s ease-out infinite;
+}
+body .cn-mode__visual--packet circle.cn-route-ripple.is-dest { stroke: #4ade80; animation-name: cn-route-ripple-dest; }
+body .cn-mode__visual--packet circle.cn-route-dest { animation: cn-route-deliver 4.8s steps(1, end) infinite; }
+
+body .cn-mode__visual--packet circle.cn-mode__packet-dot {
+  fill: #fff;
+  stroke: #67e8f9;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 4px #67e8f9);
+  animation: cn-packet-hop 4.8s ease-in-out infinite;
+}
 
 body .cn-mode__visual--packet small {
   position: absolute;
@@ -187,29 +224,152 @@ body .cn-mode__visual--packet small {
   font-family: var(--cn-font-mono);
 }
 
-body .cn-mode__visual--packet circle.cn-mode__packet-dot {
-  fill: #fff;
-  stroke: #67e8f9;
-  stroke-width: 3;
-  animation: cn-packet-hop 3.6s ease-in-out infinite;
+body .cn-mode__route-table {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: #8b93a7;
+  font-family: var(--cn-font-mono);
+  font-size: 0.78rem;
+  line-height: 1.75;
+}
+body .cn-mode__route-table li:not(.cn-mode__route-ttl) {
+  padding: 0 8px;
+  border-left: 2px solid #2a2f45;
+  animation: cn-route-scan 4.8s steps(1, end) infinite;
+}
+/* The /16 row lights one scan step (6% of the loop) after the /8 row. */
+body .cn-mode__route-table li:nth-child(3) { animation-delay: 0.288s; }
+body .cn-mode__route-table li.is-best { animation-name: cn-route-lock; animation-delay: 0s; }
+body .cn-mode__route-ttl { color: #fcd34d; }
+/* Both TTL values share one grid cell; the swap is an opacity flip. */
+body .cn-mode__route-ttl span { display: inline-grid; }
+body .cn-mode__route-ttl b { grid-area: 1 / 1; font-weight: 400; animation: cn-route-ttl 4.8s steps(1, end) infinite; }
+body .cn-mode__route-ttl b + b { opacity: 0; animation-name: cn-route-ttl-new; }
+
+/* Room for the table: push the graph right. Too narrow? Drop the table, keep the graph. */
+@container (min-width: 480px) {
+  body .cn-mode__visual--packet svg { left: 40%; width: calc(60% - 16px); }
+}
+@container (max-width: 479px) {
+  body .cn-mode__route-table { display: none; }
 }
 
 /* SVG user units: source (30,110) → hub (120,70) → branch (210,25). */
 @keyframes cn-packet-hop {
-  0%, 10% { transform: translate(0, 0); opacity: 1; }
-  40%, 50% { transform: translate(90px, -40px); }
-  80% { transform: translate(180px, -85px); opacity: 1; }
+  0% { transform: translate(0, 0); opacity: 0; }
+  4%, 8% { transform: translate(0, 0); opacity: 1; }
+  32%, 56% { transform: translate(90px, -40px); }
+  80%, 90% { transform: translate(180px, -85px); opacity: 1; }
   100% { transform: translate(180px, -85px); opacity: 0; }
+}
+@keyframes cn-route-scan {
+  0% { color: #8b93a7; border-color: #2a2f45; background: transparent; }
+  34% { color: #fde68a; border-color: #fcd34d; background: rgba(252, 211, 77, 0.1); }
+  40% { color: #8b93a7; border-color: #2a2f45; background: transparent; }
+}
+@keyframes cn-route-lock {
+  0% { color: #8b93a7; border-color: #2a2f45; background: transparent; }
+  46% { color: #fde68a; border-color: #fcd34d; background: rgba(252, 211, 77, 0.1); }
+  50% { color: #4ade80; border-color: #4ade80; background: rgba(74, 222, 128, 0.14); }
+  96% { color: #8b93a7; border-color: #2a2f45; background: transparent; }
+}
+@keyframes cn-route-ttl { 0% { opacity: 1; } 50% { opacity: 0; } 96% { opacity: 1; } }
+@keyframes cn-route-ttl-new { 0% { opacity: 0; } 50% { opacity: 1; } 96% { opacity: 0; } }
+@keyframes cn-route-try-a {
+  0% { stroke: #8b5cf6; opacity: 0.7; }
+  34% { stroke: #fcd34d; opacity: 1; }
+  40% { stroke: #8b5cf6; opacity: 0.7; }
+}
+@keyframes cn-route-try-b {
+  0% { stroke: #8b5cf6; opacity: 0.7; }
+  40% { stroke: #fcd34d; opacity: 1; }
+  46% { stroke: #8b5cf6; opacity: 0.7; }
+}
+@keyframes cn-route-pick {
+  0%, 46% { stroke: #8b5cf6; stroke-width: 2; opacity: 0.7; }
+  50%, 90% { stroke: #67e8f9; stroke-width: 3; opacity: 1; }
+  100% { stroke: #8b5cf6; stroke-width: 2; opacity: 0.7; }
+}
+@keyframes cn-route-flow { to { stroke-dashoffset: -12; } }
+@keyframes cn-route-ripple-hub {
+  0%, 31% { transform: scale(1); opacity: 0; }
+  32% { transform: scale(1); opacity: 0.9; }
+  46%, 100% { transform: scale(3.2); opacity: 0; }
+}
+@keyframes cn-route-ripple-dest {
+  0%, 79% { transform: scale(1); opacity: 0; }
+  80% { transform: scale(1); opacity: 1; }
+  96%, 100% { transform: scale(4); opacity: 0; }
+}
+@keyframes cn-route-deliver {
+  0% { fill: #140b2a; stroke: #a78bfa; }
+  80% { fill: #14532d; stroke: #4ade80; }
+  96% { fill: #140b2a; stroke: #a78bfa; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body .cn-mode__visual--packet circle.cn-mode__packet-dot { animation: none; }
+  body .cn-mode__visual--packet *,
+  body .cn-mode__route-table li { animation: none !important; }
+  body .cn-mode__visual--packet circle.cn-mode__packet-dot { transform: translate(90px, -40px); }
+  body .cn-mode__route-table li.is-best { color: #4ade80; border-color: #4ade80; }
 }
 
-/* Packet Dash: the packet swerves into the right gate's lane, the gate flashes green. ---- */
+/* Packet Dash: the tunnel rushes past, a question's gates fly in from the horizon, the packet
+   swerves into the right lane, the gate flashes green with a +100 pop. Two questions per 6s
+   loop (a port, then a protocol), so the card shows the mixed question families.
+   Everything is anchored to the bottom edge: the horizon sits 82px up, whatever the card height. */
 
 body .cn-mode__visual--dash {
   perspective: 260px;
+  --horizon: 82px;
+  transition: filter 0.3s ease;
+}
+body .cn-mode:hover .cn-mode__visual--dash,
+body .cn-mode:focus-within .cn-mode__visual--dash { filter: saturate(1.35) brightness(1.12); }
+
+/* Glow at the vanishing point. */
+body .cn-mode__visual--dash::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: var(--horizon);
+  width: 320px;
+  height: 160px;
+  margin: 0 0 -80px -160px;
+  background: radial-gradient(ellipse at center, rgba(168, 85, 247, 0.45), transparent 65%);
+  animation: cn-dash-glow 2.4s ease-in-out infinite alternate;
+}
+
+body .cn-mode__dash-tunnel i {
+  position: absolute;
+  left: 50%;
+  bottom: var(--horizon);
+  width: 300px;
+  height: 180px;
+  margin: 0 0 -90px -150px;
+  border: 2px solid #8b5cf6;
+  border-radius: 38%;
+  opacity: 0;
+  animation: cn-dash-ring 1.8s linear infinite;
+}
+body .cn-mode__dash-tunnel i:nth-child(2) { border-color: #22d3ee; animation-delay: -0.6s; }
+body .cn-mode__dash-tunnel i:nth-child(3) { animation-delay: -1.2s; }
+
+body .cn-mode__dash-streaks s {
+  position: absolute;
+  left: 50%;
+  bottom: var(--horizon);
+  width: 46px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #67e8f9);
+  transform-origin: 0 50%;
+  opacity: 0;
+  animation: cn-dash-streak 1.2s linear infinite;
+  animation-delay: calc(var(--i) * -0.27s);
 }
 
 body .cn-mode__dash-road {
@@ -221,79 +381,176 @@ body .cn-mode__dash-road {
   margin-left: -105px;
   border-inline: 2px solid #d946ef;
   background: repeating-linear-gradient(0deg, #0b0a1c 0 18px, #110d2a 18px 36px);
+  box-shadow: -6px 0 16px -6px #d946ef, 6px 0 16px -6px #d946ef;
   transform: rotateX(62deg);
   transform-origin: 50% 100%;
-  animation: cn-dash-road 0.6s linear infinite;
+  animation: cn-dash-road 0.45s linear infinite;
 }
-
 body .cn-mode__dash-road i {
   position: absolute;
   top: 0;
   bottom: 0;
   width: 2px;
   background: repeating-linear-gradient(0deg, #6d28d9 0 14px, transparent 14px 28px);
+  animation: cn-dash-road 0.45s linear infinite;
 }
-
 body .cn-mode__dash-road i:first-child { left: 33.3%; }
 body .cn-mode__dash-road i:last-child { left: 66.6%; }
 
-@keyframes cn-dash-road {
-  to { background-position: 0 36px; }
-}
-
-body .cn-mode__dash-gate {
+/* One question. Wave 1 runs half a loop behind wave 0 (negative delay = already underway). */
+body .cn-mode__dash-wave {
   position: absolute;
-  top: 70px;
-  width: 54px;
-  padding: 10px 0;
-  border: 2px solid #22d3ee;
-  border-bottom: 0;
-  color: #e0f2fe;
-  font-family: var(--cn-font-mono);
-  font-size: 0.85rem;
-  text-align: center;
-}
-
-body .cn-mode__dash-gate:nth-of-type(1) { left: calc(50% - 90px); }
-body .cn-mode__dash-gate:nth-of-type(2) { left: calc(50% - 27px); }
-body .cn-mode__dash-gate:nth-of-type(3) { left: calc(50% + 36px); }
-body .cn-mode__dash-gate.is-right { animation: cn-dash-gate 2.8s steps(1, end) infinite; }
-
-@keyframes cn-dash-gate {
-  0%, 55% { border-color: #22d3ee; color: #e0f2fe; }
-  56%, 85% { border-color: #4ade80; color: #4ade80; box-shadow: 0 0 14px #4ade80; }
-}
-
-body .cn-mode__dash-packet {
-  position: absolute;
-  left: calc(50% - 69px);
-  bottom: 28px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 0 12px 4px #67e8f9;
-  animation: cn-dash-swerve 2.8s ease-in-out infinite;
-}
-
-@keyframes cn-dash-swerve {
-  0%, 20% { transform: translateX(0); }
-  40%, 100% { transform: translateX(63px); }
+  inset: 0;
+  --delay: calc(var(--wave) * -3s);
 }
 
 body .cn-mode__visual--dash small {
   position: absolute;
   top: 16px;
   left: 50%;
-  transform: translateX(-50%);
+  translate: -50% 0;
   color: #67e8f9;
   font-family: var(--cn-font-mono);
   white-space: nowrap;
+  opacity: 0;
+  animation: cn-dash-ask 6s linear infinite var(--delay);
+}
+
+/* Gate centres sit at -63 / 0 / +63px at scale 1, matching the packet's lanes. */
+body .cn-mode__dash-row {
+  position: absolute;
+  left: 50%;
+  bottom: var(--horizon);
+  width: 180px;
+  margin-left: -90px;
+  display: flex;
+  justify-content: space-between;
+  transform-origin: 50% 100%;
+  opacity: 0;
+  animation: cn-dash-approach 6s linear infinite var(--delay);
+}
+body .cn-mode__dash-row span {
+  width: 54px;
+  padding: 10px 0;
+  border: 2px solid #22d3ee;
+  border-bottom: 0;
+  background: linear-gradient(180deg, rgba(34, 211, 238, 0.04), rgba(34, 211, 238, 0.18));
+  color: #e0f2fe;
+  font-family: var(--cn-font-mono);
+  font-size: 0.85rem;
+  text-align: center;
+  white-space: nowrap;
+}
+body .cn-mode__dash-row span.is-right { animation: cn-dash-gate 6s steps(1, end) infinite var(--delay); }
+
+body .cn-mode__dash-wave em {
+  position: absolute;
+  left: calc(50% + var(--x));
+  bottom: 96px; /* above the gate it just cleared */
+  translate: -50% 0;
+  color: #4ade80;
+  font-family: var(--cn-font-mono);
+  font-size: 0.9rem;
+  font-style: normal;
+  font-weight: 700;
+  text-shadow: 0 0 8px #4ade80;
+  opacity: 0;
+  animation: cn-dash-score 6s ease-out infinite var(--delay);
+}
+
+body .cn-mode__dash-packet {
+  position: absolute;
+  left: calc(50% - 8px);
+  bottom: 28px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 12px 4px #67e8f9;
+  animation:
+    cn-dash-lane 6s ease-in-out infinite,
+    cn-dash-bob 0.5s ease-in-out infinite alternate;
+}
+/* Light trail streaming back toward the viewer. */
+body .cn-mode__dash-packet::after {
+  content: '';
+  position: absolute;
+  top: 60%;
+  left: 3px;
+  width: 10px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(103, 232, 249, 0.8), transparent);
+}
+/* Shock ring each time the packet clears a right gate. */
+body .cn-mode__dash-packet::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 2px solid #4ade80;
+  border-radius: 50%;
+  opacity: 0;
+  animation: cn-dash-clear 6s ease-out infinite;
+}
+
+@keyframes cn-dash-glow { from { opacity: 0.65; } to { opacity: 1; } }
+@keyframes cn-dash-road { to { background-position: 0 36px; } }
+@keyframes cn-dash-ring {
+  0% { transform: scale(0.05); opacity: 0; }
+  20% { opacity: 0.75; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+@keyframes cn-dash-streak {
+  0% { transform: rotate(var(--a)) translateX(12px) scaleX(0.2); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: rotate(var(--a)) translateX(230px) scaleX(1.5); opacity: 0; }
+}
+@keyframes cn-dash-ask {
+  0% { opacity: 0; }
+  4%, 40% { opacity: 1; }
+  46%, 100% { opacity: 0; }
+}
+/* Gates grow from the horizon, line up with the packet at 30%, then rush past. */
+@keyframes cn-dash-approach {
+  0% { transform: translateY(0) scale(0.3); opacity: 0; animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.6); }
+  6% { opacity: 1; }
+  30% { transform: translateY(46px) scale(1); opacity: 1; animation-timing-function: ease-in; }
+  42%, 100% { transform: translateY(120px) scale(1.9); opacity: 0; }
+}
+@keyframes cn-dash-gate {
+  0% { border-color: #22d3ee; color: #e0f2fe; box-shadow: none; }
+  29% { border-color: #4ade80; color: #4ade80; box-shadow: 0 0 16px #4ade80, inset 0 0 12px rgba(74, 222, 128, 0.5); }
+  44% { border-color: #22d3ee; color: #e0f2fe; box-shadow: none; }
+}
+@keyframes cn-dash-score {
+  0%, 29% { transform: translateY(0) scale(0.6); opacity: 0; }
+  31% { transform: translateY(0) scale(1.25); opacity: 1; }
+  46%, 100% { transform: translateY(-36px) scale(1); opacity: 0; }
+}
+/* Right lanes: wave 0 = centre (0), wave 1 = right (+63px). In lane well before each 30% pass. */
+@keyframes cn-dash-lane {
+  0%, 6% { translate: 63px 0; }
+  20%, 56% { translate: 0 0; }
+  70%, 100% { translate: 63px 0; }
+}
+@keyframes cn-dash-bob { from { transform: translateY(0); } to { transform: translateY(-4px); } }
+@keyframes cn-dash-clear {
+  0%, 29% { transform: scale(0.6); opacity: 0; }
+  30% { transform: scale(1); opacity: 1; }
+  42%, 79% { transform: scale(3.6); opacity: 0; }
+  80% { transform: scale(1); opacity: 1; }
+  92%, 100% { transform: scale(3.6); opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body .cn-mode__dash-road,
-  body .cn-mode__dash-gate.is-right,
-  body .cn-mode__dash-packet { animation: none; }
-  body .cn-mode__dash-packet { transform: translateX(63px); }
+  body .cn-mode__visual--dash *,
+  body .cn-mode__visual--dash *::before,
+  body .cn-mode__visual--dash::before { animation: none !important; }
+  body .cn-mode__dash-tunnel,
+  body .cn-mode__dash-streaks,
+  body .cn-mode__dash-wave + .cn-mode__dash-wave,
+  body .cn-mode__dash-wave em { display: none; }
+  body .cn-mode__visual--dash small,
+  body .cn-mode__dash-row { opacity: 1; }
+  body .cn-mode__dash-row span.is-right { border-color: #4ade80; color: #4ade80; }
 }
