@@ -18,6 +18,7 @@ import { activeStore } from '@/services/progress.store';
 import type { DictionaryTerm, Question, Topic, Unit } from '@/models/content';
 import type { UserProgress } from '@/models/progress';
 import '@/styles/learn.css';
+import { isWorkedExample, proseHtml } from '@/pages/learn/prose';
 
 const ROOT_ID = 'cn-topic-root';
 
@@ -220,9 +221,7 @@ function bodyHtml(
         }
         ${topic.overview
             .split(/\n\n+/)
-            .map((para) => para.trim())
-            .filter(Boolean)
-            .map((para) => `<p class="cn-topic__overview">${escapeHtml(para)}</p>`)
+            .map((para) => proseHtml(para, { className: 'cn-topic__overview' }))
             .join('')}
 
         ${
@@ -253,10 +252,14 @@ function bodyHtml(
                  <h2>In depth</h2>
                  ${topic.sections
                    .map(
-                     (section) => `
-                       <div class="cn-depth__section">
-                         <h3 class="cn-depth__heading">${escapeHtml(section.heading)}</h3>
-                         <p class="cn-depth__body">${escapeHtml(section.body)}</p>
+                     (section, index) => `
+                       <div class="cn-depth__section"${isWorkedExample(section.heading) ? ' data-worked="true"' : ''}>
+                         <h3 class="cn-depth__heading">
+                           <span class="cn-depth__index" aria-hidden="true">${String(index + 1).padStart(2, '0')}</span>
+                           <span>${escapeHtml(section.heading)}</span>
+                         </h3>
+                         ${isWorkedExample(section.heading) ? '<span class="cn-depth__tag">Worked example</span>' : ''}
+                         ${proseHtml(section.body, { className: 'cn-depth__body', lede: true })}
                        </div>`,
                    )
                    .join('')}

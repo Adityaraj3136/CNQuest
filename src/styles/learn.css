@@ -187,20 +187,91 @@
 /* In depth: longer prose than the key points, so it gets reading-width lines and clear
    sub-headings to scan by. */
 .cn-depth__section {
+  position: relative;
   max-width: var(--cn-measure);
-  padding-top: var(--cn-space-4);
+  margin-top: var(--cn-space-4);
+  padding: var(--cn-space-4) var(--cn-space-5) var(--cn-space-5);
+  border: var(--cn-hairline);
+  border-left: 3px solid var(--cn-accent);
+  border-radius: var(--cn-radius-md);
+  background: var(--cn-paper-raised);
 }
 
-.cn-depth__section + .cn-depth__section {
-  margin-top: var(--cn-space-2);
-  border-top: var(--cn-hairline);
+/* Worked examples read as a different kind of block: the calculation to copy. */
+.cn-depth__section[data-worked='true'] {
+  border-left-color: var(--cn-mastered, #4ade80);
 }
 
 .cn-depth__heading {
-  margin: 0 0 var(--cn-space-2);
-  font-size: var(--cn-text-base);
+  display: flex;
+  align-items: baseline;
+  gap: var(--cn-space-3);
+  margin: 0 0 var(--cn-space-3);
+  font-size: var(--cn-text-lg);
   font-weight: 650;
+  line-height: 1.3;
   color: var(--cn-ink);
+}
+
+.cn-depth__index {
+  flex: none;
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-accent);
+}
+
+.cn-depth__tag {
+  display: inline-block;
+  margin-bottom: var(--cn-space-3);
+  padding: 2px var(--cn-space-2);
+  border-radius: var(--cn-radius-pill);
+  background: var(--cn-mastered-wash, rgba(74, 222, 128, 0.15));
+  color: var(--cn-mastered, #4ade80);
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-micro);
+  letter-spacing: var(--cn-tracking-label);
+  text-transform: uppercase;
+}
+
+/* The section's claim, then the explanation in short paragraphs. */
+.cn-depth__body.is-lede {
+  color: var(--cn-ink);
+  font-weight: 550;
+}
+
+.cn-depth__body + .cn-depth__body {
+  margin-top: var(--cn-space-3);
+}
+
+.cn-topic__overview + .cn-topic__overview {
+  margin-top: var(--cn-space-3);
+}
+
+/* Addresses, bit strings and formulas picked out by prose.ts. */
+.cn-depth__body code,
+.cn-topic__overview code {
+  padding: 1px 5px;
+  border-radius: var(--cn-radius-sm, 4px);
+  background: var(--cn-paper-sunken);
+  color: var(--cn-ink);
+  font-family: var(--cn-font-mono);
+  font-size: 0.9em;
+  white-space: nowrap;
+}
+
+@media (max-width: 575.98px) {
+  .cn-depth__section {
+    padding: var(--cn-space-4);
+  }
+
+  .cn-depth__heading {
+    font-size: var(--cn-text-base);
+  }
+
+  /* Long formulas may wrap on a phone rather than push the page sideways. */
+  .cn-depth__body code {
+    white-space: normal;
+  }
 }
 
 .cn-depth__body {
